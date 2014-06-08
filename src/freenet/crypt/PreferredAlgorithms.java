@@ -4,9 +4,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Collections;
@@ -19,7 +17,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import freenet.crypt.JceLoader;
-import freenet.keys.ClientCHKBlock;
 import freenet.node.Node;
 import freenet.support.Logger;
 
@@ -38,6 +35,8 @@ public class PreferredAlgorithms{
 	final static Provider NSS;
 
 	private static final Provider hmacProvider;
+	
+	private static Provider aesCTRProvider; 
 
 	public static final Map<String, Provider> mdProviders;
 //	public static final Map<String, Provider> sigProviders;
@@ -210,9 +209,11 @@ public class PreferredAlgorithms{
 		}
 		mdProviders = Collections.unmodifiableMap(mdProviders_internal);
 		
+
+		String algo;
 		
 		//HMAC Benchmarking
-		final String algo = "HmacSHA256";
+		algo = "HmacSHA256";
 		try{
 			SecretKeySpec dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
 			Mac hmac = Mac.getInstance(algo);
@@ -268,61 +269,52 @@ public class PreferredAlgorithms{
 			throw new Error(e);
 		}
 		
-	}
+		
+		//Cipher Benchmarking
+		algo = "AES/CTR/NOPADDING";
+		try{
+			byte[] key = new byte[32]; // Test for whether 256-bit works.
+			byte[] iv = new byte[16];
+			byte[] plaintext = new byte[16];
+			SecretKeySpec k = new SecretKeySpec(key, "AES");
+			IvParameterSpec IV = new IvParameterSpec(iv);
+			Cipher c = Cipher.getInstance(algo);
+			c.init(Cipher.ENCRYPT_MODE, k, IV);
+			Provider provider = c.getProvider();
+			try{
+				if(BC != null && provider != BC){
+					Cipher bcastle_cipher = Cipher.getInstance(algo, BC);
+					bcastle_cipher.init(Cipher.ENCRYPT_MODE, k, IV);
+					long time_def = cipherBenchmark(c, k, IV);
+					long time_bcastle = cipherBenchmark(bcastle_cipher, k, IV);
+					System.out.println(algo + " (" + provider + "): " + time_def + "ns");
+					System.out.println(algo + " (" + BC + "): " + time_bcastle + "ns");
+					Logger.minor(clazz, algo + "/" + provider + ": " + time_def + "ns");
+					Logger.minor(clazz, algo + "/" + BC + ": " + time_bcastle + "ns");
+					if (time_bcastle < time_def) {
+						provider = BC;
+						c = bcastle_cipher;
+					}
+				}
+				c = Cipher.getInstance(algo, provider);
+				c.init(Cipher.ENCRYPT_MODE, k, IV);
+				c.doFinal(plaintext);
+//				Logger.normal(Rijndael.class, "Using JCA: provider "+provider);
+				System.out.println("Using JCA cipher provider: "+provider);
+			} catch(GeneralSecurityException e) {
+				// ignore
+				Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+			} catch(Throwable e) {
+				// ignore
+				Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+			}
+			
 
-//	static {
-//	
-//	private static Provider getAesCtrProvider() {
-//		try {
-//			final String algo = "AES/CTR/NOPADDING";
-//			final Provider bcastle = JceLoader.BouncyCastle;
-//
-//			byte[] key = new byte[32]; // Test for whether 256-bit works.
-//			byte[] iv = new byte[16];
-//			byte[] plaintext = new byte[16];
-//			SecretKeySpec k = new SecretKeySpec(key, "AES");
-//			IvParameterSpec IV = new IvParameterSpec(iv);
-//
-//			Cipher c = Cipher.getInstance(algo);
-//			c.init(Cipher.ENCRYPT_MODE, k, IV);
-//			// ^^^ resolve provider
-//			Provider provider = c.getProvider();
-//			if (bcastle != null) {
-//				// BouncyCastle provider is faster (in some configurations)
-//				try {
-//					Cipher bcastle_cipher = Cipher.getInstance(algo, bcastle);
-//					bcastle_cipher.init(Cipher.ENCRYPT_MODE, k, IV);
-//					Provider bcastle_provider = bcastle_cipher.getProvider();
-//					if (provider != bcastle_provider) {
-//						long time_def = cipherBenchmark(c, k, IV);
-//						long time_bcastle = cipherBenchmark(bcastle_cipher, k, IV);
-//						System.out.println(algo + " (" + provider + "): " + time_def + "ns");
-//						System.out.println(algo + " (" + bcastle_provider + "): " + time_bcastle + "ns");
-////						Logger.minor(clazz, algo + "/" + provider + ": " + time_def + "ns");
-////						Logger.minor(clazz, algo + "/" + bcastle_provider + ": " + time_bcastle + "ns");
-//						if (time_bcastle < time_def) {
-//							provider = bcastle_provider;
-//							c = bcastle_cipher;
-//						}
-//					}
-//				} catch(GeneralSecurityException e) {
-//					// ignore
-////					Logger.warning(clazz, algo + "@" + bcastle + " benchmark failed", e);
-//
-//				} catch(Throwable e) {
-//					// ignore
-////					Logger.error(clazz, algo + "@" + bcastle + " benchmark failed", e);
-//				}
-//			}
-//			c = Cipher.getInstance(algo, provider);
-//			c.init(Cipher.ENCRYPT_MODE, k, IV);
-//			c.doFinal(plaintext);
-////			Logger.normal(Rijndael.class, "Using JCA: provider "+provider);
-//			System.out.println("Using JCA cipher provider: "+provider);
-//			return provider;
-//		} catch (GeneralSecurityException e) {
-////			Logger.warning(Rijndael.class, "Not using JCA as it is crippled (can't use 256-bit keys). Will use built-in encryption. ", e);
-//			return null;
-//		}
-//	}
+			aesCTRProvider = provider;
+		}catch (GeneralSecurityException e) {
+////		Logger.warning(Rijndael.class, "Not using JCA as it is crippled (can't use 256-bit keys). Will use built-in encryption. ", e);
+		}
+		
+		
+	}
 }
