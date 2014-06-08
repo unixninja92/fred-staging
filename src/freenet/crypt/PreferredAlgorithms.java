@@ -3,19 +3,42 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.security.GeneralSecurityException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import freenet.crypt.JceLoader;
+import freenet.keys.ClientCHKBlock;
+import freenet.node.Node;
+import freenet.support.Logger;
+
 public class PreferredAlgorithms{
 	// static String preferredSignatureProvider;
-	static String preferredSignature = "ECDSA";
+	private static String preferredSignature = "ECDSA";
 	// static String preferredBlockProvider;
-	static String preferredBlock = "AES";
+	private static String preferredBlock = "AES";
 	// static String preferredStreamProvider;
-	static String preferredStream = "ChaCha";
-	static String preferredMesageDigest;
+	private static String preferredStream = "ChaCha";
+	private static String preferredMesageDigest;
+
+	final static Provider sun = JceLoader.SUN;
+	final static Provider sunJCE = JceLoader.SunJCE;
+	final static Provider bc = JceLoader.BouncyCastle;
+	final static Provider NSS = JceLoader.NSS;
+
+	private static final Provider hmacProvider;
 
 	public static final Map<String, Provider> mdProviders;
-	public static final Map<String, Provider> sigProviders;
-	public static final Map<String, Provider> blockProviders;
-	public static final Map<String, Provider> streamProviders;
+//	public static final Map<String, Provider> sigProviders;
+//	public static final Map<String, Provider> blockProviders;
+//	public static final Map<String, Provider> streamProviders;
 
 	static private long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{
@@ -43,7 +66,43 @@ public class PreferredAlgorithms{
 		return times;
 	}
 
+	static private long hmacBenchmark(Mac hmac) throws GeneralSecurityException
+	{
+		long times = Long.MAX_VALUE;
+		byte[] input = new byte[1024];
+		byte[] output = new byte[hmac.getMacLength()];
+		byte[] key = new byte[Node.SYMMETRIC_KEY_LENGTH];
+		final String algo = hmac.getAlgorithm();
+		hmac.init(new SecretKeySpec(key, algo));
+		// warm-up
+		for (int i = 0; i < 32; i++) {
+			hmac.update(input, 0, input.length);
+			hmac.doFinal(output, 0);
+			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
+		}
+		System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
+		for (int i = 0; i < 1024; i++) {
+			long startTime = System.nanoTime();
+			hmac.init(new SecretKeySpec(key, algo));
+			for (int j = 0; j < 8; j++) {
+				for (int k = 0; k < 32; k ++) {
+					hmac.update(input, 0, input.length);
+				}
+				hmac.doFinal(output, 0);
+			}
+			long endTime = System.nanoTime();
+			times = Math.min(endTime - startTime, times);
+			System.arraycopy(output, 0, input, 0, output.length);
+			System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
+		}
+		return times;
+	}
+
 	static {
+		final Provider sun = JceLoader.SUN;
+		final Provider sunJCE = JceLoader.SunJCE;
+		final Provider bc = JceLoader.BouncyCastle;
+		final Provider NSS = JceLoader.NSS;
 		try {
 			HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
 
@@ -51,7 +110,7 @@ public class PreferredAlgorithms{
 				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
 			}) {
 				final Class<?> clazz = Util.class;
-				final Provider sun = JceLoader.SUN;
+				// final Provider sun = JceLoader.SUN;
 				MessageDigest md = MessageDigest.getInstance(algo);
 				md.digest();
 				if (sun != null) {
@@ -85,51 +144,18 @@ public class PreferredAlgorithms{
 			}
 			mdProviders = Collections.unmodifiableMap(mdProviders_internal);
 
-			ctx = MessageDigest.getInstance("SHA1", mdProviders.get("SHA1"));
-			ctx_length = ctx.getDigestLength();
+//			ctx = MessageDigest.getInstance("SHA1", mdProviders.get("SHA1"));
+//			ctx_length = ctx.getDigestLength();
 		} catch(NoSuchAlgorithmException e) {
 			// impossible
 			throw new Error(e);
 		}
-	}
 
-	private static final Provider hmacProvider;
-	static private long benchmark(Mac hmac) throws GeneralSecurityException
-	{
-		long times = Long.MAX_VALUE;
-		byte[] input = new byte[1024];
-		byte[] output = new byte[hmac.getMacLength()];
-		byte[] key = new byte[Node.SYMMETRIC_KEY_LENGTH];
-		final String algo = hmac.getAlgorithm();
-		hmac.init(new SecretKeySpec(key, algo));
-		// warm-up
-		for (int i = 0; i < 32; i++) {
-			hmac.update(input, 0, input.length);
-			hmac.doFinal(output, 0);
-			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
-		}
-		System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
-		for (int i = 0; i < 1024; i++) {
-			long startTime = System.nanoTime();
-			hmac.init(new SecretKeySpec(key, algo));
-			for (int j = 0; j < 8; j++) {
-				for (int k = 0; k < 32; k ++) {
-					hmac.update(input, 0, input.length);
-				}
-				hmac.doFinal(output, 0);
-			}
-			long endTime = System.nanoTime();
-			times = Math.min(endTime - startTime, times);
-			System.arraycopy(output, 0, input, 0, output.length);
-			System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
-		}
-		return times;
-	}
-	static {
+
 		try {
 			final Class<ClientCHKBlock> clazz = ClientCHKBlock.class;
 			final String algo = "HmacSHA256";
-			final Provider sun = JceLoader.SunJCE;
+			// final Provider sun = JceLoader.SunJCE;
 			SecretKeySpec dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
 			Mac hmac = Mac.getInstance(algo);
 			hmac.init(dummyKey); // resolve provider
@@ -140,8 +166,8 @@ public class PreferredAlgorithms{
 					Mac sun_hmac = Mac.getInstance(algo, sun);
 					sun_hmac.init(dummyKey); // resolve provider
 					if (hmac.getProvider() != sun_hmac.getProvider()) {
-						long time_def = benchmark(hmac);
-						long time_sun = benchmark(sun_hmac);
+						long time_def = hmacBenchmark(hmac);
+						long time_sun = hmacBenchmark(sun_hmac);
 						System.out.println(algo + " (" + hmac.getProvider() + "): " + time_def + "ns");
 						System.out.println(algo + " (" + sun_hmac.getProvider() + "): " + time_sun + "ns");
 						if(logMINOR) {
