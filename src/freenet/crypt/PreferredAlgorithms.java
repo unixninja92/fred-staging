@@ -7,6 +7,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,9 +31,9 @@ public class PreferredAlgorithms{
 	private static String preferredStream = "ChaCha";
 	private static String preferredMesageDigest;
 
-	final static Provider sun = JceLoader.SUN;
+	final static Provider SUN = JceLoader.SUN;
 	final static Provider sunJCE = JceLoader.SunJCE;
-	final static Provider bc = JceLoader.BouncyCastle;
+	final static Provider BC = JceLoader.BouncyCastle;
 	final static Provider NSS = JceLoader.NSS;
 
 	private static final Provider hmacProvider;
@@ -41,6 +42,50 @@ public class PreferredAlgorithms{
 //	public static final Map<String, Provider> sigProviders;
 //	public static final Map<String, Provider> blockProviders;
 //	public static final Map<String, Provider> streamProviders;
+	
+	public PreferredAlgorithms(){
+		final Class<?> clazz = PreferredAlgorithms.class;
+		for (String algo: new String[] {
+				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
+			}) {;
+			try {
+				MessageDigest md = MessageDigest.getInstance(algo);
+				MessageDigest sun_md = null;
+				MessageDigest bc_md = null;
+				
+				long time_def = -1;
+				long time_sun = -1;
+				long time_bc = -1;
+				
+				md.digest();
+				time_def = mdBenchmark(md);
+				System.out.println(algo + " (" + md.getProvider() + "): " + time_def + "ns");
+				Logger.minor(clazz, algo + " (" + md.getProvider() + "): " + time_def + "ns");
+				
+				if (SUN != null && md.getProvider() != Security.getProvider("SUN")) {
+					sun_md = MessageDigest.getInstance(algo, SUN);
+					sun_md.digest();
+					time_sun = mdBenchmark(sun_md);
+					System.out.println(algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
+					Logger.minor(clazz, algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
+				}
+				if (BC != null) {
+					bc_md = MessageDigest.getInstance(algo, BC);
+					bc_md.digest();
+					time_bc = mdBenchmark(bc_md);
+					System.out.println(algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
+				}
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (GeneralSecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		}
+	}
 
 	static private long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{
@@ -129,24 +174,22 @@ public class PreferredAlgorithms{
 	}
 
 	static {
-		final Provider sun = JceLoader.SUN;
-		final Provider sunJCE = JceLoader.SunJCE;
-		final Provider bc = JceLoader.BouncyCastle;
-		final Provider NSS = JceLoader.NSS;
+		
 		try {
 			HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
-
 			for (String algo: new String[] {
 				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
 			}) {
 				final Class<?> clazz = Util.class;
 				// final Provider sun = JceLoader.SUN;
 				MessageDigest md = MessageDigest.getInstance(algo);
+				MessageDigest sun_md = null;
+				MessageDigest bc_md = null;
 				md.digest();
-				if (sun != null) {
+				if (SUN != null) {
 					// SUN provider is faster (in some configurations)
 					try {
-						MessageDigest sun_md = MessageDigest.getInstance(algo, sun);
+						sun_md = MessageDigest.getInstance(algo, SUN);
 						sun_md.digest();
 						if (md.getProvider() != sun_md.getProvider()) {
 							long time_def = mdBenchmark(md);
@@ -161,12 +204,18 @@ public class PreferredAlgorithms{
 						}
 					} catch(GeneralSecurityException e) {
 						// ignore
-						Logger.warning(clazz, algo + "@" + sun + " benchmark failed", e);
+						Logger.warning(clazz, algo + "@" + SUN + " benchmark failed", e);
 					} catch(Throwable e) {
 						// ignore
-						Logger.error(clazz, algo + "@" + sun + " benchmark failed", e);
+						Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
 					}
 				}
+//				if (BC != null) {
+//					try {
+//						bc_md = MessageDigest.getInstance(algo, SUN);
+//						bc_md.digest();
+//					}
+//				}
 				Provider mdProvider = md.getProvider();
 				System.out.println(algo + ": using " + mdProvider);
 				Logger.normal(clazz, algo + ": using " + mdProvider);
@@ -190,10 +239,10 @@ public class PreferredAlgorithms{
 			Mac hmac = Mac.getInstance(algo);
 			hmac.init(dummyKey); // resolve provider
 			boolean logMINOR = Logger.shouldLog(Logger.LogLevel.MINOR, clazz);
-			if (sun != null) {
+			if (SUN != null) {
 				// SunJCE provider is faster (in some configurations)
 				try {
-					Mac sun_hmac = Mac.getInstance(algo, sun);
+					Mac sun_hmac = Mac.getInstance(algo, SUN);
 					sun_hmac.init(dummyKey); // resolve provider
 					if (hmac.getProvider() != sun_hmac.getProvider()) {
 						long time_def = hmacBenchmark(hmac);
@@ -209,11 +258,11 @@ public class PreferredAlgorithms{
 						}
 					}
 				} catch(GeneralSecurityException e) {
-					Logger.warning(clazz, algo + "@" + sun + " benchmark failed", e);
+					Logger.warning(clazz, algo + "@" + SUN + " benchmark failed", e);
 					// ignore
 
 				} catch(Throwable e) {
-					Logger.error(clazz, algo + "@" + sun + " benchmark failed", e);
+					Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
 					// ignore
 				}
 			}
