@@ -248,9 +248,9 @@ public class PreferredAlgorithms{
 			}
 			if (BC != null){
 				try {
-					bc_hmac = Mac.getInstance(algo, BC);
+					bc_hmac = Mac.getInstance("HMACSHA256", BC);
 					bc_hmac.init(dummyKey);
-					time_sun = hmacBenchmark(bc_hmac);
+					time_bc = hmacBenchmark(bc_hmac);
 					System.out.println(algo + " (" + bc_hmac.getProvider() + "): " + time_bc + "ns");
 					Logger.minor(clazz, algo + "/" + bc_hmac.getProvider() + ": " + time_bc + "ns");
 				} catch(GeneralSecurityException e) {
@@ -315,6 +315,6 @@ public class PreferredAlgorithms{
 ////		Logger.warning(Rijndael.class, "Not using JCA as it is crippled (can't use 256-bit keys). Will use built-in encryption. ", e);
 		}
 		
-		
+		System.out.println("End of PreferredAlgs");
 	}
 }

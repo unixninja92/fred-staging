@@ -22,6 +22,7 @@ public class JceLoader {
 	static public final Provider NSS; // optional, may be null
 	static public final Provider SUN; // optional, may be null
 	static public final Provider SunJCE; // optional, may be null
+	static public final PreferredAlgorithms algs;
 	static private boolean checkUse(String prop)
 	{
 		return checkUse(prop, "true");
@@ -72,6 +73,9 @@ public class JceLoader {
 		else SunJCE = null;
 		
 		SUN = checkUse("use.SUN") ? Security.getProvider("SUN") : null;
+		
+
+		algs = new PreferredAlgorithms();
 	}
 	static private class BouncyCastleLoader {
 		private BouncyCastleLoader() {}
