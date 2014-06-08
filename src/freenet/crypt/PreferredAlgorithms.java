@@ -4,6 +4,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -31,20 +32,17 @@ public class PreferredAlgorithms{
 	private static String preferredStream = "ChaCha";
 	private static String preferredMesageDigest;
 
-	public final static Provider SUN; // = JceLoader.SUN;
+	public final static Provider SUN;
 	final static Provider SunJCE;
 	final static Provider BC;
 	final static Provider NSS;
 
-//	private static final Provider hmacProvider;
+	private static final Provider hmacProvider;
 
 	public static final Map<String, Provider> mdProviders;
 //	public static final Map<String, Provider> sigProviders;
 //	public static final Map<String, Provider> blockProviders;
 //	public static final Map<String, Provider> streamProviders;
-	
-//	private static final MessageDigest ctx;
-//	private static final int ctx_length;
 	
 
 	static private long mdBenchmark(MessageDigest md) throws GeneralSecurityException
@@ -133,14 +131,31 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
+	private static Provider fastest(long time_def, Provider provider_def, long time_sun, long time_bc){
+		Provider fastest = provider_def;
+		if(time_bc != -1 && time_def > time_bc){
+			if(time_sun != -1 && time_bc > time_sun){
+				fastest = SUN;
+			}
+			else{
+				fastest = BC;
+			}
+		}
+		else if(time_sun != -1 && time_def > time_sun){
+			fastest = SUN;
+		}
+		return fastest;
+	}
+	
 	static {
 		SUN = JceLoader.SUN;
 		SunJCE = JceLoader.SunJCE;
 		BC = JceLoader.BouncyCastle;
 		NSS = JceLoader.NSS;
+
+		final Class<?> clazz = PreferredAlgorithms.class;
 		
 		//Message Digest Algorithm Benchmarking
-		final Class<?> clazz = PreferredAlgorithms.class;
 		HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
 		for (String algo: new String[] {
 				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
@@ -182,82 +197,80 @@ public class PreferredAlgorithms{
 					// ignore
 					Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
 				}
-
-				MessageDigest best = md;
 				
-				if(time_bc != -1 && time_def > time_bc){
-					if(time_sun != -1 && time_bc > time_sun){
-						best = sun_md;
-					}
-					else{
-						best = bc_md;
-					}
-				}
-				else if(time_sun != -1 && time_def > time_sun){
-					best = sun_md;
-				}
-				
-				Provider mdProvider = md.getProvider();
+				Provider mdProvider = fastest(time_def, md.getProvider(), time_sun, time_bc);
 				System.out.println(algo + ": using " + mdProvider);
 				Logger.normal(clazz, algo + ": using " + mdProvider);
 				mdProviders_internal.put(algo, mdProvider);
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			} catch (GeneralSecurityException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new Error(e);
 			}
 			
 		}
 		mdProviders = Collections.unmodifiableMap(mdProviders_internal);
+		
+		
+		//HMAC Benchmarking
+		final String algo = "HmacSHA256";
+		try{
+			SecretKeySpec dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
+			Mac hmac = Mac.getInstance(algo);
+			Mac sun_hmac = null;
+			Mac bc_hmac = null;
+			
+			long time_def = -1;
+			long time_sun = -1;
+			long time_bc = -1;
+			
+			hmac.init(dummyKey); // resolve provider
+			time_def = hmacBenchmark(hmac);
+			System.out.println(algo + " (" + hmac.getProvider() + "): " + time_def + "ns");
+			Logger.minor(clazz, algo + "/" + hmac.getProvider() + ": " + time_def + "ns");
+			
+			if (SUN != null && hmac.getProvider() != Security.getProvider("SUN")) {
+//				// SunJCE provider is faster (in some configurations)
+				try {
+					sun_hmac = Mac.getInstance(algo, SUN);
+					sun_hmac.init(dummyKey);
+					time_sun = hmacBenchmark(sun_hmac);
+					System.out.println(algo + " (" + sun_hmac.getProvider() + "): " + time_sun + "ns");
+					Logger.minor(clazz, algo + "/" + sun_hmac.getProvider() + ": " + time_sun + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + SUN + " benchmark failed", e);
+					// ignore
+
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
+					// ignore
+				}
+			}
+			if (BC != null){
+				try {
+					bc_hmac = Mac.getInstance(algo, BC);
+					bc_hmac.init(dummyKey);
+					time_sun = hmacBenchmark(bc_hmac);
+					System.out.println(algo + " (" + bc_hmac.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, algo + "/" + bc_hmac.getProvider() + ": " + time_bc + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+				}
+			}
+			hmacProvider = fastest(time_def, hmac.getProvider(), time_sun, time_bc);
+			System.out.println(algo + ": using " + hmacProvider);
+			Logger.normal(clazz, algo + ": using " + hmacProvider);
+		}catch(GeneralSecurityException e){
+			throw new Error(e);
+		}
+		
 	}
 
 //	static {
-//
-//		try {
-//			final Class<ClientCHKBlock> clazz = ClientCHKBlock.class;
-//			final String algo = "HmacSHA256";
-//			// final Provider sun = JceLoader.SunJCE;
-//			SecretKeySpec dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
-//			Mac hmac = Mac.getInstance(algo);
-//			hmac.init(dummyKey); // resolve provider
-//			boolean logMINOR = Logger.shouldLog(Logger.LogLevel.MINOR, clazz);
-//			if (SUN != null) {
-//				// SunJCE provider is faster (in some configurations)
-//				try {
-//					Mac sun_hmac = Mac.getInstance(algo, SUN);
-//					sun_hmac.init(dummyKey); // resolve provider
-//					if (hmac.getProvider() != sun_hmac.getProvider()) {
-//						long time_def = hmacBenchmark(hmac);
-//						long time_sun = hmacBenchmark(sun_hmac);
-//						System.out.println(algo + " (" + hmac.getProvider() + "): " + time_def + "ns");
-//						System.out.println(algo + " (" + sun_hmac.getProvider() + "): " + time_sun + "ns");
-//						if(logMINOR) {
-//							Logger.minor(clazz, algo + "/" + hmac.getProvider() + ": " + time_def + "ns");
-//							Logger.minor(clazz, algo + "/" + sun_hmac.getProvider() + ": " + time_sun + "ns");
-//						}
-//						if (time_sun < time_def) {
-//							hmac = sun_hmac;
-//						}
-//					}
-//				} catch(GeneralSecurityException e) {
-//					Logger.warning(clazz, algo + "@" + SUN + " benchmark failed", e);
-//					// ignore
-//
-//				} catch(Throwable e) {
-//					Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
-//					// ignore
-//				}
-//			}
-//			hmacProvider = hmac.getProvider();
-//			System.out.println(algo + ": using " + hmacProvider);
-//			Logger.normal(clazz, algo + ": using " + hmacProvider);
-//		} catch(GeneralSecurityException e) {
-//			// impossible 
-//			throw new Error(e);
-//		}
-//	}
 //	
 //	private static Provider getAesCtrProvider() {
 //		try {
