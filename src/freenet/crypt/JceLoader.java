@@ -10,7 +10,9 @@ import java.security.Provider;
 import java.security.Security;
 import java.security.Signature;
 
+import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
+import javax.crypto.KeyGenerator;
 
 import freenet.support.Logger;
 import freenet.support.io.Closer;
@@ -55,8 +57,21 @@ public class JceLoader {
 		}
 		BouncyCastle = p;
 		// optional
+		if (checkUse("use.SunJCE")) {
+			try{
+				int max = Cipher.getMaxAllowedKeyLength("AES");
+				KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunJCE");
+				kgen.init(256);
+			}
+			catch(Throwable e) {
+				final String msg = "Error with SunJCE. Unlimited policy file not installed.";
+				Logger.warning(NSSLoader.class, msg, e);
+			}
+			SunJCE = Security.getProvider("SunJCE");
+		}
+		else SunJCE = null;
+		
 		SUN = checkUse("use.SUN") ? Security.getProvider("SUN") : null;
-		SunJCE = checkUse("use.SunJCE") ? Security.getProvider("SunJCE") : null;
 	}
 	static private class BouncyCastleLoader {
 		private BouncyCastleLoader() {}
