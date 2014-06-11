@@ -4,6 +4,7 @@
 
 package freenet.crypt;
 
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -14,13 +15,11 @@ import freenet.support.Logger;
 
 public class Hash{
 	private static final HashType defaultType = PreferredAlgorithms.preferredMesageDigest;
+	private MessageDigest digest;
 	
-	public static HashResult hash(byte[] data){
+	public Hash(){
 		try {
 			MessageDigest digest = defaultType.get();
-			byte[] result = defaultType.get().digest(data);
-			SHA256.returnMessageDigest(digest);
-			return new HashResult(defaultType, result);
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
 			System.err.println("Check your JVM settings especially the JCE!" + e);
@@ -30,7 +29,29 @@ public class Hash{
 		throw new RuntimeException();
 	}
 	
-	public static boolean verify(byte[] data, HashResult hash){
+	public HashResult hash(byte[] data){
+			byte[] result = digest.digest(data);
+			SHA256.returnMessageDigest(digest);
+			return new HashResult(defaultType, result);
+	}
+	
+	public void update(byte input){
+		digest.update(input);
+	}
+
+	public void update(byte[] input){
+		digest.update(input);
+	}
+
+	public void update(ByteBuffer input){
+		digest.update(input);
+	}
+	
+	public void update(byte[] input, int offset, int len){
+		digest.update(input, offset, len);
+	}
+
+	public boolean verify(byte[] data, HashResult hash){
 		if(hash.compareTo(hash(data)) == 0){
 			return true;
 		}
