@@ -7,6 +7,7 @@ package freenet.crypt;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import net.i2p.util.NativeBigInteger;
 
@@ -58,11 +59,11 @@ public class Hash{
 	public NativeBigInteger getNativeBigIntegerHash(){
 		return new NativeBigInteger(1, digest());
 	}
-//	
-//	public NativeBigInteger getNativeBigIntegerHash(byte[] data){
-//		update(data);
-//		return hashToNativeBigInteger();
-//	}
+	
+	public NativeBigInteger getNativeBigIntegerHash(byte[] data){
+		addBytes(data);
+		return getNativeBigIntegerHash();
+	}
 	
 	public void addByte(byte input){
 		digest.update(input);
@@ -81,10 +82,16 @@ public class Hash{
 	}
 
 	public boolean verify(HashResult hash, byte[] data){
+		digest.reset();
 		if(hash.compareTo(getHashResult(data)) == 0){
 			return true;
 		}
 		return false;
+	}
+	
+	public boolean verify(byte[] hash, byte[] data){
+		digest.reset();
+		return Arrays.equals(hash, getHash(data));
 	}
 	
 	public static boolean verify(HashResult hash1, HashResult hash2){
