@@ -8,6 +8,8 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import net.i2p.util.NativeBigInteger;
+
 import org.tanukisoftware.wrapper.WrapperManager;
 
 import freenet.node.NodeInitException;
@@ -29,30 +31,57 @@ public class Hash{
 		throw new RuntimeException();
 	}
 	
-	public HashResult hash(byte[] data){
-			byte[] result = digest.digest(data);
-			SHA256.returnMessageDigest(digest);
-			return new HashResult(defaultType, result);
+	private byte[] digest(){
+		byte[] result = digest.digest();
+		SHA256.returnMessageDigest(digest);
+		return result;
 	}
 	
-	public void update(byte input){
+	public byte[] getHash(){
+		return digest();
+	}
+	
+	public byte[] getHash(byte[] input) {
+		addBytes(input);
+		return digest();
+	}
+	
+	public HashResult getHashResult() {
+		return new HashResult(defaultType, digest());
+	}
+	
+	public HashResult getHashResult(byte[] data){
+		addBytes(data);
+		return getHashResult();
+	}
+	
+	public NativeBigInteger getNativeBigIntegerHash(){
+		return new NativeBigInteger(1, digest());
+	}
+//	
+//	public NativeBigInteger getNativeBigIntegerHash(byte[] data){
+//		update(data);
+//		return hashToNativeBigInteger();
+//	}
+	
+	public void addByte(byte input){
 		digest.update(input);
 	}
 
-	public void update(byte[] input){
+	public void addBytes(byte[] input){
 		digest.update(input);
 	}
 
-	public void update(ByteBuffer input){
+	public void addBytes(ByteBuffer input){
 		digest.update(input);
 	}
 	
-	public void update(byte[] input, int offset, int len){
+	public void addBytes(byte[] input, int offset, int len){
 		digest.update(input, offset, len);
 	}
 
-	public boolean verify(byte[] data, HashResult hash){
-		if(hash.compareTo(hash(data)) == 0){
+	public boolean verify(HashResult hash, byte[] data){
+		if(hash.compareTo(getHashResult(data)) == 0){
 			return true;
 		}
 		return false;
