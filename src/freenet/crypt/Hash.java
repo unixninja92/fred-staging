@@ -14,6 +14,7 @@ import net.i2p.util.NativeBigInteger;
 import org.tanukisoftware.wrapper.WrapperManager;
 
 import freenet.node.NodeInitException;
+import freenet.support.HexUtil;
 import freenet.support.Logger;
 
 public class Hash{
@@ -22,11 +23,13 @@ public class Hash{
 	
 	public Hash(){
 		try {
-			MessageDigest digest = defaultType.get();
+			digest = defaultType.get();
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
 			System.err.println("Check your JVM settings especially the JCE!" + e);
 			e.printStackTrace();
+		} finally {
+			SHA256.returnMessageDigest(digest);
 		}
 		WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
 		throw new RuntimeException();
@@ -34,7 +37,6 @@ public class Hash{
 	
 	private byte[] digest(){
 		byte[] result = digest.digest();
-		SHA256.returnMessageDigest(digest);
 		return result;
 	}
 	
@@ -54,6 +56,10 @@ public class Hash{
 	public HashResult getHashResult(byte[] data){
 		addBytes(data);
 		return getHashResult();
+	}
+	
+	public String getHexHash() {
+		return HexUtil.bytesToHex(digest());
 	}
 	
 	public NativeBigInteger getNativeBigIntegerHash(){
