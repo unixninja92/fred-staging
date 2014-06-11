@@ -1,6 +1,7 @@
 /* This code is part of Freenet. It is distributed under the GNU General
  * Public License, version 2 (or at your option any later version). See
  * http://www.gnu.org/ for further details of the GPL. */
+
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
@@ -22,21 +23,21 @@ import freenet.support.Logger;
 
 public class PreferredAlgorithms{
 	// static String preferredSignatureProvider;
-	private static String preferredSignature = "ECDSA";
+	public static String preferredSignature = "ECDSA";
 	// static String preferredBlockProvider;
-	private static String preferredBlock = "AES";
+	public static String preferredBlock = "AES";
 	// static String preferredStreamProvider;
-	private static String preferredStream = "ChaCha";
-	private static String preferredMesageDigest;
+	public static String preferredStream = "ChaCha";
+	public static HashType preferredMesageDigest = HashType.SHA256;
 
-	public final static Provider SUN;
+	final static Provider SUN;
 	final static Provider SunJCE;
 	final static Provider BC;
 	final static Provider NSS;
 
-	private static final Provider hmacProvider;
+	public static final Provider hmacProvider;
 	
-	private static Provider aesCTRProvider; 
+	public static Provider aesCTRProvider; 
 
 	public static final Map<String, Provider> mdProviders;
 //	public static final Map<String, Provider> sigProviders;
@@ -70,29 +71,29 @@ public class PreferredAlgorithms{
 		return times;
 	}
 
-	static private long hmacBenchmark(Mac hmac) throws GeneralSecurityException
+	static private long macBenchmark(Mac mac) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
-		byte[] output = new byte[hmac.getMacLength()];
+		byte[] output = new byte[mac.getMacLength()];
 		byte[] key = new byte[Node.SYMMETRIC_KEY_LENGTH];
-		final String algo = hmac.getAlgorithm();
-		hmac.init(new SecretKeySpec(key, algo));
+		final String algo = mac.getAlgorithm();
+		mac.init(new SecretKeySpec(key, algo));
 		// warm-up
 		for (int i = 0; i < 32; i++) {
-			hmac.update(input, 0, input.length);
-			hmac.doFinal(output, 0);
+			mac.update(input, 0, input.length);
+			mac.doFinal(output, 0);
 			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
 		}
 		System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
 		for (int i = 0; i < 1024; i++) {
 			long startTime = System.nanoTime();
-			hmac.init(new SecretKeySpec(key, algo));
+			mac.init(new SecretKeySpec(key, algo));
 			for (int j = 0; j < 8; j++) {
 				for (int k = 0; k < 32; k ++) {
-					hmac.update(input, 0, input.length);
+					mac.update(input, 0, input.length);
 				}
-				hmac.doFinal(output, 0);
+				mac.doFinal(output, 0);
 			}
 			long endTime = System.nanoTime();
 			times = Math.min(endTime - startTime, times);
@@ -225,7 +226,7 @@ public class PreferredAlgorithms{
 			long time_bc = -1;
 			
 			hmac.init(dummyKey); // resolve provider
-			time_def = hmacBenchmark(hmac);
+			time_def = macBenchmark(hmac);
 			System.out.println(algo + " (" + hmac.getProvider() + "): " + time_def + "ns");
 			Logger.minor(clazz, algo + "/" + hmac.getProvider() + ": " + time_def + "ns");
 			
@@ -234,7 +235,7 @@ public class PreferredAlgorithms{
 				try {
 					sun_hmac = Mac.getInstance(algo, SUN);
 					sun_hmac.init(dummyKey);
-					time_sun = hmacBenchmark(sun_hmac);
+					time_sun = macBenchmark(sun_hmac);
 					System.out.println(algo + " (" + sun_hmac.getProvider() + "): " + time_sun + "ns");
 					Logger.minor(clazz, algo + "/" + sun_hmac.getProvider() + ": " + time_sun + "ns");
 				} catch(GeneralSecurityException e) {
@@ -250,7 +251,7 @@ public class PreferredAlgorithms{
 				try {
 					bc_hmac = Mac.getInstance("HMACSHA256", BC);
 					bc_hmac.init(dummyKey);
-					time_bc = hmacBenchmark(bc_hmac);
+					time_bc = macBenchmark(bc_hmac);
 					System.out.println(algo + " (" + bc_hmac.getProvider() + "): " + time_bc + "ns");
 					Logger.minor(clazz, algo + "/" + bc_hmac.getProvider() + ": " + time_bc + "ns");
 				} catch(GeneralSecurityException e) {

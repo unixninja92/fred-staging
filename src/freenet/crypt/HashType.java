@@ -47,7 +47,7 @@ public enum HashType {
 			// User the pool
 			return freenet.crypt.SHA256.getMessageDigest();
 		} else {
-			return MessageDigest.getInstance(javaName, Util.mdProviders.get(javaName));
+			return MessageDigest.getInstance(javaName, PreferredAlgorithms.mdProviders.get(javaName));
 		}
 	}
 

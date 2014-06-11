@@ -93,7 +93,7 @@ public class SHA256 {
 		}
 	}
 
-	private static final Provider mdProvider = Util.mdProviders.get("SHA-256");
+	private static final Provider mdProvider = PreferredAlgorithms.mdProviders.get("SHA-256");
 
 	/**
 	 * Create a new SHA-256 MessageDigest
