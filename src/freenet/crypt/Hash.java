@@ -86,18 +86,27 @@ public class Hash{
 	public void addBytes(byte[] input, int offset, int len){
 		digest.update(input, offset, len);
 	}
-
-	public boolean verify(HashResult hash, byte[] data){
-		digest.reset();
-		if(hash.compareTo(getHashResult(data)) == 0){
-			return true;
-		}
-		return false;
-	}
 	
 	public boolean verify(byte[] hash, byte[] data){
 		digest.reset();
 		return Arrays.equals(hash, getHash(data));
+	}	
+	
+	public static boolean verify(HashResult hash, byte[] intput){
+		try {
+			HashType type = hash.type;
+			HashResult result = new HashResult(type, type.get().digest(intput));
+			if(hash.compareTo(result) == 0){
+				return true;
+			}
+		} catch (NoSuchAlgorithmException e) {
+			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
+			System.err.println("Check your JVM settings especially the JCE!" + e);
+			e.printStackTrace();
+			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
+			throw new RuntimeException();
+		}
+		return false;
 	}
 	
 	public static boolean verify(HashResult hash1, HashResult hash2){
