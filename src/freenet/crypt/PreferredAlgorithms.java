@@ -6,6 +6,7 @@ package freenet.crypt;
 
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -15,6 +16,8 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -44,8 +47,9 @@ public class PreferredAlgorithms{
 	final static Provider NSS;
 
 	public static final Provider hmacProvider;
-	public static final Provider keyGenProvider;
 	public static Provider aesCTRProvider; 
+	public static final Provider keyGenProvider;
+	public static final Provider signatureProvider;
 	
 	public static final Map<String, Provider> mdProviders;
 	
@@ -136,64 +140,105 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long keyPairGenBenchmark(KeyPairGenerator kg){
+	static private long keyFactoryBenchmark(KeyPairGenerator kg, KeyFactory kf) 
+			throws NoSuchAlgorithmException, InvalidKeySpecException 
+			{
 		long times = Long.MAX_VALUE;
-
+		int modulusSize = 91;
 		KeyPair key;
+		PublicKey pub;
+		PrivateKey pk;
+		byte [] pubkey;
+		byte [] pkey;
+		PublicKey pub2;
+		PrivateKey pk2;
 		//warmup
 		for (int i = 0; i < 32; i++) {
 			key = kg.generateKeyPair();
+			pub = key.getPublic();
+			pk = key.getPrivate();
+			pubkey = pub.getEncoded();
+			pkey = pk.getEncoded();
+			if(pubkey.length > modulusSize || pubkey.length == 0)
+				throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
+			
+			pub2 = kf.generatePublic(
+					new X509EncodedKeySpec(pubkey)
+					);
+			if(!Arrays.equals(pub2.getEncoded(), pubkey))
+				throw new Error("Pubkey encoding mismatch");
+			pk2 = kf.generatePrivate(
+					new PKCS8EncodedKeySpec(pkey)
+					);
 		}
 		for (int i = 0; i < 128; i++) {
 			long startTime = System.nanoTime();
+			
 			key = kg.generateKeyPair();
+			pub = key.getPublic();
+			pk = key.getPrivate();
+			pubkey = pub.getEncoded();
+			pkey = pk.getEncoded();
+
+			pub2 = kf.generatePublic(
+					new X509EncodedKeySpec(pubkey)
+					);
+
+			pk2 = kf.generatePrivate(
+					new PKCS8EncodedKeySpec(pkey)
+					);
+
 			long endTime = System.nanoTime();
 			times = Math.min(endTime - startTime, times);
 		}
 		return times;
 	}
 	
-	static private long keyFactoryBenchmark(KeyPairGenerator kg, KeyFactory kf) 
-			throws NoSuchAlgorithmException, InvalidKeySpecException 
-			{
+	static private long signatureBenchmark(Signature sig)
+			throws GeneralSecurityException
+	{
 		long times = Long.MAX_VALUE;
+		int modulusSize = 91;
+		
+		Provider provider = keyGenProvider;//sig.getProvider();
+		
+        ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance(preferredKeyGen, provider);
+		kpg.initialize(spec);
+        
+        KeyPair key = kpg.generateKeyPair();
+		KeyFactory kf = KeyFactory.getInstance(preferredKeyGen, provider);
+		PublicKey pub = key.getPublic();
+        PrivateKey pk = key.getPrivate();
+        byte [] pubkey = pub.getEncoded();
+        byte [] pkey = pk.getEncoded();
+		if(pubkey.length > modulusSize || pubkey.length == 0)
+			throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
+        PublicKey pub2 = kf.generatePublic(
+                new X509EncodedKeySpec(pubkey)
+                );
+        if(!Arrays.equals(pub2.getEncoded(), pubkey))
+            throw new Error("Pubkey encoding mismatch");
+        PrivateKey pk2 = kf.generatePrivate(
+                new PKCS8EncodedKeySpec(pkey)
+                );
+        
 		//warmup
 		for (int i = 0; i < 32; i++) {
-			KeyPair key = kg.generateKeyPair();
-			int modulusSize = 91;
-			PublicKey pub = key.getPublic();
-			PrivateKey pk = key.getPrivate();
-			byte [] pubkey = pub.getEncoded();
-			byte [] pkey = pk.getEncoded();
-			if(pubkey.length > modulusSize || pubkey.length == 0)
-				throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
-			
-			PublicKey pub2 = kf.generatePublic(
-					new X509EncodedKeySpec(pubkey)
-					);
-			if(!Arrays.equals(pub2.getEncoded(), pubkey))
-				throw new Error("Pubkey encoding mismatch");
-			PrivateKey pk2 = kf.generatePrivate(
-					new PKCS8EncodedKeySpec(pkey)
-					);
+			sig.initSign(key.getPrivate());
+			byte[] sign = sig.sign();
+			sig.initVerify(key.getPublic());
+			boolean verified = sig.verify(sign);
+			if (!verified)
+				throw new Error("Verification failed");
 		}
 		for (int i = 0; i < 128; i++) {
 			long startTime = System.nanoTime();
-			
-			KeyPair key = kg.generateKeyPair();
-			int modulusSize = 91;
-			PublicKey pub = key.getPublic();
-			PrivateKey pk = key.getPrivate();
-			byte [] pubkey = pub.getEncoded();
-			byte [] pkey = pk.getEncoded();
-			
-			PublicKey pub2 = kf.generatePublic(
-					new X509EncodedKeySpec(pubkey)
-					);
-			
-			PrivateKey pk2 = kf.generatePrivate(
-					new PKCS8EncodedKeySpec(pkey)
-					);
+		
+			sig.initSign(key.getPrivate());
+			byte[] sign = sig.sign();
+			sig.initVerify(key.getPublic());
+			sig.verify(sign);
 			
 			long endTime = System.nanoTime();
 			times = Math.min(endTime - startTime, times);
@@ -479,6 +524,56 @@ public class PreferredAlgorithms{
 			keyGenProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
 			System.out.println("KeyGen " + algo + ": using " + keyGenProvider);
 			Logger.normal(clazz, "KeyGen " + algo + ": using " + keyGenProvider);
+		} catch(GeneralSecurityException e){
+			throw new Error(e);
+		}
+		
+		//Signature benchmarks
+		algo = preferredSignature;
+		try {
+			Signature sig = Signature.getInstance(algo);
+			Signature nss_sig = null;
+			Signature bc_sig = null;
+
+			long time_def = Long.MAX_VALUE;
+			long time_sun = Long.MAX_VALUE;
+			long time_nss = Long.MAX_VALUE;
+			long time_bc = Long.MAX_VALUE;
+
+			time_def = signatureBenchmark(sig);
+			System.out.println(algo + " (" + sig.getProvider() + "): " + time_def + "ns");
+			Logger.minor(clazz, algo + "/" + sig.getProvider() + ": " + time_def + "ns");
+
+			if(NSS != null && sig.getProvider() != NSS){
+				try{
+					nss_sig = Signature.getInstance(algo, NSS);
+					time_nss = signatureBenchmark(nss_sig);
+					System.out.println(algo + " (" + nss_sig.getProvider() + "): " + time_nss + "ns");
+					Logger.minor(clazz, algo + "/" + nss_sig.getProvider() + ": " + time_nss + "ns");
+				} catch(GeneralSecurityException e) {
+					e.printStackTrace();
+					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+					// ignore
+				}
+			}
+
+			if(BC != null && sig.getProvider() != BC){
+				try{
+					bc_sig = Signature.getInstance(algo, BC);
+					time_bc = signatureBenchmark(bc_sig);
+					System.out.println(algo + " (" + bc_sig.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, algo + "/" + bc_sig.getProvider() + ": " + time_bc + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+				}
+			}
+
+			signatureProvider = fastest(time_def, sig.getProvider(), time_sun, time_nss, time_bc);
+			System.out.println(algo + ": using " + signatureProvider);
+			Logger.normal(clazz, algo + ": using " + signatureProvider);
+			
+//			if(signatureProvider)
 		} catch(GeneralSecurityException e){
 			throw new Error(e);
 		}
