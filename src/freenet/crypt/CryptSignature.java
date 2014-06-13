@@ -11,12 +11,12 @@ import java.security.KeyPair;
 
 import net.i2p.util.NativeBigInteger;
 
-public class Signature{
+public class CryptSignature{
 	private String algorithm; 
 	private String provider;
 	private KeyPair key;
 
-	public Signature(){
+	public CryptSignature(){
 
 	}
 	

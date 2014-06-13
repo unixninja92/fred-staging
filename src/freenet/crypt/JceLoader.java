@@ -35,7 +35,7 @@ public class JceLoader {
 		Provider p;
 		// NSS is preferred over BC, add it first
 		p = null;
-		if (checkUse("use.NSS","false")) {
+		if (checkUse("use.NSS")) {
 			try {
 				p = (new NSSLoader()).load(checkUse("prefer.NSS"));
 			} catch(Throwable e) {

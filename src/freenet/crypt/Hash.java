@@ -29,7 +29,9 @@ public class Hash{
 			System.err.println("Check your JVM settings especially the JCE!" + e);
 			e.printStackTrace();
 		} finally {
-			SHA256.returnMessageDigest(digest);
+			if(defaultType.name().equals("SHA256")){
+				SHA256.returnMessageDigest(digest);
+			}
 		}
 		WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
 		throw new RuntimeException();
