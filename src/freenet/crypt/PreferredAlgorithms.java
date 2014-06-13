@@ -34,14 +34,8 @@ import freenet.node.Node;
 import freenet.support.Logger;
 
 public class PreferredAlgorithms{
-	// static String preferredSignatureProvider;
 	public static String preferredSignature = "SHA256withECDSA";
-	// static String preferredBlockProvider;
-//	public static String preferredBlock = "AES";
-	// static String preferredStreamProvider;
-//	public static String preferredStream = "ChaCha";
-	public static String preferredKeyPairGenerator = "EC";
-	public static String preferredKeyFactory = "EC";
+	public static String preferredKeyGen = "EC";
 	public static HashType preferredMesageDigest = HashType.SHA256;
 
 	final static Provider SUN;
@@ -50,16 +44,10 @@ public class PreferredAlgorithms{
 	final static Provider NSS;
 
 	public static final Provider hmacProvider;
-	
+	public static final Provider keyGenProvider;
 	public static Provider aesCTRProvider; 
 	
-	public static Provider keyPairGenProvider;
-	public static Provider keyFactoryProvider;
-
 	public static final Map<String, Provider> mdProviders;
-//	public static final Map<String, Provider> sigProviders;
-//	public static final Map<String, Provider> blockProviders;
-//	public static final Map<String, Provider> streamProviders;
 	
 
 	static private long mdBenchmark(MessageDigest md) throws GeneralSecurityException
@@ -165,30 +153,48 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long keyFactoryBenchmark(KeyFactory kf) throws NoSuchAlgorithmException, InvalidKeySpecException {
+	static private long keyFactoryBenchmark(KeyPairGenerator kg, KeyFactory kf) 
+			throws NoSuchAlgorithmException, InvalidKeySpecException 
+			{
 		long times = Long.MAX_VALUE;
-		KeyPairGenerator kg = KeyPairGenerator.getInstance(preferredKeyPairGenerator,keyPairGenProvider);
-		KeyPair key = kg.generateKeyPair();
-		int modulusSize = 91;
-		PublicKey pub = key.getPublic();
-		PrivateKey pk = key.getPrivate();
-		byte [] pubkey = pub.getEncoded();
-		byte [] pkey = pk.getEncoded();
-		if(pubkey.length > modulusSize || pubkey.length == 0)
-			throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
-		X509EncodedKeySpec x509 = new X509EncodedKeySpec(pubkey);
-		PKCS8EncodedKeySpec pkcs8 = new PKCS8EncodedKeySpec(pkey);
 		//warmup
 		for (int i = 0; i < 32; i++) {
-			PublicKey pub2 = kf.generatePublic(x509);
+			KeyPair key = kg.generateKeyPair();
+			int modulusSize = 91;
+			PublicKey pub = key.getPublic();
+			PrivateKey pk = key.getPrivate();
+			byte [] pubkey = pub.getEncoded();
+			byte [] pkey = pk.getEncoded();
+			if(pubkey.length > modulusSize || pubkey.length == 0)
+				throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
+			
+			PublicKey pub2 = kf.generatePublic(
+					new X509EncodedKeySpec(pubkey)
+					);
 			if(!Arrays.equals(pub2.getEncoded(), pubkey))
 				throw new Error("Pubkey encoding mismatch");
-			PrivateKey pk2 = kf.generatePrivate(pkcs8);
+			PrivateKey pk2 = kf.generatePrivate(
+					new PKCS8EncodedKeySpec(pkey)
+					);
 		}
 		for (int i = 0; i < 128; i++) {
 			long startTime = System.nanoTime();
-			PublicKey pub2 = kf.generatePublic(x509);
-			PrivateKey pk2 = kf.generatePrivate(pkcs8);
+			
+			KeyPair key = kg.generateKeyPair();
+			int modulusSize = 91;
+			PublicKey pub = key.getPublic();
+			PrivateKey pk = key.getPrivate();
+			byte [] pubkey = pub.getEncoded();
+			byte [] pkey = pk.getEncoded();
+			
+			PublicKey pub2 = kf.generatePublic(
+					new X509EncodedKeySpec(pubkey)
+					);
+			
+			PrivateKey pk2 = kf.generatePrivate(
+					new PKCS8EncodedKeySpec(pkey)
+					);
+			
 			long endTime = System.nanoTime();
 			times = Math.min(endTime - startTime, times);
 		}
@@ -418,78 +424,35 @@ public class PreferredAlgorithms{
 ////		Logger.warning(Rijndael.class, "Not using JCA as it is crippled (can't use 256-bit keys). Will use built-in encryption. ", e);
 		}
 		
-		//KeyPairGenerator benchmarks
-		algo = preferredKeyPairGenerator;
+		//KeyGen benchmarks
+		algo = preferredKeyGen;
 		try {
 			KeyPairGenerator kpg = KeyPairGenerator.getInstance(algo);
 			KeyPairGenerator nss_kpg = null;
 			KeyPairGenerator bc_kpg = null;
 			
+			KeyFactory kf = KeyFactory.getInstance(algo);
+			KeyFactory nss_kf = null;
+			KeyFactory bc_kf = null;
+
+			ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
+			
 			long time_def = Long.MAX_VALUE;
 			long time_sun = Long.MAX_VALUE;
 			long time_nss = Long.MAX_VALUE;
 			long time_bc = Long.MAX_VALUE;
-			
-			ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
-			
+
 			kpg.initialize(spec);
-			time_def = keyPairGenBenchmark(kpg);
+			time_def = keyFactoryBenchmark(kpg, kf);
 			System.out.println(algo + " (" + kpg.getProvider() + "): " + time_def + "ns");
 			Logger.minor(clazz, algo + "/" + kpg.getProvider() + ": " + time_def + "ns");
-			
+
 			if(NSS != null && kpg.getProvider() != NSS){
 				try{
 					nss_kpg = KeyPairGenerator.getInstance(algo, NSS);
 					nss_kpg.initialize(spec);
-					time_nss = keyPairGenBenchmark(nss_kpg);
-					System.out.println(algo + " (" + nss_kpg.getProvider() + "): " + time_nss + "ns");
-					Logger.minor(clazz, algo + "/" + nss_kpg.getProvider() + ": " + time_nss + "ns");
-				} catch(GeneralSecurityException e) {
-					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
-					// ignore
-				}
-			}
-			
-			if(BC != null){
-				try{
-					bc_kpg = KeyPairGenerator.getInstance(algo, BC);
-					bc_kpg.initialize(spec);
-					time_bc = keyPairGenBenchmark(bc_kpg);
-					System.out.println(algo + " (" + bc_kpg.getProvider() + "): " + time_bc + "ns");
-					Logger.minor(clazz, algo + "/" + bc_kpg.getProvider() + ": " + time_bc + "ns");
-				} catch(GeneralSecurityException e) {
-					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-					// ignore
-				}
-			}
-			
-			keyPairGenProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
-			System.out.println("KeyPairGenerator " + algo + ": using " + keyPairGenProvider);
-			Logger.normal(clazz, "KeyPairGenerator " + algo + ": using " + keyPairGenProvider);
-		} catch(GeneralSecurityException e){
-			throw new Error(e);
-		}
-		
-		//KeyFactory benchmarks
-		algo = preferredKeyFactory;
-		try {
-			KeyFactory kpg = KeyFactory.getInstance(algo);
-			KeyFactory nss_kpg = null;
-			KeyFactory bc_kpg = null;
-
-			long time_def = Long.MAX_VALUE;
-			long time_sun = Long.MAX_VALUE;
-			long time_nss = Long.MAX_VALUE;
-			long time_bc = Long.MAX_VALUE;
-
-			time_def = keyFactoryBenchmark(kpg);
-			System.out.println(algo + " (" + kpg.getProvider() + "): " + time_def + "ns");
-			Logger.minor(clazz, algo + "/" + kpg.getProvider() + ": " + time_def + "ns");
-
-			if(NSS != null && kpg.getProvider() != NSS){
-				try{
-					nss_kpg = KeyFactory.getInstance(algo, NSS);
-					time_nss = keyFactoryBenchmark(nss_kpg);
+					nss_kf = KeyFactory.getInstance(algo, NSS);
+					time_nss = keyFactoryBenchmark(nss_kpg, nss_kf);
 					System.out.println(algo + " (" + nss_kpg.getProvider() + "): " + time_nss + "ns");
 					Logger.minor(clazz, algo + "/" + nss_kpg.getProvider() + ": " + time_nss + "ns");
 				} catch(GeneralSecurityException e) {
@@ -501,8 +464,10 @@ public class PreferredAlgorithms{
 
 			if(BC != null && kpg.getProvider() != BC){
 				try{
-					bc_kpg = KeyFactory.getInstance(algo, BC);
-					time_bc = keyFactoryBenchmark(bc_kpg);
+					bc_kpg = KeyPairGenerator.getInstance(algo, BC);
+					bc_kpg.initialize(spec);
+					bc_kf = KeyFactory.getInstance(algo, BC);
+					time_bc = keyFactoryBenchmark(bc_kpg, bc_kf);
 					System.out.println(algo + " (" + bc_kpg.getProvider() + "): " + time_bc + "ns");
 					Logger.minor(clazz, algo + "/" + bc_kpg.getProvider() + ": " + time_bc + "ns");
 				} catch(GeneralSecurityException e) {
@@ -511,9 +476,9 @@ public class PreferredAlgorithms{
 				}
 			}
 
-			keyFactoryProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
-			System.out.println("KeyFactory " + algo + ": using " + keyFactoryProvider);
-			Logger.normal(clazz, "KeyFactory " + algo + ": using " + keyFactoryProvider);
+			keyGenProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
+			System.out.println("KeyGen " + algo + ": using " + keyGenProvider);
+			Logger.normal(clazz, "KeyGen " + algo + ": using " + keyGenProvider);
 		} catch(GeneralSecurityException e){
 			throw new Error(e);
 		}
