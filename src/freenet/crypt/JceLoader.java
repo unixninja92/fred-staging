@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.Provider;
 import java.security.Security;
 import java.security.Signature;
@@ -33,11 +35,20 @@ public class JceLoader {
 	}
 	static {
 		Provider p;
+		System.out.println("Test");
 		// NSS is preferred over BC, add it first
 		p = null;
 		if (checkUse("use.NSS")) {
 			try {
 				p = (new NSSLoader()).load(checkUse("prefer.NSS"));
+				try{
+					KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunPKCS11-NSS");
+					kgen.init(256);
+				} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+					final String msg = "Error with SunPKCS11-NSS. Unlimited policy file not installed.";
+					Logger.warning(NSSLoader.class, msg, e);
+					System.out.println(msg);
+				}
 			} catch(Throwable e) {
 				// FIXME what about Windows/MacOSX/etc?
 				final String msg = "Unable to load SunPKCS11-NSScrypto provider. This is NOT fatal error, Freenet will work, but some performance degradation possible. Consider installing libnss3 package.";
