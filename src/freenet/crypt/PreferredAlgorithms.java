@@ -35,7 +35,7 @@ import freenet.support.Logger;
 
 public class PreferredAlgorithms{
 	// static String preferredSignatureProvider;
-	public static String preferredSignature = "ECDSA";
+	public static String preferredSignature = "SHA256withECDSA";
 	// static String preferredBlockProvider;
 //	public static String preferredBlock = "AES";
 	// static String preferredStreamProvider;
