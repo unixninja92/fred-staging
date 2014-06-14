@@ -10,7 +10,7 @@ import java.security.spec.ECGenParameterSpec;
 public enum SigType{
 	DSA(1),
 	ECDSAP256(2, "secp256r1", "SHA256withECDSA", 91, 72),
-	ECDSAP348(4, "secp384r1", "SHA384withECDSA", 120, 104),
+	ECDSAP384(4, "secp384r1", "SHA384withECDSA", 120, 104),
 	ECDSAP512(8, "secp521r1", "SHA512withECDSA", 158, 139);
 	
 	/** Bitmask for aggregation. */

@@ -28,13 +28,13 @@ public class Hash{
 			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
 			System.err.println("Check your JVM settings especially the JCE!" + e);
 			e.printStackTrace();
+			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
+			throw new RuntimeException();
 		} finally {
 			if(defaultType.name().equals("SHA256")){
 				SHA256.returnMessageDigest(digest);
 			}
 		}
-		WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
-		throw new RuntimeException();
 	}
 	
 	private byte[] digest(){
@@ -46,7 +46,7 @@ public class Hash{
 		return digest();
 	}
 	
-	public byte[] getHash(byte[] input) {
+	public byte[] getHash(byte[]... input) {
 		addBytes(input);
 		return digest();
 	}
@@ -55,8 +55,8 @@ public class Hash{
 		return new HashResult(defaultType, digest());
 	}
 	
-	public HashResult getHashResult(byte[] data){
-		addBytes(data);
+	public HashResult getHashResult(byte[]... input){
+		addBytes(input);
 		return getHashResult();
 	}
 	
@@ -77,8 +77,10 @@ public class Hash{
 		digest.update(input);
 	}
 
-	public void addBytes(byte[] input){
-		digest.update(input);
+	public void addBytes(byte[]... input){
+		for(byte[] b: input){
+			digest.update(b);
+		}
 	}
 
 	public void addBytes(ByteBuffer input){

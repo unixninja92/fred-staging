@@ -37,7 +37,7 @@ import freenet.node.Node;
 import freenet.support.Logger;
 
 public class PreferredAlgorithms{
-	public static String preferredSignature = "SHA256withECDSA";
+	public static SigType preferredSignature = SigType.ECDSAP256;
 	public static String preferredKeyGen = "EC";
 	public static HashType preferredMesageDigest = HashType.SHA256;
 
@@ -95,7 +95,7 @@ public class PreferredAlgorithms{
 			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
 		}
 		System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
-		for (int i = 0; i < 1024; i++) {
+		for (int i = 0; i < 128; i++) {
 			long startTime = System.nanoTime();
 			mac.init(new SecretKeySpec(key, algo));
 			for (int j = 0; j < 8; j++) {
@@ -529,7 +529,7 @@ public class PreferredAlgorithms{
 		}
 		
 		//Signature benchmarks
-		algo = preferredSignature;
+		algo = "SHA256withECDSA";
 		try {
 			Signature sig = Signature.getInstance(algo);
 			Signature nss_sig = null;
