@@ -35,7 +35,6 @@ public class JceLoader {
 	}
 	static {
 		Provider p;
-		System.out.println("Test");
 		// NSS is preferred over BC, add it first
 		p = null;
 		if (checkUse("use.NSS")) {
