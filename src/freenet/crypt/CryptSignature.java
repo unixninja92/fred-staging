@@ -18,8 +18,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.interfaces.ECPublicKey;
 
+import freenet.support.Base64;
 import freenet.support.Logger;
+import freenet.support.SimpleFieldSet;
 import net.i2p.util.NativeBigInteger;
 
 public class CryptSignature{
@@ -127,5 +130,29 @@ public class CryptSignature{
 			e.printStackTrace();
 		}
     	return false;
+    }
+    
+    public ECPublicKey getPublicKey() {
+        return (ECPublicKey) keys.getPublic();
+    }
+    
+    /**
+     * Returns an SFS containing:
+     *  - the private key
+     *  - the public key
+     *  - the name of the curve in use
+     *  
+     *  It should only be used in NodeCrypto
+     * @param includePrivate - include the (secret) private key
+     * @return SimpleFieldSet
+     */
+    public SimpleFieldSet asFieldSet(boolean includePrivate) {
+        SimpleFieldSet fs = new SimpleFieldSet(true);
+        SimpleFieldSet fsCurve = new SimpleFieldSet(true);
+        fsCurve.putSingle("pub", Base64.encode(keys.getPublic().getEncoded()));
+        if(includePrivate)
+            fsCurve.putSingle("pri", Base64.encode(keys.getPrivate().getEncoded()));
+        fs.put(defaultType.name(), fsCurve);
+        return fs;
     }
 }
