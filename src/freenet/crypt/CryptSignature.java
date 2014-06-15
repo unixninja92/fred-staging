@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -43,13 +44,49 @@ public class CryptSignature{
 		}
 	}
 	
+	public void addByte(byte input){
+		try {
+			sig.update(input);
+		} catch (SignatureException e) {
+			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+			e.printStackTrace();
+		}
+	}
+	
+	public void addBytes(byte[] input){
+		try {
+			sig.update(input);
+		} catch (SignatureException e) {
+			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+			e.printStackTrace();
+		}
+	}
+
+	public void addBytes(byte[] data, int offset, int length){
+		try {
+			sig.update(data, offset, length);
+		} catch (SignatureException e) {
+			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+			e.printStackTrace();
+		}
+	}
+	
+	public void addBytes(ByteBuffer input){
+		try {
+			sig.update(input);
+		} catch (SignatureException e) {
+			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+			e.printStackTrace();
+		}
+	}
+	
 	public byte[] sign(byte[]... data) {
         byte[] result = null;
         try{
         	while(true) {
 //        		sig.initSign(keys.getPrivate());
         		for(byte[] b: data){
-        			sig.update(b);
+        			addBytes(b);
         		}
         		result = sig.sign();
         		// It's a DER encoded signature, most sigs will fit in N bytes
@@ -60,7 +97,8 @@ public class CryptSignature{
                 	Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+defaultType.maxSigSize+" - re-signing...");
         	}
         } catch(SignatureException e){
-        	//TODO
+        	Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+        	e.printStackTrace();
 //        } catch (InvalidKeyException e) {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
@@ -68,7 +106,26 @@ public class CryptSignature{
         return result;
     }
 
+	public boolean verify(byte[] signature){
+		try {
+			return sig.verify(signature);
+		} catch (SignatureException e) {
+            Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
     public boolean verify(byte[] signature, byte[]... data){
+		try {
+			for(byte[] b: data){
+				addBytes(b);
+			}
+			return sig.verify(signature);
+		} catch (SignatureException e) {
+			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+			e.printStackTrace();
+		}
     	return false;
     }
 }
