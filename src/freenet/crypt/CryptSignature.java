@@ -3,6 +3,7 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -26,6 +27,8 @@ import freenet.support.SimpleFieldSet;
 public class CryptSignature{
 	private static final SigType defaultType = 
 			PreferredAlgorithms.preferredSignature;
+	private static final RandomSource random = PreferredAlgorithms.random;
+	
 	private SigType type;
 	private KeyPair keys;
 	private Signature sig;
@@ -92,6 +95,8 @@ public class CryptSignature{
 		this.type = type;
 		if(type.name()=="DSA"){
 			dsaGroup = Global.DSAgroupBigA;
+			dsaPrivK = new DSAPrivateKey(dsaGroup, random);
+			dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		}
 		else {
 			try {
@@ -149,29 +154,57 @@ public class CryptSignature{
 	
 	public byte[] sign(byte[]... data) {
         byte[] result = null;
-        try{
-        	while(true) {
-        		sig.initSign(keys.getPrivate());
-        		for(byte[] b: data){
-        			addBytes(b);
+        if(type == SigType.DSA){
+        	try {
+				throw new Exception();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+        else{
+        	try{
+        		while(true) {
+        			sig.initSign(keys.getPrivate());
+        			for(byte[] b: data){
+        				addBytes(b);
+        			}
+        			result = sig.sign();
+        			// It's a DER encoded signature, most sigs will fit in N bytes
+        			// If it doesn't let's re-sign.
+        			if(result.length <= type.maxSigSize)
+        				break;
+        			else
+        				Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
         		}
-        		result = sig.sign();
-        		// It's a DER encoded signature, most sigs will fit in N bytes
-                // If it doesn't let's re-sign.
-                if(result.length <= type.maxSigSize)
-                	break;
-                else
-                	Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
+        	} catch(SignatureException e){
+        		Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+        		e.printStackTrace();
+        	} catch (InvalidKeyException e) {
+        		// TODO Auto-generated catch block
+        		e.printStackTrace();
         	}
-        } catch(SignatureException e){
-        	Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-        	e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        }
         return result;
     }
+	
+	public DSASignature signToDSASignature(byte[]... data){
+		DSASignature result = null;
+        if(type == SigType.DSA){
+        	Hash h = new Hash();
+        	BigInteger m = new BigInteger(1, h.getHash(data));
+        	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
+        }
+        else {
+        	try {
+				throw new Exception();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+        return result;
+	}
 	
 	/**
      * Sign data and return a fixed size signature. The data does not need to be hashed, the 
