@@ -3,19 +3,13 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.Provider;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.ECPrivateKey;
@@ -28,37 +22,30 @@ import freenet.node.FSParseException;
 import freenet.support.Base64;
 import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
-import net.i2p.util.NativeBigInteger;
 
 public class CryptSignature{
-	private static final SigType defaultType = PreferredAlgorithms.preferredSignature;
+	private static final SigType defaultType = 
+			PreferredAlgorithms.preferredSignature;
 	private SigType type;
 	private KeyPair keys;
 	private Signature sig;
-	private KeyPairGenerator kg;
+	
+	private DSAPrivateKey dsaPrivK;
+	private DSAPublicKey dsaPubK;
+	private DSAGroup dsaGroup;
 
 	public CryptSignature(){
-		try {
-			type = defaultType;
-			kg = KeyPairGenerator.getInstance(PreferredAlgorithms.preferredKeyGen, 
-					PreferredAlgorithms.keyGenProvider);
-			kg.initialize(defaultType.getSpec());
-			keys = kg.generateKeyPair();
-			
-			sig = defaultType.get();
-			sig.initSign(keys.getPrivate());
-			sig.initVerify(keys.getPublic());
-		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		this(defaultType);
 	}
 	
 	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{
-		byte[] pub = null;
-        byte[] pri = null;
+		this.type = type;
         try {
-            KeyFactory kf = KeyFactory.getInstance(PreferredAlgorithms.preferredKeyGen, PreferredAlgorithms.keyGenProvider);
+    		byte[] pub = null;
+            byte[] pri = null;
+            KeyFactory kf = KeyFactory.getInstance(
+            		PreferredAlgorithms.preferredKeyGen, 
+            		PreferredAlgorithms.keyGenProvider);
             
             pub = Base64.decode(sfs.get("pub"));
             if (pub.length > type.modulusSize)
@@ -71,15 +58,57 @@ public class CryptSignature{
             ECPrivateKey privK = (ECPrivateKey) kf.generatePrivate(pks);
             
             keys = new KeyPair(pubK, privK);
+            
+            sig = type.get();
+			sig.initSign(privK);
+			sig.initVerify(pubK);
         }  catch (NoSuchAlgorithmException e) {
             Logger.error(ECDSA.class, "NoSuchAlgorithmException : "+e.getMessage(),e);
             e.printStackTrace();
         } catch (InvalidKeySpecException e) {
             Logger.error(ECDSA.class, "InvalidKeySpecException : "+e.getMessage(), e);
             e.printStackTrace();
-        } catch (Exception e) {
+        } catch (InvalidKeyException e) {
+            Logger.error(ECDSA.class, "InvalidKeyException : "+e.getMessage(), e);
+			e.printStackTrace();
+		} catch (Exception e) {
             throw new FSParseException(e);
         }
+	}
+	
+	public CryptSignature(DSAGroup group, DSAPrivateKey priv, DSAPublicKey pub){
+		dsaGroup = group;
+		dsaPrivK = priv;
+		dsaPubK = pub;
+	}
+	
+	public CryptSignature(DSAPrivateKey priv, DSAPublicKey pub){
+		dsaGroup = Global.DSAgroupBigA;
+		dsaPrivK = priv;
+		dsaPubK = pub;
+	}
+	
+	public CryptSignature(SigType type){
+		this.type = type;
+		if(type.name()=="DSA"){
+			dsaGroup = Global.DSAgroupBigA;
+		}
+		else {
+			try {
+				KeyPairGenerator kg = KeyPairGenerator.getInstance(
+						PreferredAlgorithms.preferredKeyGen, 
+						PreferredAlgorithms.keyGenProvider);
+				kg.initialize(type.getSpec());
+				keys = kg.generateKeyPair();
+				
+				sig = type.get();
+				sig.initSign(keys.getPrivate());
+				sig.initVerify(keys.getPublic());
+			} catch (GeneralSecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	public void addByte(byte input){

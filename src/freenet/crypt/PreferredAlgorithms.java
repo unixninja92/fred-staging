@@ -5,8 +5,6 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -15,9 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.security.Signature;
-import java.security.SignatureException;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -49,11 +45,17 @@ public class PreferredAlgorithms{
 	public static final Provider hmacProvider;
 	public static Provider aesCTRProvider; 
 	public static final Provider keyGenProvider;
-	public static final Provider signatureProvider;
+//	public static final Provider signatureProvider;
 	
 	public static final Map<String, Provider> mdProviders;
+	public static final Map<String, Provider> sigProviders;
 	
+	public static RandomSource random;
 
+	static public void setRandomSource(RandomSource r){
+		random = r;
+	}
+	
 	static private long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
@@ -194,15 +196,15 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long signatureBenchmark(Signature sig)
+	static private long signatureBenchmark(Signature sig, SigType type)
 			throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
-		int modulusSize = 91;
+		int modulusSize = type.modulusSize;
 		
 		Provider provider = keyGenProvider;//sig.getProvider();
 		
-        ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
+        ECGenParameterSpec spec = new ECGenParameterSpec(type.specName);
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(preferredKeyGen, provider);
 		kpg.initialize(spec);
         
@@ -529,55 +531,60 @@ public class PreferredAlgorithms{
 		}
 		
 		//Signature benchmarks
-		algo = "SHA256withECDSA";
-		try {
-			Signature sig = Signature.getInstance(algo);
-			Signature nss_sig = null;
-			Signature bc_sig = null;
+		HashMap<String,Provider> sigProviders_internal = new HashMap<String, Provider>();
+		for (SigType sigAlgo: new SigType[] {
+				SigType.ECDSAP256//, SigType.ECDSAP384, SigType.ECDSAP512
+		}) {;
+			algo = sigAlgo.algName;
+			try {
+				Signature sig = Signature.getInstance(algo);
+				Signature nss_sig = null;
+				Signature bc_sig = null;
 
-			long time_def = Long.MAX_VALUE;
-			long time_sun = Long.MAX_VALUE;
-			long time_nss = Long.MAX_VALUE;
-			long time_bc = Long.MAX_VALUE;
+				long time_def = Long.MAX_VALUE;
+				long time_sun = Long.MAX_VALUE;
+				long time_nss = Long.MAX_VALUE;
+				long time_bc = Long.MAX_VALUE;
 
-			time_def = signatureBenchmark(sig);
-			System.out.println(algo + " (" + sig.getProvider() + "): " + time_def + "ns");
-			Logger.minor(clazz, algo + "/" + sig.getProvider() + ": " + time_def + "ns");
+				time_def = signatureBenchmark(sig, sigAlgo);
+				System.out.println(algo + " (" + sig.getProvider() + "): " + time_def + "ns");
+				Logger.minor(clazz, algo + "/" + sig.getProvider() + ": " + time_def + "ns");
 
-			if(NSS != null && sig.getProvider() != NSS){
-				try{
-					nss_sig = Signature.getInstance(algo, NSS);
-					time_nss = signatureBenchmark(nss_sig);
-					System.out.println(algo + " (" + nss_sig.getProvider() + "): " + time_nss + "ns");
-					Logger.minor(clazz, algo + "/" + nss_sig.getProvider() + ": " + time_nss + "ns");
-				} catch(GeneralSecurityException e) {
-					e.printStackTrace();
-					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
-					// ignore
+				if(NSS != null && sig.getProvider() != NSS){
+					try{
+						nss_sig = Signature.getInstance(algo, NSS);
+						time_nss = signatureBenchmark(nss_sig, sigAlgo);
+						System.out.println(algo + " (" + nss_sig.getProvider() + "): " + time_nss + "ns");
+						Logger.minor(clazz, algo + "/" + nss_sig.getProvider() + ": " + time_nss + "ns");
+					} catch(GeneralSecurityException e) {
+						e.printStackTrace();
+						Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+						// ignore
+					}
 				}
-			}
 
-			if(BC != null && sig.getProvider() != BC){
-				try{
-					bc_sig = Signature.getInstance(algo, BC);
-					time_bc = signatureBenchmark(bc_sig);
-					System.out.println(algo + " (" + bc_sig.getProvider() + "): " + time_bc + "ns");
-					Logger.minor(clazz, algo + "/" + bc_sig.getProvider() + ": " + time_bc + "ns");
-				} catch(GeneralSecurityException e) {
-					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-					// ignore
+				if(BC != null && sig.getProvider() != BC){
+					try{
+						bc_sig = Signature.getInstance(algo, BC);
+						time_bc = signatureBenchmark(bc_sig, sigAlgo);
+						System.out.println(algo + " (" + bc_sig.getProvider() + "): " + time_bc + "ns");
+						Logger.minor(clazz, algo + "/" + bc_sig.getProvider() + ": " + time_bc + "ns");
+					} catch(GeneralSecurityException e) {
+						Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+						// ignore
+					}
 				}
-			}
+				Provider fastestSig = fastest(time_def, sig.getProvider(), time_sun, time_nss, time_bc);
+				System.out.println(algo + ": using " + fastestSig);
+				Logger.normal(clazz, algo + ": using " + fastestSig);
 
-			signatureProvider = fastest(time_def, sig.getProvider(), time_sun, time_nss, time_bc);
-			System.out.println(algo + ": using " + signatureProvider);
-			Logger.normal(clazz, algo + ": using " + signatureProvider);
-			
-//			if(signatureProvider)
-		} catch(GeneralSecurityException e){
-			throw new Error(e);
+				sigProviders_internal.put(algo, fastestSig);
+			} catch(GeneralSecurityException e){
+				throw new Error(e);
+			}
 		}
-
+		sigProviders = Collections.unmodifiableMap(sigProviders_internal);
+		
 		System.out.println("End of PreferredAlgs");
 	}
 }
