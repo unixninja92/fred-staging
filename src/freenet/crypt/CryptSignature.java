@@ -18,7 +18,9 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
 
+import net.i2p.util.NativeBigInteger;
 import freenet.node.FSParseException;
 import freenet.support.Base64;
 import freenet.support.Logger;
@@ -33,6 +35,8 @@ public class CryptSignature{
 	private KeyPair keys;
 	private Signature sig;
 	
+	/** Length of signature parameters R and S */
+	private static final int SIGNATURE_PARAMETER_LENGTH = 32;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
 	private DSAGroup dsaGroup;
@@ -155,12 +159,12 @@ public class CryptSignature{
 	public byte[] sign(byte[]... data) {
         byte[] result = null;
         if(type == SigType.DSA){
-        	try {
-				throw new Exception();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+        	Hash h = new Hash();
+        	NativeBigInteger m = new NativeBigInteger(1, h.getHash(data));
+        	DSASignature sig = DSA.sign(dsaGroup, dsaPrivK, m, random);
+        	result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
+        	System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
+            System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
         }
         else{
         	try{
@@ -192,15 +196,31 @@ public class CryptSignature{
 		DSASignature result = null;
         if(type == SigType.DSA){
         	Hash h = new Hash();
-        	BigInteger m = new BigInteger(1, h.getHash(data));
+        	NativeBigInteger m = new NativeBigInteger(1, h.getHash(data));
         	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
         }
         else {
         	try {
 				throw new Exception();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Logger.error(CryptSignature.class, "Only SigType DSA can return a DSASignature",e);
+				System.out.println("Only SigType DSA can return a DSASignature");
+			}
+        }
+        return result;
+	}
+	
+	public DSASignature signToDSASignature(BigInteger m){
+		DSASignature result = null;
+        if(type == SigType.DSA){
+        	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
+        }
+        else {
+        	try {
+				throw new Exception();
+			} catch (Exception e) {
+				Logger.error(CryptSignature.class, "Only SigType DSA can return a DSASignature",e);
+				System.out.println("Only SigType DSA can return a DSASignature");
 			}
         }
         return result;
@@ -238,16 +258,31 @@ public class CryptSignature{
 	}
 	
     public boolean verify(byte[] signature, byte[]... data){
-		try {
-			for(byte[] b: data){
-				addBytes(b);
-			}
-			return sig.verify(signature);
-		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-			e.printStackTrace();
-		}
+    	if(type == SigType.DSA && Arrays.equals(sign(data), signature)){
+    		return true;
+    	}
+    	else{
+    		try {
+    			for(byte[] b: data){
+    				addBytes(b);
+    			}
+    			return sig.verify(signature);
+    		} catch (SignatureException e) {
+    			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+    			e.printStackTrace();
+    		}
+    	}
     	return false;
+    }
+    
+    public boolean verify(DSASignature sig, byte[]... data){
+    	Hash h = new Hash();
+    	NativeBigInteger m = new NativeBigInteger(1, h.getHash(data));
+    	return DSA.verify(dsaPubK, sig, m, false);
+    }
+    
+    public boolean verify(DSASignature sig, BigInteger m){
+    	return DSA.verify(dsaPubK, sig, m, false);
     }
     
     public ECPublicKey getPublicKey() {
