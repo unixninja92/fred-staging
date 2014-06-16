@@ -19,7 +19,20 @@ import freenet.support.Logger;
 
 public class Hash{
 	private static final HashType defaultType = PreferredAlgorithms.preferredMesageDigest;
+	private static final MessageDigest staticDigest;
 	private MessageDigest digest;
+	
+	static{
+		try{
+			staticDigest = defaultType.get();
+		}catch (NoSuchAlgorithmException e) {
+			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
+			System.err.println("Check your JVM settings especially the JCE!" + e);
+			e.printStackTrace();
+			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
+			throw new RuntimeException();
+		}
+	}
 	
 	public Hash(){
 		try {
@@ -31,15 +44,20 @@ public class Hash{
 			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
 			throw new RuntimeException();
 		} finally {
-			if(defaultType.name().equals("SHA256")){
-				SHA256.returnMessageDigest(digest);
-			}
+			defaultType.recycle(digest);
 		}
 	}
 	
 	private byte[] digest(){
 		byte[] result = digest.digest();
 		return result;
+	}
+	
+	public static byte[] hash(byte[]... input){
+		for(byte[] b: input){
+			staticDigest.update(b);
+		}
+		return staticDigest.digest();
 	}
 	
 	public byte[] getHash(){
