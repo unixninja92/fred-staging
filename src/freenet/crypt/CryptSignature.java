@@ -259,7 +259,17 @@ public class CryptSignature{
 	
     public boolean verify(byte[] signature, byte[]... data){
     	if(type == SigType.DSA && Arrays.equals(sign(data), signature)){
-    		return true;
+    		int x = 0;
+    		byte[] bufR = new byte[SIGNATURE_PARAMETER_LENGTH];
+			byte[] bufS = new byte[SIGNATURE_PARAMETER_LENGTH];
+			
+			System.arraycopy(signature, x, bufR, 0, SIGNATURE_PARAMETER_LENGTH);
+			x+=SIGNATURE_PARAMETER_LENGTH;
+			System.arraycopy(signature, x, bufS, 0, SIGNATURE_PARAMETER_LENGTH);
+
+			NativeBigInteger r = new NativeBigInteger(1, bufR);
+			NativeBigInteger s = new NativeBigInteger(1, bufS);
+    		return verify(r, s, data);
     	}
     	else{
     		try {
@@ -281,8 +291,18 @@ public class CryptSignature{
     	return DSA.verify(dsaPubK, sig, m, false);
     }
     
+    public boolean verify(BigInteger r, BigInteger s, byte[]... data){
+    	Hash h = new Hash();
+    	NativeBigInteger m = new NativeBigInteger(1, h.getHash(data));
+    	return DSA.verify(dsaPubK, new DSASignature(r, s), m, false);
+    }
+    
     public boolean verify(DSASignature sig, BigInteger m){
     	return DSA.verify(dsaPubK, sig, m, false);
+    }
+    
+    public boolean verify(BigInteger r, BigInteger s, BigInteger m){
+    	return DSA.verify(dsaPubK, new DSASignature(r, s), m, false);
     }
     
     public ECPublicKey getPublicKey() {
