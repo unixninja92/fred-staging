@@ -20,29 +20,22 @@ public class MessageAuthCode {
 	private SecretKey key;
 	private IvParameterSpec iv;
 	
-	public MessageAuthCode(){
+	public MessageAuthCode() throws NoSuchAlgorithmException{
 		this(defaultType);
 	}
 	
-	public MessageAuthCode(MACType type) {
-		try {
-			mac = type.get();
-			KeyGenerator kg = KeyGenerator.getInstance(defaultType.mac);
-			key = kg.generateKey();
-			if(type.usesIV){;
-				checkPoly1305Key(key.getEncoded());
-				iv = new IvParameterSpec(new byte[16]);//FIXME actually gen IV
-			}
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	public MessageAuthCode(MACType type) throws NoSuchAlgorithmException {
+		this(type, KeyGenerator.getInstance(defaultType.mac).generateKey());
 	}
 	
 	public MessageAuthCode(MACType type, byte[] cryptoKey) {
+		this(type, new SecretKeySpec(cryptoKey, type.mac));	
+	}
+	
+	public MessageAuthCode(MACType type, SecretKey cryptoKey) {
 		try {
 			mac = type.get();
-			key = new SecretKeySpec(cryptoKey, type.mac);
+			key = cryptoKey;
 			if(type.usesIV){;
 				checkPoly1305Key(key.getEncoded());
 				iv = new IvParameterSpec(new byte[16]);//FIXME actually gen IV
