@@ -36,6 +36,7 @@ public class CryptSignature{
 	
 	/** Length of signature parameters R and S */
 	private static final int SIGNATURE_PARAMETER_LENGTH = 32;
+	private Hash sha256 = new Hash();
 	private RandomSource random;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
@@ -198,7 +199,7 @@ public class CryptSignature{
     }
 	
 	public DSASignature signToDSASignature(byte[]... data){
-		return signToDSASignature(new NativeBigInteger(1, Hash.hash(data)));
+		return signToDSASignature(new NativeBigInteger(1, sha256.getHash(data)));
 	}
 	
 	public DSASignature signToDSASignature(BigInteger m){
@@ -250,6 +251,7 @@ public class CryptSignature{
 	
     public boolean verify(byte[] signature, byte[]... data){
     	if(type == SigType.DSA) { //&& Arrays.equals(sign(data), signature)){
+    		//FIXME needs to be tested to make sure that it splits the array correctly.
     		int x = 0;
     		byte[] bufR = new byte[SIGNATURE_PARAMETER_LENGTH];
 			byte[] bufS = new byte[SIGNATURE_PARAMETER_LENGTH];
@@ -285,11 +287,11 @@ public class CryptSignature{
     }
     
     public boolean verify(DSASignature sig, byte[]... data){
-    	return verify(sig, new NativeBigInteger(1, Hash.hash(data)));
+    	return verify(sig, new NativeBigInteger(1, sha256.getHash(data)));
     }
     
     public boolean verify(BigInteger r, BigInteger s, byte[]... data){
-    	return verify(r, s, new NativeBigInteger(1, Hash.hash(data)));
+    	return verify(r, s, new NativeBigInteger(1, sha256.getHash(data)));
     }
     
     public ECPublicKey getPublicKey() {
