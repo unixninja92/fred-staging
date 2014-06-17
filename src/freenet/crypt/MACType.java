@@ -21,7 +21,7 @@ public enum MACType {
 	}
 	
 	public Mac get() throws NoSuchAlgorithmException{
-		return Mac.getInstance(mac, PreferredAlgorithms.hmacProvider);
+		return Mac.getInstance(mac, PreferredAlgorithms.macProviders.get(mac));
 	}
 	
 }

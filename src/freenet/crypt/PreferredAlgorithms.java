@@ -36,7 +36,7 @@ public class PreferredAlgorithms{
 	public static SigType preferredSignature = SigType.ECDSAP256;
 	public static String preferredKeyGen = "EC";
 	public static HashType preferredMesageDigest = HashType.SHA256;
-	public static MACType preferredMAC = MACType.HMACSHA256;//FIXME will be poly1305
+	public static MACType preferredMAC = MACType.Poly1305;
 
 	final static Provider SUN;
 	final static Provider SunJCE;
@@ -49,6 +49,7 @@ public class PreferredAlgorithms{
 //	public static final Provider signatureProvider;
 	
 	public static final Map<String, Provider> mdProviders;
+	public static final Map<String, Provider> macProviders;
 	public static final Map<String, Provider> sigProviders;
 	
 	public static RandomSource random;
@@ -352,6 +353,7 @@ public class PreferredAlgorithms{
 		String algo;
 		
 		//HMAC Benchmarking
+		HashMap<String,Provider> macProviders_internal = new HashMap<String, Provider>();
 		algo = "HmacSHA256";
 		try{
 			SecretKeySpec dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
@@ -422,10 +424,14 @@ public class PreferredAlgorithms{
 			hmacProvider = fastest(time_def, hmac.getProvider(), time_sun, time_nss, time_bc);
 			System.out.println(algo + ": using " + hmacProvider);
 			Logger.normal(clazz, algo + ": using " + hmacProvider);
+			
+			macProviders_internal.put(algo, hmacProvider);
 		}catch(GeneralSecurityException e){
 			throw new Error(e);
 		}
-		
+		macProviders_internal.put("HMACSHA1", hmacProvider);
+		macProviders_internal.put("POLY1305-AES", BC);
+		macProviders = Collections.unmodifiableMap(macProviders_internal);
 		
 		//Cipher Benchmarking
 		algo = "AES/CTR/NOPADDING";
