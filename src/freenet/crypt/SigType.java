@@ -43,7 +43,8 @@ public enum SigType{
 	}
 	
 	public Signature get() throws NoSuchAlgorithmException{
-		return Signature.getInstance(algName, PreferredAlgorithms.sigProviders.get(algName));
+		return Signature.getInstance(algName, 
+				PreferredAlgorithms.sigProviders.get(algName));
 	}
 	
 	public DSASignature get(String sig){
