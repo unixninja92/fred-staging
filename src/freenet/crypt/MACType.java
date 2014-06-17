@@ -5,23 +5,23 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 
 public enum MACType {
-	HMACSHA1(1, "HMACSHA1", "SHA1"),
-	HMACSHA256(2, "HmacSHA256", "SHA256");
+	HMACSHA1(1, "HMACSHA1", false),
+	HMACSHA256(2, "HmacSHA256", false),
+	Poly1305(4, "POLY1305-AES", true);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
 	public final String mac;
-	/** Name for MessageDigest purposes. Can contain dashes. */
-	public final HashType hash;
+	public final boolean usesIV;
 	
-	MACType(int bitmask, String mac, String hash){
+	MACType(int bitmask, String mac, boolean usesIV){
 		this.bitmask = bitmask;
 		this.mac = mac;
-		this.hash = this.hash.valueOf(hash);
+		this.usesIV = usesIV;
 	}
 	
 	public Mac get() throws NoSuchAlgorithmException{
 		return Mac.getInstance(mac, PreferredAlgorithms.hmacProvider);
 	}
-
+	
 }
