@@ -36,6 +36,7 @@ public class PreferredAlgorithms{
 	public static SigType preferredSignature = SigType.ECDSAP256;
 	public static String preferredKeyGen = "EC";
 	public static HashType preferredMesageDigest = HashType.SHA256;
+	public static MACType preferredMAC = MACType.HMACSHA256;//FIXME will be poly1305
 
 	final static Provider SUN;
 	final static Provider SunJCE;
