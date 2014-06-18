@@ -5,6 +5,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -500,6 +501,60 @@ public class PreferredAlgorithms{
 		macProviders_internal.put("HMACSHA1", hmacProvider);
 		macProviders_internal.put("POLY1305-AES", BC);
 		macProviders = Collections.unmodifiableMap(macProviders_internal);
+		
+		//Benchmark HMAC class against fastest Provider
+//		try {
+//			algo = "HmacSHA256";
+//			SecretKey dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
+//			Mac fastMac = Mac.getInstance(algo,macProviders.get(algo));
+//			fastMac.init(dummyKey);
+//			HMAC hmac = new HMAC(SHA256.getMessageDigest());
+//			long time_provider = macBenchmark(fastMac);
+//			System.out.println("HMAC Provider " + " (" + fastMac.getProvider() + "): " + time_provider + "ns");
+//			
+//			//Benchmark HMAC class
+//			long times = Long.MAX_VALUE;
+//			byte[] input = new byte[1024];
+//			int len = HashType.SHA256.hashLength;
+//			byte[] output = new byte[len];
+//			byte[] key = new byte[Node.SYMMETRIC_KEY_LENGTH];
+//			// warm-up
+//			for (int i = 0; i < 32; i++) {
+//				output = HMAC.macWithSHA256(key, input, len);
+//				System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
+//			}
+//			System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
+//			for (int i = 0; i < 1024; i++) {
+//				long startTime = System.nanoTime();
+//				for (int j = 0; j < 8; j++) {
+//					output = HMAC.macWithSHA256(key, input, len);
+//				}
+//				long endTime = System.nanoTime();
+//				times = Math.min(endTime - startTime, times);
+//				System.arraycopy(output, 0, input, 0, output.length);
+//				System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
+//			}
+//			
+//			long time_class = times;
+//			System.out.println("HMAC Class: " + time_class + "ns");
+//			
+//			if(time_provider > time_class){
+//				System.out.println("HMAC Class is faster");
+//			}
+//			else{
+//				System.out.println("HMAC Provider is faster");
+//			}
+//		} catch (NoSuchAlgorithmException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		} catch (InvalidKeyException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (GeneralSecurityException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		
 		
 		//Cipher Benchmarking
 		algo = "AES/CTR/NOPADDING";

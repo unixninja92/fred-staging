@@ -58,9 +58,9 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			this.myExponent = params[0];
 			this.myExponential = params[1];
 		}
-		else if(type.name() == "JFK"){
-			
-		}
+//		else if(type.name() == "JFK"){
+//			
+//		}
 		else{
 			try {
 				ka = type.get();
@@ -205,7 +205,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		System.arraycopy(nR, 0, toHash, offset, nR.length);
 		offset += nR.length;
 		System.arraycopy(number, 0, toHash, offset, number.length);
-		return HMAC.macWithSHA256(exponential, toHash, HashType.SHA256.hashLength);
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, exponential);
+		return mac.getMAC(toHash);
 	}
 	
 	public ECPublicKey getPublicKey() {
@@ -218,7 +219,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	
 	public byte[] getPublicKeyNetworkFormat() {
 		if(type.algName == "DH"){
-			return stripBigIntegerToNetworkFormat(myExponential);
+			return DiffieHellmanLightContext.stripBigIntegerToNetworkFormat(myExponential);
 		}
 		else{
 			byte[] ret = getPublicKey().getEncoded();
@@ -234,24 +235,4 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			}
 		}
 	}
-	
-	private byte[] stripBigIntegerToNetworkFormat(BigInteger exponential) {
-        byte[] data = exponential.toByteArray();
-        int targetLength = DiffieHellman.modulusLengthInBytes();
-        assert(exponential.signum() == 1);
-
-        if(data.length != targetLength) {
-            byte[] newData = new byte[targetLength];
-            if((data.length == targetLength+1) && (data[0] == 0)) {
-                // Sign bit
-                System.arraycopy(data, 1, newData, 0, targetLength);
-            } else if(data.length < targetLength) {
-                System.arraycopy(data, 0, newData, targetLength-data.length, data.length);
-            } else {
-                throw new IllegalStateException("Too long!");
-            }
-            data = newData;
-        }
-        return data;
-    }
 }
