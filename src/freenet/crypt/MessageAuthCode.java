@@ -36,9 +36,9 @@ public class MessageAuthCode {
 		try {
 			mac = type.get();
 			key = cryptoKey;
-			if(type.usesIV){;
+			if(type.ivlen != -1){;
 				checkPoly1305Key(key.getEncoded());
-				iv = new IvParameterSpec(new byte[16]);//FIXME actually gen IV
+				iv = new IvParameterSpec(new byte[type.ivlen]);//FIXME actually gen IV
 				mac.init(key, iv);
 			}
 			else{
