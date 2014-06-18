@@ -53,8 +53,8 @@ public class CryptSignature{
 		else {
 			try {
 				KeyPairGenerator kg = KeyPairGenerator.getInstance(
-						PreferredAlgorithms.preferredKeyGen, 
-						PreferredAlgorithms.keyGenProvider);
+						PreferredAlgorithms.preferredKeyPairGen, 
+						PreferredAlgorithms.keyPairProvider);
 				kg.initialize(type.getSpec());
 				keys = kg.generateKeyPair();
 				
@@ -78,8 +78,8 @@ public class CryptSignature{
     		byte[] pub = null;
             byte[] pri = null;
             KeyFactory kf = KeyFactory.getInstance(
-            		PreferredAlgorithms.preferredKeyGen, 
-            		PreferredAlgorithms.keyGenProvider);
+            		PreferredAlgorithms.preferredKeyPairGen, 
+            		PreferredAlgorithms.keyPairProvider);
             
             pub = Base64.decode(sfs.get("pub"));
             if (pub.length > type.modulusSize)
