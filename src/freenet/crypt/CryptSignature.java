@@ -26,21 +26,21 @@ import freenet.support.Base64;
 import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
 
-public class CryptSignature{
+public final class CryptSignature{
 	private static final SigType defaultType = 
 			PreferredAlgorithms.preferredSignature;
 	
-	private SigType type;
+	private final SigType type;
 	private KeyPair keys;
 	private Signature sig;
 	
 	/** Length of signature parameters R and S */
 	private static final int SIGNATURE_PARAMETER_LENGTH = 32;
-	private Hash sha256 = new Hash();
-	private RandomSource random;
+	private final Hash sha256 = new Hash();
+	private final RandomSource random;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
-	private DSAGroup dsaGroup;
+	private final DSAGroup dsaGroup;
 	
 	public CryptSignature(){
 		this(defaultType);
@@ -55,6 +55,8 @@ public class CryptSignature{
 			dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		}
 		else {
+			random = null;
+			dsaGroup = null;
 			try {
 				KeyPairGenerator kg = KeyPairGenerator.getInstance(
 						PreferredAlgorithms.preferredKeyPairGen, 
@@ -74,6 +76,8 @@ public class CryptSignature{
 	
 	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{
 		this.type = type;
+		random = null;
+		dsaGroup = null;
         try {
     		byte[] pub = null;
             byte[] pri = null;
@@ -111,6 +115,7 @@ public class CryptSignature{
 	}
 	
 	public CryptSignature(DSAGroup group, DSAPrivateKey priv, DSAPublicKey pub){
+		type = SigType.DSA;
 		random = PreferredAlgorithms.random;
 		dsaGroup = group;
 		dsaPrivK = priv;
@@ -122,6 +127,7 @@ public class CryptSignature{
 	}
 	
 	public CryptSignature(RandomSource r){
+		type = SigType.DSA;
 		random = r;
 		dsaGroup = Global.DSAgroupBigA;
 		dsaPrivK = new DSAPrivateKey(dsaGroup, random);

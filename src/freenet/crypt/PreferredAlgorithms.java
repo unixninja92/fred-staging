@@ -5,7 +5,6 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -35,7 +34,7 @@ import freenet.crypt.JceLoader;
 import freenet.node.Node;
 import freenet.support.Logger;
 
-public class PreferredAlgorithms{
+public final class PreferredAlgorithms{
 
 	final static Provider SUN;
 	final static Provider SunJCE;
@@ -44,11 +43,11 @@ public class PreferredAlgorithms{
 	
 	public static RandomSource random;
 	
-	public static SigType preferredSignature = SigType.ECDSAP256;
-	public static String preferredKeyPairGen = "EC";
-	public static HashType preferredMesageDigest = HashType.SHA256;
-	public static MACType preferredMAC = MACType.Poly1305;
-	public static KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
+	public static final SigType preferredSignature = SigType.ECDSAP256;
+	public static final String preferredKeyPairGen = "EC";
+	public static final HashType preferredMesageDigest = HashType.SHA256;
+	public static final MACType preferredMAC = MACType.Poly1305;
+	public static final KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
@@ -58,11 +57,11 @@ public class PreferredAlgorithms{
 	public static final Map<String, Provider> sigProviders;
 	public static final Map<String, Provider> keyGenProviders;
 
-	static public void setRandomSource(RandomSource r){
+	static public final void setRandomSource(RandomSource r){
 		random = r;
 	}
 	
-	static private long mdBenchmark(MessageDigest md) throws GeneralSecurityException
+	static private final long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
@@ -88,7 +87,7 @@ public class PreferredAlgorithms{
 		return times;
 	}
 
-	static private long macBenchmark(Mac mac) throws GeneralSecurityException
+	static private final long macBenchmark(Mac mac) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
@@ -120,7 +119,7 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long cipherBenchmark(Cipher cipher, SecretKeySpec key, IvParameterSpec IV) throws GeneralSecurityException
+	static private final long cipherBenchmark(Cipher cipher, SecretKeySpec key, IvParameterSpec IV) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
@@ -148,7 +147,7 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long keyGenBenchmark(KeyGenerator kg){
+	static private final long keyGenBenchmark(KeyGenerator kg){
 		long times = Long.MAX_VALUE;
 		@SuppressWarnings("unused")
 		SecretKey key;
@@ -165,7 +164,7 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long keyPairBenchmark(KeyPairGenerator kg, KeyFactory kf) 
+	static private final long keyPairBenchmark(KeyPairGenerator kg, KeyFactory kf) 
 			throws NoSuchAlgorithmException, InvalidKeySpecException 
 			{
 		long times = Long.MAX_VALUE;
@@ -220,7 +219,7 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	static private long signatureBenchmark(Signature sig, SigType type)
+	static private final long signatureBenchmark(Signature sig, SigType type)
 			throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
@@ -273,7 +272,7 @@ public class PreferredAlgorithms{
 		return times;
 	}
 	
-	private static Provider fastest(long time_def, Provider provider_def, long time_sun, long time_nss, long time_bc){
+	private static final Provider fastest(long time_def, Provider provider_def, long time_sun, long time_nss, long time_bc){
 		Provider fastest = provider_def;
 		if(time_def > time_bc){
 			if(time_bc > time_sun && time_nss > time_sun){

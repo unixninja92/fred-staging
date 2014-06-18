@@ -17,7 +17,7 @@ import freenet.node.NodeInitException;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
 
-public class Hash{
+public final class Hash{
 	private static final HashType defaultType = PreferredAlgorithms.preferredMesageDigest;
 	private MessageDigest digest;
 	
@@ -35,66 +35,66 @@ public class Hash{
 		}
 	}
 	
-	private byte[] digest(){
+	private final byte[] digest(){
 		byte[] result = digest.digest();
 		return result;
 	}
 	
-	public byte[] getHash(){
+	public final byte[] getHash(){
 		return digest();
 	}
 	
-	public byte[] getHash(byte[]... input) {
+	public final byte[] getHash(byte[]... input) {
 		addBytes(input);
 		return digest();
 	}
 	
-	public HashResult getHashResult() {
+	public final HashResult getHashResult() {
 		return new HashResult(defaultType, digest());
 	}
 	
-	public HashResult getHashResult(byte[]... input){
+	public final HashResult getHashResult(byte[]... input){
 		addBytes(input);
 		return getHashResult();
 	}
 	
-	public String getHexHash() {
+	public final String getHexHash() {
 		return HexUtil.bytesToHex(digest());
 	}
 	
-	public NativeBigInteger getNativeBigIntegerHash(){
+	public final NativeBigInteger getNativeBigIntegerHash(){
 		return new NativeBigInteger(1, digest());
 	}
 	
-	public NativeBigInteger getNativeBigIntegerHash(byte[] data){
+	public final NativeBigInteger getNativeBigIntegerHash(byte[] data){
 		addBytes(data);
 		return getNativeBigIntegerHash();
 	}
 	
-	public void addByte(byte input){
+	public final void addByte(byte input){
 		digest.update(input);
 	}
 
-	public void addBytes(byte[]... input){
+	public final void addBytes(byte[]... input){
 		for(byte[] b: input){
 			digest.update(b);
 		}
 	}
 
-	public void addBytes(ByteBuffer input){
+	public final void addBytes(ByteBuffer input){
 		digest.update(input);
 	}
 	
-	public void addBytes(byte[] input, int offset, int len){
+	public final void addBytes(byte[] input, int offset, int len){
 		digest.update(input, offset, len);
 	}
 	
-	public boolean verify(byte[] hash, byte[] data){
+	public final boolean verify(byte[] hash, byte[] data){
 		digest.reset();
-		return Arrays.equals(hash, getHash(data));
+		return MessageDigest.isEqual(hash, getHash());
 	}	
 	
-	public static boolean verify(HashResult hash, byte[] intput){
+	public final static boolean verify(HashResult hash, byte[] intput){
 		try {
 			HashType type = hash.type;
 			HashResult result = new HashResult(type, type.get().digest(intput));
@@ -111,7 +111,7 @@ public class Hash{
 		return false;
 	}
 	
-	public static boolean verify(HashResult hash1, HashResult hash2){
+	public final static boolean verify(HashResult hash1, HashResult hash2){
 		if(hash1.compareTo(hash2) == 0){
 			return true;
 		}

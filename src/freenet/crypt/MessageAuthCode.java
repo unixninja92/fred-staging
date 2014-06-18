@@ -3,6 +3,7 @@ package freenet.crypt;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.KeyGenerator;
@@ -14,7 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
 import org.bouncycastle.util.Arrays;
 
-public class MessageAuthCode {
+public final class MessageAuthCode {
 	private static final MACType defaultType = PreferredAlgorithms.preferredMAC;
 	private Mac mac;
 	private SecretKey key;
@@ -87,7 +88,7 @@ public class MessageAuthCode {
 		}
 	}
 	
-	private void checkPoly1305Key(byte[] encodedKey){
+	private final void checkPoly1305Key(byte[] encodedKey){
 		try{
 			Poly1305KeyGenerator.checkKey(encodedKey);
 		} catch (IllegalArgumentException e){
@@ -124,15 +125,15 @@ public class MessageAuthCode {
 	}
 	
 	public boolean verify(byte[] otherMac){
-		return Arrays.areEqual(getMAC(), otherMac);
+		return MessageDigest.isEqual(getMAC(), otherMac);
 	}
 	
 	public boolean verify(byte[] mac1, byte[] mac2){
-		return Arrays.areEqual(mac1, mac2);
+		return MessageDigest.isEqual(mac1, mac2);
 	}
 	
 	public boolean verifyData(byte[] otherMac, byte[]... data){
-		return Arrays.areEqual(getMAC(data), otherMac);
+		return MessageDigest.isEqual(getMAC(data), otherMac);
 	}
 	
 	public SecretKey getKey(){
