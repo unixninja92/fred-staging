@@ -50,7 +50,7 @@ public enum HashType {
 			return MessageDigest.getInstance(javaName, PreferredAlgorithms.mdProviders.get(javaName));
 		}
 	}
-
+	
 	public void recycle(MessageDigest md) {
 		if(this.equals(SHA256)) {
 			freenet.crypt.SHA256.returnMessageDigest(md);

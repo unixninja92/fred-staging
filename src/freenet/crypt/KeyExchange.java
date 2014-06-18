@@ -21,7 +21,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
     private static volatile boolean logDEBUG;
 	
     //ECDH
-    private KeyExchType type;
+    private final KeyExchType type;
 	private KeyAgreement ka;
 	private KeyPair keys;
 	
@@ -86,6 +86,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	public KeyExchange(DHGroup group, NativeBigInteger myExponent, NativeBigInteger myExponential){
+		type = KeyExchType.DH;
 		dhGroup = group;
 		this.myExponent = myExponent;
 		checkExponentialValidity(myExponential);

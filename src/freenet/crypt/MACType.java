@@ -26,7 +26,7 @@ public enum MACType {
 		this.ivlen = ivlen;
 	}
 	
-	public Mac get() throws NoSuchAlgorithmException{
+	public final Mac get() throws NoSuchAlgorithmException{
 		return Mac.getInstance(mac, PreferredAlgorithms.macProviders.get(mac));
 	}
 	

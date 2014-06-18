@@ -13,7 +13,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
-import org.bouncycastle.util.Arrays;
 
 public final class MessageAuthCode {
 	private static final MACType defaultType = PreferredAlgorithms.preferredMAC;
@@ -97,58 +96,58 @@ public final class MessageAuthCode {
 		}
 	}
 	
-	public void addByte(byte input){
+	public final void addByte(byte input){
 		mac.update(input);
 	}
 	
-	public void addBytes(byte[]... input){
+	public final void addBytes(byte[]... input){
 		for(byte[] b: input){
 			mac.update(b);
 		}
 	}
 	
-	public void addBytes(ByteBuffer input){
+	public final void addBytes(ByteBuffer input){
 		mac.update(input);
 	}
 	
-	public void addBytes(byte[] input, int offset, int len){
+	public final void addBytes(byte[] input, int offset, int len){
 		mac.update(input, offset, len);
 	}
 	
-	public byte[] getMAC(){
+	public final byte[] getMAC(){
 		return mac.doFinal();
 	}
 	
-	public byte[] getMAC(byte[]... input){
+	public final byte[] getMAC(byte[]... input){
 		addBytes(input);
 		return mac.doFinal();
 	}
 	
-	public boolean verify(byte[] otherMac){
+	public final boolean verify(byte[] otherMac){
 		return MessageDigest.isEqual(getMAC(), otherMac);
 	}
 	
-	public boolean verify(byte[] mac1, byte[] mac2){
+	public final boolean verify(byte[] mac1, byte[] mac2){
 		return MessageDigest.isEqual(mac1, mac2);
 	}
 	
-	public boolean verifyData(byte[] otherMac, byte[]... data){
+	public final boolean verifyData(byte[] otherMac, byte[]... data){
 		return MessageDigest.isEqual(getMAC(data), otherMac);
 	}
 	
-	public SecretKey getKey(){
+	public final SecretKey getKey(){
 		return key;
 	}
 	
-	public byte[] getEncodedKey(){
+	public final byte[] getEncodedKey(){
 		return key.getEncoded();
 	}
 	
-	public byte[] getIV() {
+	public final byte[] getIV() {
 		return iv.getIV();
 	}
 	
-	public IvParameterSpec getIVSpec(){
+	public final IvParameterSpec getIVSpec(){
 		return iv;
 	}
 

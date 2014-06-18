@@ -36,7 +36,7 @@ public enum KeyExchType {
 		this.maxSigSize = maxSigSize;
 	}
 	
-	public KeyAgreement get() throws NoSuchAlgorithmException{
+	public final KeyAgreement get() throws NoSuchAlgorithmException{
 		//FIXME switch to preferred provider
 		return KeyAgreement.getInstance(algName, PreferredAlgorithms.BC);
 	}
@@ -50,7 +50,7 @@ public enum KeyExchType {
 //		}
 //	}
 	
-	public ECGenParameterSpec getSpec(){
+	public final ECGenParameterSpec getSpec(){
 		return new ECGenParameterSpec(specName);
 	}
 }
