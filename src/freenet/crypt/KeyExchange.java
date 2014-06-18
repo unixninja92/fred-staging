@@ -1,5 +1,6 @@
 package freenet.crypt;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -18,16 +19,27 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
     private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
-	private KeyExchType type;
+	
+    //ECDH
+    private KeyExchType type;
 	private KeyAgreement ka;
 	private KeyPair keys;
 	
+	
+	//DH
 	/** My exponent.*/
 	private NativeBigInteger myExponent;
 	/** My exponential. This is group.g ^ myExponent mod group.p */
 	private NativeBigInteger myExponential;
-	private DSAGroup dsaGroup;
+	private DHGroup dhGroup;
 	
+	//JFK
+//	private byte[] nI; //Initiators nonce 
+//	private byte[] nR; //Responders nonce
+//	private byte[] hashnI; //N'i
+//	private byte[] myxponential; //Initiators exponential
+//	private byte[] theirExponential;//Responders exponential
+//	private KeyExchange underlyingExch; //IDi
 	
 	public KeyExchange(){
 		this(defaultType);
@@ -36,7 +48,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	public KeyExchange(KeyExchType type){
 		this.type = type;
 		if(type.name()=="DH"){
-			dsaGroup = Global.DSAgroupBigA;
+			dhGroup = Global.DHgroupA;
 			long time1 = System.currentTimeMillis();
 			NativeBigInteger[] params = DiffieHellman.getParams();
 			long time2 = System.currentTimeMillis();
@@ -45,6 +57,9 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			}
 			this.myExponent = params[0];
 			this.myExponential = params[1];
+		}
+		else if(type.name() == "JFK"){
+			
 		}
 		else{
 			try {
@@ -70,6 +85,29 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		}
 	}
 	
+	public KeyExchange(DHGroup group, NativeBigInteger myExponent, NativeBigInteger myExponential){
+		dhGroup = group;
+		this.myExponent = myExponent;
+		checkExponentialValidity(myExponential);
+		this.myExponential = myExponential;
+	}
+	
+	public KeyExchange(DHGroup group, NativeBigInteger myExponent){
+		this(group, myExponent, (NativeBigInteger) group.getG().modPow(myExponent, group.getP()));
+	}
+	
+	public KeyExchange(NativeBigInteger myExponent, NativeBigInteger myExponential){
+		this(Global.DHgroupA, myExponent, myExponential);
+	}
+	
+	public KeyExchange(NativeBigInteger myExponent){
+		this(Global.DHgroupA, myExponent);
+	}
+	
+	public KeyExchange(DHGroup group){
+		this(KeyExchType.DH);
+		dhGroup = group;
+	}
 	/**
      * Completes the ECDH exchange: this is CPU intensive
      * @param pubkey
@@ -77,7 +115,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * 
      * **THE OUTPUT SHOULD ALWAYS GO THROUGH A KDF**
      */
-	public byte[] getHMACKey(ECPublicKey peerExponential){
+	public byte[] getSharedSecrect(ECPublicKey peerExponential){
 		byte[] sharedKey = null;
 		synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
@@ -107,18 +145,23 @@ public class KeyExchange extends KeyAgreementSchemeContext{
         return sharedKey;
 	}
 	
+	@Deprecated
+	public byte[] getHMACKey(ECPublicKey peerExponential){
+		return getSharedSecrect(peerExponential);
+	}
+	
 	/**
      * Completes the DH exchange: this is CPU intensive
      * @param peerExponential
      * @return a SecretKey or null if it fails
      * 
      */
-	public byte[] getHMACKey(NativeBigInteger peerExponential) {
+	public byte[] getSharedSecrect(NativeBigInteger peerExponential) {
 		synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
 		}
 		
-		BigInteger P = dsaGroup.getP();
+		BigInteger P = dhGroup.getP();
 		NativeBigInteger sharedSecret =
 			(NativeBigInteger) peerExponential.modPow(myExponent, P);
 
@@ -132,9 +175,46 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return sharedSecret.toByteArray();
 	}
 	
+	@Deprecated
+	public byte[] getHMACKey(NativeBigInteger peerExponential){
+		return getSharedSecrect(peerExponential);
+	}
+	
+	/**
+	 * 
+	 * @param exponential: computedExponential
+	 * @param nI: nonceInitiatorHashed
+	 * @param nR: nonceResponder
+	 * @param what: what kind of key
+	 * @return
+	 */
+	public static byte[] computeJFKSharedKey(byte[] exponential, byte[] nI, byte[] nR, String what) {
+		assert("0".equals(what) || "1".equals(what) || "2".equals(what) || "3".equals(what)
+				|| "4".equals(what) || "5".equals(what) || "6".equals(what) || "7".equals(what));
+		byte[] number = null;
+		try {
+			number = what.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new Error("Impossible: JVM doesn't support UTF-8: " + e, e);
+		}
+
+		byte[] toHash = new byte[nI.length + nR.length + number.length];
+		int offset = 0;
+		System.arraycopy(nI, 0, toHash, offset, nI.length);
+		offset += nI.length;
+		System.arraycopy(nR, 0, toHash, offset, nR.length);
+		offset += nR.length;
+		System.arraycopy(number, 0, toHash, offset, number.length);
+		return HMAC.macWithSHA256(exponential, toHash, HashType.SHA256.hashLength);
+	}
+	
 	public ECPublicKey getPublicKey() {
         return (ECPublicKey) keys.getPublic();
     }
+	
+	public boolean checkExponentialValidity(BigInteger exp){
+		return DiffieHellman.checkDHExponentialValidity(getClass(), exp);
+	}
 	
 	public byte[] getPublicKeyNetworkFormat() {
 		if(type.algName == "DH"){

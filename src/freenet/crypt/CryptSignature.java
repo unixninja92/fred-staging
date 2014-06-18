@@ -41,7 +41,11 @@ public class CryptSignature{
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
 	private DSAGroup dsaGroup;
-
+	
+	public CryptSignature(){
+		this(defaultType);
+	}
+	
 	public CryptSignature(SigType type){
 		this.type = type;
 		if(type.name()=="DSA"){
@@ -66,10 +70,6 @@ public class CryptSignature{
 				e.printStackTrace();
 			}
 		}
-	}
-	
-	public CryptSignature(){
-		this(defaultType);
 	}
 	
 	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{

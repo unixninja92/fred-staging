@@ -6,8 +6,9 @@ import java.security.spec.ECGenParameterSpec;
 import javax.crypto.KeyAgreement;
 
 public enum KeyExchType {
-	DH(1, 128),
-	ECDHP256(2, "ECDH", "secp256r1", 91, 32);
+	DH(1),//128
+	JFK(2),
+	ECDHP256(4, "ECDH", "secp256r1", 91, 32);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
@@ -19,11 +20,11 @@ public enum KeyExchType {
     /** Maximum (padded) size of a DER-encoded signature (network-format) */
 	public final int maxSigSize;
 	
-	KeyExchType(int bitmask, int modulusSize){
+	KeyExchType(int bitmask){
 		this.bitmask = bitmask;
 		specName = name();
 		algName = specName;
-		this.modulusSize = modulusSize;
+		this.modulusSize = -1;
 		maxSigSize = -1;
 	}
 	
