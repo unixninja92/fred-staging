@@ -1,3 +1,6 @@
+/* This code is part of Freenet. It is distributed under the GNU General
+ * Public License, version 2 (or at your option any later version). See
+ * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
 import java.io.UnsupportedEncodingException;
@@ -189,7 +192,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	 * @param what: what kind of key
 	 * @return
 	 */
-	public static byte[] computeJFKSharedKey(byte[] exponential, byte[] nI, byte[] nR, String what) {
+	public static final byte[] computeJFKSharedKey(byte[] exponential, byte[] nI, byte[] nR, String what) {
 		assert("0".equals(what) || "1".equals(what) || "2".equals(what) || "3".equals(what)
 				|| "4".equals(what) || "5".equals(what) || "6".equals(what) || "7".equals(what));
 		byte[] number = null;

@@ -97,10 +97,7 @@ public final class Hash{
 	public final static boolean verify(HashResult hash, byte[] intput){
 		try {
 			HashType type = hash.type;
-			HashResult result = new HashResult(type, type.get().digest(intput));
-			if(hash.compareTo(result) == 0){
-				return true;
-			}
+			return verify(hash, new HashResult(type, type.get().digest(intput)));
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
 			System.err.println("Check your JVM settings especially the JCE!" + e);
@@ -108,7 +105,6 @@ public final class Hash{
 			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
 			throw new RuntimeException();
 		}
-		return false;
 	}
 	
 	public final static boolean verify(HashResult hash1, HashResult hash2){
