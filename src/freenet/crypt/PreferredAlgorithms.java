@@ -47,6 +47,7 @@ public class PreferredAlgorithms{
 	public static String preferredKeyPairGen = "EC";
 	public static HashType preferredMesageDigest = HashType.SHA256;
 	public static MACType preferredMAC = MACType.Poly1305;
+	public static KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
