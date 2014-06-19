@@ -31,7 +31,7 @@ public final class CryptBucket implements Bucket {
     private boolean readOnly;
     
 //    private FilterInputStream is;
-//    private FilterOutputStream os;
+    private FilterOutputStream outStream;
     
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
     
@@ -43,6 +43,12 @@ public final class CryptBucket implements Bucket {
     	this.type = type;
         this.underlying = underlying;
         this.key = new SecretKeySpec(key, "AES");
+        try {
+			outStream = genOutputStream();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     
     public final byte[] decrypt(){
@@ -58,24 +64,56 @@ public final class CryptBucket implements Bucket {
 		return plain;
     }
     
-    public final void encrypt(byte[]... input){
+    public final void addByte(byte input){
     	try {
-			OutputStream os = getOutputStream();
-			for(byte[] b: input){
-				os.write(b);
-			}
-			os.close();
+    		outStream.write(input);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
     
+    public final void addBytes(byte[]... input){
+    	try {
+			for(byte[] b: input){
+				outStream.write(b);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public final void addBytes(byte[] input, int offset, int len){
+    	try {
+    		outStream.write(input, offset, len);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public final void encrypt(){
+    	try {
+			outStream.close();
+			outStream = genOutputStream();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public final void encrypt(byte[]... input){
+    	addBytes(input);
+    	encrypt();
+    }
+    
 	@Override
     public OutputStream getOutputStream() throws IOException {
-    	return genOutputStream();
+    	return outStream;
     }
-	private final OutputStream genOutputStream() throws IOException {
+	
+	private final FilterOutputStream genOutputStream() throws IOException {
 		if(type.equals(CryptBucketType.AEADAESOCB) || type.equals(CryptBucketType.AEADAESOCBDraft00)){
 			boolean isOld = type.equals(CryptBucketType.AEADAESOCBDraft00);
 
@@ -100,7 +138,7 @@ public final class CryptBucket implements Bucket {
 		return genInputStream();
 	}
 	
-	private final InputStream genInputStream() throws IOException {
+	private final FilterInputStream genInputStream() throws IOException {
         if(type.equals(CryptBucketType.AEADAESOCB) || type.equals(CryptBucketType.AEADAESOCBDraft00)){
         	return new AEADInputStream(underlying.getInputStream(), 
         			key.getEncoded(), new AESEngine(), new AESLightEngine(), 
