@@ -41,7 +41,9 @@ public final class MessageAuthCode {
 			key = cryptoKey;
 			if(type.ivlen != -1){;
 				checkPoly1305Key(key.getEncoded());
-				iv = new IvParameterSpec(new byte[type.ivlen]);//FIXME actually gen IV
+				byte[] iV = new byte[type.ivlen];
+				PreferredAlgorithms.random.nextBytes(iV);
+				this.iv = new IvParameterSpec(iV);
 				mac.init(key, iv);
 			}
 			else{
@@ -68,7 +70,7 @@ public final class MessageAuthCode {
 	}
 	
 	public MessageAuthCode(SecretKey key, byte[] iv){
-		this(key, new IvParameterSpec(iv));
+		this(key, new IvParameterSpec(iv, 0, 16));
 	}
 	
 	public MessageAuthCode(SecretKey key, IvParameterSpec iv){
@@ -153,5 +155,12 @@ public final class MessageAuthCode {
 	public final IvParameterSpec getIVSpec(){
 		return iv;
 	}
+	
+	public final void changeIV(byte[] iv){
+		changeIV(new IvParameterSpec(iv, 0, 16));
+	}
 
+	public final void changeIV(IvParameterSpec iv){
+		this.iv = iv;
+	}
 }
