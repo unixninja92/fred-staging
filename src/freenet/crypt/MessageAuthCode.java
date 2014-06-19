@@ -156,11 +156,12 @@ public final class MessageAuthCode {
 		return iv;
 	}
 	
-	public final void changeIV(byte[] iv){
+	public final void changeIV(byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		changeIV(new IvParameterSpec(iv, 0, 16));
 	}
 
-	public final void changeIV(IvParameterSpec iv){
+	public final void changeIV(IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this.iv = iv;
+		mac.init(key, iv);
 	}
 }
