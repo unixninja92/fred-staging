@@ -9,8 +9,10 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -21,6 +23,7 @@ import org.bouncycastle.util.Arrays;
 import com.db4o.ObjectContainer;
 
 import freenet.support.api.Bucket;
+import freenet.support.io.ArrayBucketFactory;
 
 public final class CryptBucket implements Bucket {
 	private static final CryptBucketType defaultType = PreferredAlgorithms.preferredCryptBucketAlg;
@@ -33,7 +36,18 @@ public final class CryptBucket implements Bucket {
 //    private FilterInputStream is;
     private FilterOutputStream outStream;
     
+  //FIXME make per type
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
+    
+    public CryptBucket(long size) throws IOException, NoSuchAlgorithmException{
+    	this.type = defaultType;
+    	ArrayBucketFactory bf = new ArrayBucketFactory();
+    	this.underlying = bf.makeBucket(size);
+    	KeyGenerator kg = KeyGenerator.getInstance(type.cipherName, PreferredAlgorithms.keyGenProviders.get(type.cipherName));
+    	kg.init(type.keySize);
+    	this.key = kg.generateKey();
+    	this.readOnly = false;
+    }
     
     public CryptBucket(Bucket underlying, byte[] key){
     	this(defaultType, underlying, key, false);
@@ -44,18 +58,12 @@ public final class CryptBucket implements Bucket {
         this.underlying = underlying;
         this.key = new SecretKeySpec(key, "AES");
         this.readOnly = readOnly;
-        try {
-        	outStream = genOutputStream();
-        } catch (IOException e) {
-        	// TODO Auto-generated catch block
-        	e.printStackTrace();
-        }
     }
     
     public final byte[] decrypt(){
     	byte[] plain = new byte[(int) size()];
     	try {
-    		InputStream is = getInputStream();
+    		FilterInputStream is = genInputStream();
 			is.read(plain);
 			is.close();
 		} catch (IOException e) {
@@ -177,7 +185,7 @@ public final class CryptBucket implements Bucket {
 	}
 	
 	@Override
-	public synchronized void setReadOnly() {
+	public final synchronized void setReadOnly() {
 		this.readOnly = true;
 	}
 	
@@ -199,7 +207,7 @@ public final class CryptBucket implements Bucket {
 	}
 	
 	@Override
-	public Bucket createShadow() {
+	public final Bucket createShadow() {
         Bucket undershadow = underlying.createShadow();
         CryptBucket ret = new CryptBucket(undershadow, key.getEncoded());
         ret.setReadOnly();

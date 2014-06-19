@@ -380,10 +380,11 @@ public final class PreferredAlgorithms{
 		//KeyGenBenchmarking
 		HashMap<String,Provider> keyGenProviders_internal = new HashMap<String, Provider>();
 		for (String algo: new String[] {
-				"HMACSHA1", "HMACSHA256", "POLY1305-AES"
+				"HMACSHA1", "HMACSHA256", "POLY1305-AES", "AES", "RIJNDAEL"
 			}) {;
 			try{
 				KeyGenerator kg = KeyGenerator.getInstance(algo);
+				KeyGenerator nss_kg = null;
 				KeyGenerator bc_kg = null;
 
 				long time_def = Long.MAX_VALUE;
@@ -395,6 +396,22 @@ public final class PreferredAlgorithms{
 				System.out.println("KeyGeneration " + algo + " (" + kg.getProvider() + "): " + time_def + "ns");
 				Logger.minor(clazz, "KeyGeneration " + algo + "/" + kg.getProvider() + ": " + time_def + "ns");
 
+				if (NSS != null && kg.getProvider() != NSS){
+					try {
+						nss_kg = KeyGenerator.getInstance(algo, NSS);
+						time_nss = keyGenBenchmark(nss_kg);
+						System.out.println("KeyGeneration " + algo + " (" + nss_kg.getProvider() + "): " + time_nss + "ns");
+						Logger.minor(clazz, "KeyGeneration " + algo + "/" + nss_kg.getProvider() + ": " + time_nss + "ns");
+					} catch(GeneralSecurityException e) {
+						Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+						// ignore
+
+					} catch(Throwable e) {
+						Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
+						// ignore
+					}
+				}
+				
 				if (BC != null && kg.getProvider() != BC){
 					try {
 						bc_kg = KeyGenerator.getInstance(algo, BC);
@@ -657,8 +674,8 @@ public final class PreferredAlgorithms{
 			}
 
 			keyPairProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
-			System.out.println("KeyGen " + algo + ": using " + keyPairProvider);
-			Logger.normal(clazz, "KeyGen " + algo + ": using " + keyPairProvider);
+			System.out.println("KeyPairGen " + algo + ": using " + keyPairProvider);
+			Logger.normal(clazz, "KeyPairGen " + algo + ": using " + keyPairProvider);
 		} catch(GeneralSecurityException e){
 			throw new Error(e);
 		}
