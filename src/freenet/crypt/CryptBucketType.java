@@ -9,8 +9,8 @@ public enum CryptBucketType {
 	RijndaelCTR(4, 256),
 	AESPCFB(8, 256),
 	AESCTR(16, 256, "AES/CTR/NOPADDING"),
-	AESOCBDraft00(32, 128),
-	AESOCB(64, 128);
+	AEADAESOCBDraft00(32, 128),
+	AEADAESOCB(64, 128);
 	
 	public final int bitmask;
 	public final int keySize;
