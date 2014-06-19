@@ -36,19 +36,20 @@ public final class CryptBucket implements Bucket {
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
     
     public CryptBucket(Bucket underlying, byte[] key){
-    	this(defaultType, underlying, key);
+    	this(defaultType, underlying, key, false);
     }
     
-    public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key) {
+    public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key, boolean readOnly) {
     	this.type = type;
         this.underlying = underlying;
         this.key = new SecretKeySpec(key, "AES");
+        this.readOnly = readOnly;
         try {
-			outStream = genOutputStream();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        	outStream = genOutputStream();
+        } catch (IOException e) {
+        	// TODO Auto-generated catch block
+        	e.printStackTrace();
+        }
     }
     
     public final byte[] decrypt(){
@@ -64,7 +65,10 @@ public final class CryptBucket implements Bucket {
 		return plain;
     }
     
-    public final void addByte(byte input){
+    public final void addByte(byte input) throws IOException{
+    	if(readOnly){
+    		throw new IOException("Read only");
+    	}
     	try {
     		outStream.write(input);
 		} catch (IOException e) {
@@ -73,7 +77,10 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
-    public final void addBytes(byte[]... input){
+    public final void addBytes(byte[]... input) throws IOException{
+    	if(readOnly){
+    		throw new IOException("Read only");
+    	}
     	try {
 			for(byte[] b: input){
 				outStream.write(b);
@@ -84,7 +91,10 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
-    public final void addBytes(byte[] input, int offset, int len){
+    public final void addBytes(byte[] input, int offset, int len) throws IOException{
+    	if(readOnly){
+    		throw new IOException("Read only");
+    	}
     	try {
     		outStream.write(input, offset, len);
 		} catch (IOException e) {
@@ -93,7 +103,10 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
-    public final void encrypt(){
+    public final void encrypt() throws IOException{
+    	if(readOnly){
+    		throw new IOException("Read only");
+    	}
     	try {
 			outStream.close();
 			outStream = genOutputStream();
@@ -103,14 +116,14 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
-    public final void encrypt(byte[]... input){
+    public final void encrypt(byte[]... input) throws IOException{
     	addBytes(input);
     	encrypt();
     }
     
 	@Override
     public OutputStream getOutputStream() throws IOException {
-    	return outStream;
+    	return genOutputStream();
     }
 	
 	private final FilterOutputStream genOutputStream() throws IOException {
