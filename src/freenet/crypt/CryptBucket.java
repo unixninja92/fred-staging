@@ -39,11 +39,16 @@ public final class CryptBucket implements Bucket {
   //FIXME make per type
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
     
-    public CryptBucket(long size) throws IOException, NoSuchAlgorithmException{
-    	this.type = defaultType;
+    public CryptBucket(long size) throws NoSuchAlgorithmException, IOException{
+    	this(defaultType, size);
+    }
+    
+    public CryptBucket(CryptBucketType type, long size) throws IOException, NoSuchAlgorithmException{
+    	this.type = type;
     	ArrayBucketFactory bf = new ArrayBucketFactory();
     	this.underlying = bf.makeBucket(size);
-    	KeyGenerator kg = KeyGenerator.getInstance(type.cipherName, PreferredAlgorithms.keyGenProviders.get(type.cipherName));
+    	KeyGenerator kg = KeyGenerator.getInstance(type.cipherName, 
+    			PreferredAlgorithms.keyGenProviders.get(type.cipherName));
     	kg.init(type.keySize);
     	this.key = kg.generateKey();
     	this.readOnly = false;
