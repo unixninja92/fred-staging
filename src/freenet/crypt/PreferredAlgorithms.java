@@ -13,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -32,6 +33,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import freenet.crypt.JceLoader;
 import freenet.node.Node;
+import freenet.node.NodeStarter;
 import freenet.support.Logger;
 
 public final class PreferredAlgorithms{
@@ -42,6 +44,7 @@ public final class PreferredAlgorithms{
 	final static Provider NSS;
 	
 	public static RandomSource random;
+	public static final SecureRandom sRandom = NodeStarter.getGlobalSecureRandom();
 	
 	public static final SigType preferredSignature = SigType.ECDSAP256;
 	public static final String preferredKeyPairGen = "EC";

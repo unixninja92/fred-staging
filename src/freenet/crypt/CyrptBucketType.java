@@ -5,10 +5,12 @@ package freenet.crypt;
 
 public enum CyrptBucketType {
 	RijndaelECB(1, 256),
-	RijndaelCTR(2, 256),
-	AESPCFB(4, 256),
-	AESCTR(8, 256, "AES/CTR/NOPADDING"),
-	AESOCB(16, 128);
+	RigndaelECB(2, 256, 128),
+	RijndaelCTR(4, 256),
+	AESPCFB(8, 256),
+	AESCTR(16, 256, "AES/CTR/NOPADDING"),
+	OldAESOCB(32, 128),
+	AESOCB(64, 128);
 	
 	public final int bitmask;
 	public final int keySize;
