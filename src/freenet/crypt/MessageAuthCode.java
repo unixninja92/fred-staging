@@ -42,7 +42,7 @@ public final class MessageAuthCode {
 			if(type.ivlen != -1){;
 				checkPoly1305Key(key.getEncoded());
 				byte[] iV = new byte[type.ivlen];
-				PreferredAlgorithms.random.nextBytes(iV);
+				PreferredAlgorithms.sRandom.nextBytes(iV);
 				this.iv = new IvParameterSpec(iV);
 				mac.init(key, iv);
 			}
