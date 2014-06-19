@@ -65,10 +65,19 @@ public final class CryptBucket implements Bucket {
 		return plain;
     }
     
-    public final void addByte(byte input) throws IOException{
-    	if(readOnly){
+    private final void checkOutStream() throws IOException{
+    	if(!readOnly){
+    		if(outStream == null){
+    			outStream = genOutputStream();
+    		}
+    	}
+    	else{
     		throw new IOException("Read only");
     	}
+    }
+    
+    public final void addByte(byte input) throws IOException{
+    	checkOutStream();
     	try {
     		outStream.write(input);
 		} catch (IOException e) {
@@ -78,9 +87,7 @@ public final class CryptBucket implements Bucket {
     }
     
     public final void addBytes(byte[]... input) throws IOException{
-    	if(readOnly){
-    		throw new IOException("Read only");
-    	}
+    	checkOutStream();
     	try {
 			for(byte[] b: input){
 				outStream.write(b);
@@ -92,9 +99,7 @@ public final class CryptBucket implements Bucket {
     }
     
     public final void addBytes(byte[] input, int offset, int len) throws IOException{
-    	if(readOnly){
-    		throw new IOException("Read only");
-    	}
+    	checkOutStream();
     	try {
     		outStream.write(input, offset, len);
 		} catch (IOException e) {
@@ -104,16 +109,12 @@ public final class CryptBucket implements Bucket {
     }
     
     public final void encrypt() throws IOException{
-    	if(readOnly){
-    		throw new IOException("Read only");
+    	if(outStream == null){
+    		throw new IOException();
     	}
-    	try {
-			outStream.close();
-			outStream = genOutputStream();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    	checkOutStream();
+    	outStream.close();
+    	outStream = null;
     }
     
     public final void encrypt(byte[]... input) throws IOException{
