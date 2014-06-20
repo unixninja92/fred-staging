@@ -15,12 +15,16 @@ import java.security.interfaces.ECPublicKey;
 import javax.crypto.KeyAgreement;
 
 import net.i2p.util.NativeBigInteger;
+import freenet.io.comm.Peer;
+import freenet.node.NodeCrypto;
+import freenet.node.PeerNode;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
 	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
-    private static volatile boolean logMINOR;
+    private static final RandomSource rand = PreferredAlgorithms.random;
+	private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
 	
     //ECDH
@@ -37,12 +41,15 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	private DHGroup dhGroup;
 	
 	//JFK
-//	private byte[] nI; //Initiators nonce 
-//	private byte[] nR; //Responders nonce
-//	private byte[] hashnI; //N'i
-//	private byte[] myxponential; //Initiators exponential
-//	private byte[] theirExponential;//Responders exponential
-//	private KeyExchange underlyingExch; //IDi
+	private byte[] nonceI; //Initiators nonce 
+	private byte[] nonceR; //Responders nonce
+	private byte[] hashnI; //N'i
+	private byte[] hashnR; //N'r
+	private byte[] exponentialI; //Initiators exponential
+	private byte[] exponentialR;//Responders exponential
+	private byte[] sig;
+	private int modulusLength;
+	private KeyExchange underlyingExch; //IDi and IDr
 	
 	public KeyExchange(){
 		this(defaultType);
@@ -61,9 +68,9 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			this.myExponent = params[0];
 			this.myExponential = params[1];
 		}
-//		else if(type.name() == "JFK"){
-//			
-//		}
+		else if(type.name() == "JFKi" || type.name() == "JFKr"){
+			//throw an error
+		}
 		else{
 			try {
 				ka = type.get();
@@ -88,6 +95,43 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		}
 	}
 	
+	//JFK
+	public KeyExchange(KeyExchType underlying, int nonceSize){
+		type = KeyExchType.JFKi;
+		this.underlyingExch = new KeyExchange(underlying);
+		this.modulusLength = underlyingExch.type.modulusSize;
+		
+		nonceI = new byte[nonceSize];
+		rand.nextBytes(nonceI);
+		
+		Hash hash = new Hash();
+		hashnI = hash.getHash(nonceI);
+
+		exponentialI = underlyingExch.getPublicKeyNetworkFormat();
+	}
+	
+	public KeyExchange(KeyExchType underlying, int nonceSize, byte[] nonceI, byte[] exponentialI, PeerNode peerNode){
+		type = KeyExchType.JFKr;
+		this.underlyingExch = new KeyExchange(underlying);
+		this.modulusLength = underlyingExch.type.modulusSize;
+		this.nonceI = nonceI;
+		this.exponentialI = exponentialI;
+		if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
+				new NativeBigInteger(1,exponentialI))){
+			Logger.error(this, "We can't accept the exponential "+peerNode+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
+		}
+		
+		this.nonceR = new byte[nonceSize];
+		rand.nextBytes(nonceR);
+		
+		Hash hash = new Hash();
+		hashnR = hash.getHash(nonceR);
+		
+		exponentialR = underlyingExch.getPublicKeyNetworkFormat();
+		//TODO set sig
+	}
+	
+	//DH
 	public KeyExchange(DHGroup group, NativeBigInteger myExponent, NativeBigInteger myExponential){
 		type = KeyExchType.DH;
 		dhGroup = group;
@@ -112,6 +156,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		this(KeyExchType.DH);
 		dhGroup = group;
 	}
+	
 	/**
      * Completes the ECDH exchange: this is CPU intensive
      * @param pubkey
@@ -182,6 +227,80 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	@Deprecated
 	public byte[] getHMACKey(NativeBigInteger peerExponential){
 		return getSharedSecrect(peerExponential);
+	}
+	
+	//sent by initiator
+	public final byte[] genMessage1(boolean hash, boolean unknownInitiator){
+		if(type==KeyExchType.JFKi){
+			int offset = 0;
+			int nonceSize = hash ? hashnI.length: nonceI.length;
+			byte[] message1 = new byte[nonceSize+modulusLength
+			                           +(unknownInitiator ? NodeCrypto.IDENTITY_LENGTH : 0)];
+			System.arraycopy((hash ? hashnI : nonceI), 0, message1, offset, nonceSize);
+			offset += nonceSize;
+			System.arraycopy(exponentialI, 0, message1, offset, modulusLength);
+			return message1;
+		}
+		return null;
+	}
+	
+	//sent by reciver
+	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress){
+		if(type==KeyExchType.JFKr){
+			byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
+			                           sig.length + hashnR.length];
+
+			int offset = 0;
+			System.arraycopy(nonceI, 0, message2, offset, nonceI.length);
+			offset += nonceI.length;
+			System.arraycopy(nonceR, 0, message2, offset, nonceR.length);
+			offset += nonceR.length;
+			System.arraycopy(exponentialR, 0, message2, offset, modulusLength);
+			offset += modulusLength;
+
+			System.arraycopy(sig, 0, message2, offset, sig.length);
+			offset += sig.length;
+
+			MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
+
+			byte[] authenticator = mac.getMAC(assembleJFKAuthenticator(exponentialR, exponentialI, nonceR, nonceI, replyToAddress));
+
+			System.arraycopy(authenticator, 0, message2, offset, hashnR.length);
+
+			return message2;
+		}
+		return null;
+	}
+	
+	//done by initiator
+	public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] sigR, byte[] authenticator){
+		this.nonceR = nonceR;
+		this.exponentialR = exponentialR;
+		
+	}
+	
+	
+	/*
+	 * Assemble what will be the jfk-Authenticator :
+	 * computed over the Responder exponentials and the Nonces and
+	 * used by the responder to verify that the round-trip has been done
+	 *
+	 */
+	private byte[] assembleJFKAuthenticator(byte[] gR, byte[] gI, byte[] nR, byte[] nI, byte[] address) {
+		byte[] authData=new byte[gR.length + gI.length + nR.length + nI.length + address.length];
+		int offset = 0;
+
+		System.arraycopy(gR, 0, authData, offset ,gR.length);
+		offset += gR.length;
+		System.arraycopy(gI, 0, authData, offset, gI.length);
+		offset += gI.length;
+		System.arraycopy(nR, 0,authData, offset, nR.length);
+		offset += nR.length;
+		System.arraycopy(nI, 0,authData, offset, nI.length);
+		offset += nI.length;
+		System.arraycopy(address, 0, authData, offset, address.length);
+
+		return authData;
 	}
 	
 	/**

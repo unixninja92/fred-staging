@@ -10,8 +10,9 @@ import javax.crypto.KeyAgreement;
 
 public enum KeyExchType {
 	DH(1),//128
-//	JFK(2),
-	ECDHP256(4, "ECDH", "secp256r1", 91, 32);
+	JFKi(2),
+	JFKr(4),
+	ECDHP256(8, "ECDH", "secp256r1", 91, 32);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;

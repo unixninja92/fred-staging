@@ -16,13 +16,13 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.crypto.engines.AESEngine;
+import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.engines.AESLightEngine;
-import org.bouncycastle.util.Arrays;
 
 import com.db4o.ObjectContainer;
 
 import freenet.support.api.Bucket;
+import freenet.support.api.BucketFactory;
 import freenet.support.io.ArrayBucketFactory;
 
 public final class CryptBucket implements Bucket {
@@ -39,29 +39,39 @@ public final class CryptBucket implements Bucket {
   //FIXME make per type
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
     
-    public CryptBucket(long size) throws NoSuchAlgorithmException, IOException{
+    public CryptBucket(long size) throws IOException{
     	this(defaultType, size);
     }
     
-    public CryptBucket(CryptBucketType type, long size) throws IOException, NoSuchAlgorithmException{
-    	this.type = type;
-    	ArrayBucketFactory bf = new ArrayBucketFactory();
-    	this.underlying = bf.makeBucket(size);
-    	KeyGenerator kg = KeyGenerator.getInstance(type.cipherName, 
-    			PreferredAlgorithms.keyGenProviders.get(type.cipherName));
-    	kg.init(type.keySize);
-    	this.key = kg.generateKey();
-    	this.readOnly = false;
+    public CryptBucket(CryptBucketType type, long size) throws IOException{
+    	this(type, new ArrayBucketFactory(), size);
+    }
+    
+    private CryptBucket(CryptBucketType type, BucketFactory bf, long size) throws IOException{
+    	this(type, bf.makeBucket(size));
     }
     
     public CryptBucket(Bucket underlying, byte[] key){
-    	this(defaultType, underlying, key, false);
+    	this(defaultType, underlying, new SecretKeySpec(key, "AES"), false);
     }
     
-    public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key, boolean readOnly) {
+    public CryptBucket(CryptBucketType type, Bucket underlying){
+    	this(type, underlying, null, false);
+		try {
+			KeyGenerator kg = KeyGenerator.getInstance(type.cipherName, 
+					PreferredAlgorithms.keyGenProviders.get(type.cipherName));
+	    	kg.init(type.keySize);
+	    	this.key = kg.generateKey();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
+    
+    public CryptBucket(CryptBucketType type, Bucket underlying, SecretKey key, boolean readOnly) {
     	this.type = type;
         this.underlying = underlying;
-        this.key = new SecretKeySpec(key, "AES");
+        this.key = key;
         this.readOnly = readOnly;
     }
     
@@ -154,7 +164,7 @@ public final class CryptBucket implements Bucket {
 			nonce[0] &= 0x7F;
 
 			return new AEADOutputStream(underlying.getOutputStream(), 
-					key.getEncoded(), nonce, new AESEngine(), 
+					key.getEncoded(), nonce, new AESFastEngine(), 
 					new AESLightEngine(), isOld);
 		}
         throw new IOException();
@@ -168,7 +178,7 @@ public final class CryptBucket implements Bucket {
 	private final FilterInputStream genInputStream() throws IOException {
         if(type.equals(CryptBucketType.AEADAESOCB) || type.equals(CryptBucketType.AEADAESOCBDraft00)){
         	return new AEADInputStream(underlying.getInputStream(), 
-        			key.getEncoded(), new AESEngine(), new AESLightEngine(), 
+        			key.getEncoded(), new AESFastEngine(), new AESLightEngine(), 
         			type.equals(CryptBucketType.AEADAESOCBDraft00));
         }
         throw new IOException();
