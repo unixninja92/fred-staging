@@ -3,14 +3,17 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
 
@@ -47,7 +50,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	private byte[] hashnR; //N'r
 	private byte[] exponentialI; //Initiators exponential
 	private byte[] exponentialR;//Responders exponential
-	private byte[] sig;
+	private PeerNode peer;
 	private int modulusLength;
 	private KeyExchange underlyingExch; //IDi and IDr
 	
@@ -96,10 +99,11 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	//JFK
-	public KeyExchange(KeyExchType underlying, int nonceSize){
+	public KeyExchange(KeyExchType underlying, int nonceSize, PeerNode pn){
 		type = KeyExchType.JFKi;
 		this.underlyingExch = new KeyExchange(underlying);
 		this.modulusLength = underlyingExch.type.modulusSize;
+		this.peer = pn;
 		
 		nonceI = new byte[nonceSize];
 		rand.nextBytes(nonceI);
@@ -114,6 +118,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		type = KeyExchType.JFKr;
 		this.underlyingExch = new KeyExchange(underlying);
 		this.modulusLength = underlyingExch.type.modulusSize;
+		this.peer = peerNode;
 		this.nonceI = nonceI;
 		this.exponentialI = exponentialI;
 		if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
@@ -245,7 +250,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	//sent by reciver
-	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress){
+	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig){
 		if(type==KeyExchType.JFKr){
 			byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
 			                           sig.length + hashnR.length];
@@ -273,9 +278,44 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	//done by initiator
-	public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] sigR, byte[] authenticator){
+	public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] publicKeyR, byte[] locallyExpectedExponentials, byte[] sigR, byte[] authenticator){
 		this.nonceR = nonceR;
 		this.exponentialR = exponentialR;
+		
+
+		try {
+			CryptSignature sig;
+			if(underlyingExch.type == KeyExchType.DH){
+				if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
+						new NativeBigInteger(1,exponentialR))){
+					Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
+				}
+				sig = new CryptSignature(SigType.DSA, publicKeyR);
+				if(!sig.verify(sigR, locallyExpectedExponentials)){
+					Logger.error(this, "The signature verification has failed in JFK(2)!! "+peer.getPeer());
+					return;
+				}
+			} else{
+				sig = new CryptSignature(PreferredAlgorithms.preferredSignature, publicKeyR);
+				if(!sig.verify(sigR, locallyExpectedExponentials)){
+			    	  Logger.error(this, "The ECDSA signature verification has failed in JFK(2)!! "+peer.getPeer());
+		              if(logDEBUG) Logger.debug(this, "Expected signature on "+HexUtil.bytesToHex(exponentialR)+
+		            		  " with "+HexUtil.bytesToHex(publicKeyR)+
+		            		  " signature "+HexUtil.bytesToHex(sigR));
+		              return;
+				}
+			}
+		} catch (GeneralSecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CryptFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		
 	}
 	

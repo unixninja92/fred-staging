@@ -3,6 +3,7 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
@@ -11,6 +12,7 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.ECPrivateKey;
@@ -19,6 +21,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+
+import org.bouncycastle.crypto.util.PublicKeyFactory;
 
 import net.i2p.util.NativeBigInteger;
 import freenet.node.FSParseException;
@@ -30,8 +34,11 @@ public final class CryptSignature{
 	private static final SigType defaultType = 
 			PreferredAlgorithms.preferredSignature;
 	
+	private boolean verifyOnly;
+	
 	private final SigType type;
 	private KeyPair keys;
+	private PublicKey pubK;
 	private Signature sig;
 	
 	/** Length of signature parameters R and S */
@@ -72,12 +79,36 @@ public final class CryptSignature{
 				e.printStackTrace();
 			}
 		}
+		verifyOnly = false;
+	}
+	
+	public CryptSignature(SigType type, byte[] publicKey) throws IOException, CryptFormatException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException{
+		this.type = type;
+		random = PreferredAlgorithms.random;
+		dsaGroup = Global.DSAgroupBigA;
+		verifyOnly = true;
+		if(type.name()=="DSA"){
+			dsaPrivK = null;
+			dsaPubK = new DSAPublicKey(publicKey);
+		}
+		else{
+            KeyFactory kf = KeyFactory.getInstance(
+            		PreferredAlgorithms.preferredKeyPairGen, 
+            		PreferredAlgorithms.keyPairProvider);
+			X509EncodedKeySpec xks = new X509EncodedKeySpec(publicKey);
+            ECPublicKey pubK = (ECPublicKey)kf.generatePublic(xks);
+            
+            keys = new KeyPair(pubK, null);
+            
+			sig.initVerify(pubK);
+		}
 	}
 	
 	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{
 		this.type = type;
 		random = null;
 		dsaGroup = null;
+		verifyOnly = false;
         try {
     		byte[] pub = null;
             byte[] pri = null;
@@ -120,6 +151,7 @@ public final class CryptSignature{
 		dsaGroup = group;
 		dsaPrivK = priv;
 		dsaPubK = pub;
+		verifyOnly = false;
 	}
 	
 	public CryptSignature(DSAPrivateKey priv, DSAPublicKey pub){
@@ -132,6 +164,7 @@ public final class CryptSignature{
 		dsaGroup = Global.DSAgroupBigA;
 		dsaPrivK = new DSAPrivateKey(dsaGroup, random);
 		dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
+		verifyOnly = false;
 	}
 	
 	public void addByte(byte input){
@@ -172,34 +205,39 @@ public final class CryptSignature{
 	
 	public byte[] sign(byte[]... data) {
         byte[] result = null;
-        if(type == SigType.DSA){
-        	DSASignature sig = signToDSASignature(data);
-        	result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
-        	System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
-            System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+        if(!verifyOnly){
+        	if(type == SigType.DSA){
+        		DSASignature sig = signToDSASignature(data);
+        		result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
+        		System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
+        		System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+        	}
+        	else{
+        		try{
+        			while(true) {
+        				sig.initSign(keys.getPrivate());
+        				for(byte[] b: data){
+        					addBytes(b);
+        				}
+        				result = sig.sign();
+        				// It's a DER encoded signature, most sigs will fit in N bytes
+        				// If it doesn't let's re-sign.
+        				if(result.length <= type.maxSigSize)
+        					break;
+        				else
+        					Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
+        			}
+        		} catch(SignatureException e){
+        			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
+        			e.printStackTrace();
+        		} catch (InvalidKeyException e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		}
+        	}
         }
         else{
-        	try{
-        		while(true) {
-        			sig.initSign(keys.getPrivate());
-        			for(byte[] b: data){
-        				addBytes(b);
-        			}
-        			result = sig.sign();
-        			// It's a DER encoded signature, most sigs will fit in N bytes
-        			// If it doesn't let's re-sign.
-        			if(result.length <= type.maxSigSize)
-        				break;
-        			else
-        				Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
-        		}
-        	} catch(SignatureException e){
-        		Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-        		e.printStackTrace();
-        	} catch (InvalidKeyException e) {
-        		// TODO Auto-generated catch block
-        		e.printStackTrace();
-        	}
+        	//TODO log this
         }
         return result;
     }
@@ -210,16 +248,20 @@ public final class CryptSignature{
 	
 	public DSASignature signToDSASignature(BigInteger m){
 		DSASignature result = null;
-        if(type == SigType.DSA){
-        	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
-        }
-        else {
-        	try {
-				throw new Exception();
-			} catch (Exception e) {
-				Logger.error(CryptSignature.class, "Only SigType DSA can return a DSASignature",e);
-				System.out.println("Only SigType DSA can return a DSASignature");
-			}
+        if(!verifyOnly){
+        	if(type == SigType.DSA){
+        		result = DSA.sign(dsaGroup, dsaPrivK, m, random);
+        	}
+        	else {
+        		try {
+        			throw new Exception();
+        		} catch (Exception e) {
+        			Logger.error(CryptSignature.class, "Only SigType DSA can return a DSASignature",e);
+        			System.out.println("Only SigType DSA can return a DSASignature");
+        		}
+        	}
+        } else{
+        	//TODO log this
         }
         return result;
 	}
@@ -231,16 +273,20 @@ public final class CryptSignature{
      */
     public byte[] signToNetworkFormat(byte[]... data) {
         byte[] plainsig = sign(data);
-        int targetLength = type.maxSigSize;
+        if(!verifyOnly){
+        	int targetLength = type.maxSigSize;
 
-        if(plainsig.length != targetLength) {
-            byte[] newData = new byte[targetLength];
-            if(plainsig.length < targetLength) {
-                System.arraycopy(plainsig, 0, newData, 0, plainsig.length);
-            } else {
-                throw new IllegalStateException("Too long!");
-            }
-            plainsig = newData;
+        	if(plainsig.length != targetLength) {
+        		byte[] newData = new byte[targetLength];
+        		if(plainsig.length < targetLength) {
+        			System.arraycopy(plainsig, 0, newData, 0, plainsig.length);
+        		} else {
+        			throw new IllegalStateException("Too long!");
+        		}
+        		plainsig = newData;
+        	}
+        } else{
+        	//TODO log this
         }
         return plainsig;
     }

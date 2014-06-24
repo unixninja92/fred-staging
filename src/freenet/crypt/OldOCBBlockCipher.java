@@ -1,3 +1,5 @@
+/** Copied from Bouncycastle v149/OCBBlockCipher.java. Bouncycastle is MIT X licensed i.e. 
+ * GPL compatible. */
 package freenet.crypt;
 
 import java.util.Vector;
