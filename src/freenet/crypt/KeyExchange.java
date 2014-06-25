@@ -18,10 +18,14 @@ import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
 
+import org.bouncycastle.util.Arrays;
+
 import net.i2p.util.NativeBigInteger;
+import freenet.crypt.ciphers.Rijndael;
 import freenet.io.comm.Peer;
 import freenet.node.NodeCrypto;
 import freenet.node.PeerNode;
+import freenet.support.Fields;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
 
@@ -30,9 +34,10 @@ public class KeyExchange extends KeyAgreementSchemeContext{
     private static final RandomSource rand = PreferredAlgorithms.random;
 	private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
-	
+
+    private KeyExchType type;	
+    
     //ECDH
-    private final KeyExchType type;
 	private KeyAgreement ka;
 	private KeyPair keys;
 	
@@ -54,6 +59,34 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	private PeerNode peer;
 	private int modulusLength;
 	private KeyExchange underlyingExch; //IDi and IDr
+	
+	public byte[] outgoingKey;
+	public byte[] incommingKey;
+	public byte[] jfkKe;
+	public byte[] jfkKa;
+	public byte[] hmacKey;
+	public byte[] ivKey;
+	public byte[] ivNonce;
+	public int ourInitialSeqNum;
+	public int theirInitialSeqNum;
+	public int ourInitialMsgID;
+	public int theirInitialMsgID;
+	
+	/** The following is used in the HMAC calculation of JFK message3 and message4 */
+	private static final byte[] JFK_PREFIX_INITIATOR, JFK_PREFIX_RESPONDER;
+	static {
+		byte[] I = null,R = null;
+		try {
+			I = "I".getBytes("UTF-8");
+			R = "R".getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new Error("Impossible: JVM doesn't support UTF-8: " + e, e);
+		}
+
+		JFK_PREFIX_INITIATOR = I;
+		JFK_PREFIX_RESPONDER = R;
+	}
+	
 	
 	public KeyExchange(){
 		this(defaultType);
@@ -78,12 +111,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		else{
 			try {
 				ka = type.get();
-
-				KeyPairGenerator kg = KeyPairGenerator.getInstance(
-						PreferredAlgorithms.preferredKeyPairGen, 
-						PreferredAlgorithms.keyPairProvider);
-				kg.initialize(type.getSpec());
-				keys = kg.generateKeyPair();
+				
+				keys = KeyUtils.genKeyPair(type.sigType.keyType);
 
 				ka.init(keys.getPrivate());	
 			} catch (NoSuchAlgorithmException e) {
@@ -115,26 +144,11 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		exponentialI = underlyingExch.getPublicKeyNetworkFormat();
 	}
 	
-	public KeyExchange(KeyExchType underlying, int nonceSize, byte[] nonceI, byte[] exponentialI, PeerNode peerNode){
+	//process message 1
+	public KeyExchange(KeyExchType underlying, PeerNode peerNode, int nonceSize, byte[] nonceI, byte[] exponentialI){
+		this(underlying, nonceSize, peerNode);
 		type = KeyExchType.JFKr;
-		this.underlyingExch = new KeyExchange(underlying);
-		this.modulusLength = underlyingExch.type.modulusSize;
-		this.peer = peerNode;
-		this.nonceI = nonceI;
-		this.exponentialI = exponentialI;
-		if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
-				new NativeBigInteger(1,exponentialI))){
-			Logger.error(this, "We can't accept the exponential "+peerNode+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
-		}
-		
-		this.nonceR = new byte[nonceSize];
-		rand.nextBytes(nonceR);
-		
-		Hash hash = new Hash();
-		hashnR = hash.getHash(nonceR);
-		
-		exponentialR = underlyingExch.getPublicKeyNetworkFormat();
-		//TODO set sig
+		this.processMessage1(nonceSize, nonceI, exponentialI);
 	}
 	
 	//DH
@@ -235,14 +249,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			return getSharedSecrect(new NativeBigInteger(1, peerExponential));
 		}
 		else{
-			try {
-				return getSharedSecrect(KeyUtils.getPublicKey(peerExponential));
-			} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			return getSharedSecrect(KeyUtils.getPublicKey(peerExponential));
 		}
-		return null;
 	}
 	
 	@Deprecated
@@ -258,15 +266,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	 * @param what: what kind of key
 	 * @return
 	 */
-	public final byte[] getSharedSecrect(String what) {
-		byte[] exponential;
-		
-		if(type == KeyExchType.JFKi){
-			exponential = underlyingExch.getSharedSecrect(exponentialR);
-		}else{
-			exponential = underlyingExch.getSharedSecrect(exponentialI);
-		}
-		
+	public final byte[] getSharedSecrect(byte[] exponential, String what) {
 		assert("0".equals(what) || "1".equals(what) || "2".equals(what) || "3".equals(what)
 				|| "4".equals(what) || "5".equals(what) || "6".equals(what) || "7".equals(what));
 		byte[] number = null;
@@ -303,7 +303,25 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return null;
 	}
 	
-	//sent by reciver
+	//for receiver
+	public final void processMessage1(int nonceSize, byte[] nonceI, byte[] exponentialI){
+		this.nonceI = nonceI;
+		this.exponentialI = exponentialI;
+		if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
+				new NativeBigInteger(1,exponentialI))){
+			Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
+		}
+		
+		this.nonceR = new byte[nonceSize];
+		rand.nextBytes(nonceR);
+		
+		Hash hash = new Hash();
+		hashnR = hash.getHash(nonceR);
+		
+		exponentialR = underlyingExch.getPublicKeyNetworkFormat();
+	}
+	
+	//sent by receiver
 	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig){
 		if(type==KeyExchType.JFKr){
 			byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
@@ -364,15 +382,117 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		}
 	}
 	
-//	public byte[] genMessage3(byte[] sig){
-//		final byte[] message3 = new byte[nonceI.length*2 + // nI, nR
-//				                           modulusLength*2 + // g^i, g^r
-//				                           hashnI.length + // authenticator
-//				                           hashnI.length + // HMAC(cyphertext)
-//				                           (c.getBlockSize() >> 3) + // IV
-//				                           sig.length + // Signature
-//				                           data.length]; // The bootid+noderef
-//	}
+	//send by initiator 
+	public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, byte[] authenticator){
+		BlockCipher c = null;
+		try { c = new Rijndael(256, 256); } catch (UnsupportedCipherException e) { throw new RuntimeException(e); }
+		
+		byte[] data = new byte[8 + 8 + ref.length];
+		int ptr = 0;
+		System.arraycopy(Fields.longToBytes(trackerID), 0, data, ptr, 8);
+		ptr += 8;
+		if(logMINOR) Logger.minor(this, "Sending tracker ID "+trackerID+" in JFK(3)");
+		System.arraycopy(Fields.longToBytes(bootID), 0, data, ptr, 8);
+		ptr += 8;
+		System.arraycopy(ref, 0, data, ptr, ref.length);
+		final byte[] message3 = new byte[nonceI.length*2 + // nI, nR
+				                           modulusLength*2 + // g^i, g^r
+				                           hashnI.length + // authenticator
+				                           hashnI.length + // HMAC(cyphertext)
+				                           (c.getBlockSize() >> 3) + // IV
+				                           sig.length + // Signature
+				                           data.length]; // The bootid+noderef'
+		
+		
+		int offset = 0;
+		// Ni
+		System.arraycopy(nonceI, 0, message3, offset, nonceI.length);
+		offset += nonceI.length;
+		if(logDEBUG) Logger.debug(this, "We are sending Ni : " + HexUtil.bytesToHex(nonceI));
+		// Nr
+		System.arraycopy(nonceR, 0, message3, offset, nonceR.length);
+		offset += nonceR.length;
+		// g^i
+		System.arraycopy(exponentialI, 0,message3, offset, exponentialI.length);
+		offset += exponentialI.length;
+		// g^r
+		System.arraycopy(exponentialR, 0,message3, offset, exponentialR.length);
+		offset += exponentialR.length;
+
+		// Authenticator
+		System.arraycopy(authenticator, 0, message3, offset, authenticator.length);
+		offset += authenticator.length;
+		
+		byte[] computedExponential;
+		if(type == KeyExchType.JFKi){
+			computedExponential = underlyingExch.getSharedSecrect(exponentialR);
+		}else{
+			computedExponential = underlyingExch.getSharedSecrect(exponentialI);
+		}
+		
+		outgoingKey = getSharedSecrect(computedExponential, "0");
+		incommingKey = getSharedSecrect(computedExponential, "7");
+		jfkKe = getSharedSecrect(computedExponential, "1");
+		jfkKa = getSharedSecrect(computedExponential, "2");
+
+		hmacKey = getSharedSecrect(computedExponential, "3");
+		ivKey = getSharedSecrect(computedExponential, "4");
+		ivNonce = getSharedSecrect(computedExponential, "5");
+		
+		byte[] sharedData = getSharedSecrect(computedExponential, "6");
+	    Arrays.fill(computedExponential, (byte)0);
+	    ourInitialSeqNum = ((sharedData[0] & 0xFF) << 24)
+	    		| ((sharedData[1] & 0xFF) << 16)
+	    		| ((sharedData[2] & 0xFF) << 8)
+	    		| (sharedData[3] & 0xFF);
+	    theirInitialSeqNum = ((sharedData[4] & 0xFF) << 24)
+	    		| ((sharedData[5] & 0xFF) << 16)
+	    		| ((sharedData[6] & 0xFF) << 8)
+	    		| (sharedData[7] & 0xFF);
+
+	    ourInitialMsgID = ((sharedData[8] & 0xFF) << 24)
+	    		| ((sharedData[9] & 0xFF) << 16)
+	    		| ((sharedData[10] & 0xFF) << 8)
+	    		| (sharedData[11] & 0xFF);
+	    theirInitialMsgID = ((sharedData[12] & 0xFF) << 24)
+	    		| ((sharedData[13] & 0xFF) << 16)
+	    		| ((sharedData[14] & 0xFF) << 8)
+	    		| (sharedData[15] & 0xFF);
+		
+	    
+	    c.initialize(jfkKe);
+		int ivLength = PCFBMode.lengthIV(c);
+		byte[] iv = new byte[ivLength];
+		PreferredAlgorithms.random.nextBytes(iv);
+		PCFBMode pcfb = PCFBMode.create(c, iv);
+		
+		int cleartextOffset = 0;
+		byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivLength + sig.length + data.length];
+		System.arraycopy(JFK_PREFIX_INITIATOR, 0, cleartext, cleartextOffset, JFK_PREFIX_INITIATOR.length);
+		cleartextOffset += JFK_PREFIX_INITIATOR.length;
+		System.arraycopy(iv, 0, cleartext, cleartextOffset, ivLength);
+		cleartextOffset += ivLength;
+		System.arraycopy(sig, 0, cleartext, cleartextOffset, sig.length);
+		cleartextOffset += sig.length;
+		System.arraycopy(data, 0, cleartext, cleartextOffset, data.length);
+		cleartextOffset += data.length;
+
+		int cleartextToEncypherOffset = JFK_PREFIX_INITIATOR.length + ivLength;
+		pcfb.blockEncipher(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
+
+		// We compute the HMAC of (prefix + cyphertext) Includes the IV!
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
+		byte[] hmac = mac.getMAC(cleartext);
+
+		// copy stuffs back to the message
+		System.arraycopy(hmac, 0, message3, offset, hmac.length);
+		offset += hmac.length;
+		System.arraycopy(iv, 0, message3, offset, ivLength);
+		offset += ivLength;
+		System.arraycopy(cleartext, cleartextToEncypherOffset, message3, offset, cleartext.length-cleartextToEncypherOffset);
+
+		return message3;
+	}
 	
 	
 	/*

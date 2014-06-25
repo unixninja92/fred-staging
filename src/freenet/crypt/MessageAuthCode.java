@@ -23,11 +23,11 @@ public final class MessageAuthCode {
 	private SecretKey key;
 	private IvParameterSpec iv;
 	
-	public MessageAuthCode() throws NoSuchAlgorithmException{
+	public MessageAuthCode(){
 		this(defaultType);
 	}
 	
-	public MessageAuthCode(MACType type) throws NoSuchAlgorithmException {
+	public MessageAuthCode(MACType type){
 		this(type, KeyUtils.genSecretKey(type.keyType));
 	}
 	

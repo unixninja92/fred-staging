@@ -8,15 +8,16 @@ public enum CryptBucketType {
 	RigndaelECB(2, "Rijndael", 256, 128),
 	RijndaelCTR(4, "Rijndael", 256, 128),
 	RijndaelPCFB(8, "Rijndael", 256),
-	AESCTR(16, "AES", 256, "AES/CTR/NOPADDING"),
-	AEADAESOCBDraft00(32, "AES", 128),
-	AEADAESOCB(64, "AES", 128);
+	AESCTR(16, "AES", 256, "AES/CTR/NOPADDING", KeyType.AES256),
+	AEADAESOCBDraft00(32, "AES", 128, KeyType.AES256),
+	AEADAESOCB(64, "AES", 128, KeyType.AES256);
 	
 	public final int bitmask;
 	public final int keySize;
 	public final int blockSize;
 	public final String algName;
 	public final String cipherName;
+	public final KeyType keyType;
 	
 	CryptBucketType(int bitmask, String cipherName, int keySize){
 		this.bitmask = bitmask;
@@ -24,6 +25,16 @@ public enum CryptBucketType {
 		this.keySize = keySize;
 		this.blockSize = keySize;
 		algName = name();
+		keyType = null;
+	}
+	
+	CryptBucketType(int bitmask, String cipherName, int keySize, KeyType keyType){
+		this.bitmask = bitmask;
+		this.cipherName = cipherName;
+		this.keySize = keySize;
+		this.blockSize = keySize;
+		algName = name();
+		this.keyType = keyType;
 	}
 	
 	CryptBucketType(int bitmask, String cipherName, int keySize, int blockSize){
@@ -32,14 +43,16 @@ public enum CryptBucketType {
 		this.keySize = keySize;
 		this.blockSize = blockSize;
 		algName = name();
+		keyType = null;
 	}
 	
-	CryptBucketType(int bitmask, String cipherName, int keySize, String algName){
+	CryptBucketType(int bitmask, String cipherName, int keySize, String algName, KeyType keyType){
 		this.bitmask = bitmask;
 		this.cipherName = cipherName;
 		this.keySize = keySize;
 		this.blockSize = keySize;
 		this.algName = algName;
+		this.keyType = keyType;
 	}
 	
 }
