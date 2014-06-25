@@ -22,22 +22,24 @@ public class SymmetricOutputStream extends FilterOutputStream {
 	
 	private BlockCipher bCipher;
 	private PCFBMode pcfb;
-	private byte[] iv;
+	private byte[] plainText;
 
-	public SymmetricOutputStream(OutputStream out, CryptBucketType type, byte[] key, byte[] nonce) throws NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedCipherException, InvalidKeyException {
+	public SymmetricOutputStream(OutputStream out, CryptBucketType type, byte[] key, byte[] iv) throws NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedCipherException, InvalidKeyException, IOException {
 		super(out);
+		out.write(iv);
 		this.type = type;
 		if(type.cipherName == "AES"){
 			cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
-			cipher.init(0, KeyUtils.getSecretKey(key, type.keyType));
+			//FIXME should gen with IV
+//			cipher.init(0, KeyUtils.getSecretKey(key, type.keyType));
 		}
 		else if(type == CryptBucketType.RijndaelPCFB){
 			bCipher = new Rijndael(type.keySize, type.blockSize);
 			bCipher.initialize(key);
-			int ivLength = PCFBMode.lengthIV(bCipher);
-			byte[] iv = new byte[ivLength];
-			PreferredAlgorithms.random.nextBytes(iv);
+			
 			pcfb = PCFBMode.create(bCipher, iv);
+			
+			plainText = new byte[0];
 		}
 	}
 	
@@ -55,24 +57,35 @@ public class SymmetricOutputStream extends FilterOutputStream {
     public void write(byte[] buf, int offset, int length) throws IOException {
     	byte[] output = null;
     	if(type.cipherName == "AES"){
-    		try {
-        		output = new byte[cipher.getOutputSize(length)];
-				cipher.doFinal(buf, offset, length, output, 0);
-			} catch (ShortBufferException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalBlockSizeException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (BadPaddingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+    		output = cipher.update(buf, offset, length);
     	}
     	else if(type == CryptBucketType.RijndaelPCFB){
-    		output = pcfb.blockEncipher(buf, offset, length);
+    		byte[] first = new byte[plainText.length];
+    		System.arraycopy(plainText, 0, first, 0, plainText.length);
+    		plainText = new byte[first.length+length];
+    		return;
     	}
 		out.write(output);
     }
 
+    @Override
+    public void close() throws IOException {
+        byte[] output = null;
+    	if(type.cipherName == "AES"){
+    		output = new byte[cipher.getOutputSize(0)];
+    		try {
+    			cipher.doFinal(output, 0);
+    		} catch (IllegalBlockSizeException | ShortBufferException | 
+    				BadPaddingException e) {
+    			// Impossible???
+    			throw new RuntimeException("Impossible: "+e);
+    		}
+    	}
+		else if(type == CryptBucketType.RijndaelPCFB){
+			output = pcfb.blockEncipher(plainText, 0, plainText.length);
+			
+		}
+        out.write(output);
+        out.close();
+    }
 }

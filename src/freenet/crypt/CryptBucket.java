@@ -9,10 +9,12 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -167,6 +169,18 @@ public final class CryptBucket implements Bucket {
 					key.getEncoded(), nonce, new AESFastEngine(), 
 					new AESLightEngine(), isOld);
 		}
+		else{
+			byte[] iv = new byte[type.blockSize >> 3];
+			rand.nextBytes(iv);
+			
+			try {
+				return new SymmetricOutputStream(underlying.getOutputStream(), type, key.getEncoded(), iv);
+			} catch (InvalidKeyException | NoSuchAlgorithmException
+					| NoSuchPaddingException | UnsupportedCipherException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
         throw new IOException();
 	}
 	
@@ -180,6 +194,15 @@ public final class CryptBucket implements Bucket {
         	return new AEADInputStream(underlying.getInputStream(), 
         			key.getEncoded(), new AESFastEngine(), new AESLightEngine(), 
         			type.equals(CryptBucketType.AEADAESOCBDraft00));
+        }
+        else{
+        	try {
+				return new SymmetricInputStream(underlying.getInputStream(), type, key.getEncoded(), type.blockSize >> 3);
+			} catch (InvalidKeyException | NoSuchAlgorithmException
+					| NoSuchPaddingException | UnsupportedCipherException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
         throw new IOException();
 	}
