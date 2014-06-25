@@ -30,7 +30,7 @@ public class SymmetricOutputStream extends FilterOutputStream {
 		this.type = type;
 		if(type.cipherName == "AES"){
 			cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
-			//FIXME should gen with IV
+			//FIXME should init with IV
 //			cipher.init(0, KeyUtils.getSecretKey(key, type.keyType));
 		}
 		else if(type == CryptBucketType.RijndaelPCFB){

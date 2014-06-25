@@ -340,7 +340,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 
 			MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
 
-			byte[] authenticator = mac.getMAC(assembleJFKAuthenticator(exponentialR, exponentialI, nonceR, nonceI, replyToAddress));
+			byte[] authenticator = mac.getMAC(assembleJFKAuthenticator(replyToAddress));
 
 			System.arraycopy(authenticator, 0, message2, offset, hashnR.length);
 
@@ -384,8 +384,10 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	
 	//send by initiator 
 	public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, byte[] authenticator){
-		BlockCipher c = null;
-		try { c = new Rijndael(256, 256); } catch (UnsupportedCipherException e) { throw new RuntimeException(e); }
+//		BlockCipher c = null;
+//		try { c = new Rijndael(256, 256); } catch (UnsupportedCipherException e) { throw new RuntimeException(e); }
+		int blockSize = CryptBucketType.RijndaelPCFB.blockSize;
+		int ivSize = blockSize >> 3;
 		
 		byte[] data = new byte[8 + 8 + ref.length];
 		int ptr = 0;
@@ -399,7 +401,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 				                           modulusLength*2 + // g^i, g^r
 				                           hashnI.length + // authenticator
 				                           hashnI.length + // HMAC(cyphertext)
-				                           (c.getBlockSize() >> 3) + // IV
+				                           ivSize + // IV
 				                           sig.length + // Signature
 				                           data.length]; // The bootid+noderef'
 		
@@ -459,37 +461,44 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	    		| ((sharedData[14] & 0xFF) << 8)
 	    		| (sharedData[15] & 0xFF);
 		
-	    
-	    c.initialize(jfkKe);
-		int ivLength = PCFBMode.lengthIV(c);
-		byte[] iv = new byte[ivLength];
+		byte[] iv = new byte[ivSize];
 		PreferredAlgorithms.random.nextBytes(iv);
-		PCFBMode pcfb = PCFBMode.create(c, iv);
 		
 		int cleartextOffset = 0;
-		byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivLength + sig.length + data.length];
+		byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivSize + sig.length + data.length];
 		System.arraycopy(JFK_PREFIX_INITIATOR, 0, cleartext, cleartextOffset, JFK_PREFIX_INITIATOR.length);
 		cleartextOffset += JFK_PREFIX_INITIATOR.length;
-		System.arraycopy(iv, 0, cleartext, cleartextOffset, ivLength);
-		cleartextOffset += ivLength;
+		System.arraycopy(iv, 0, cleartext, cleartextOffset, ivSize);
+		cleartextOffset += ivSize;
 		System.arraycopy(sig, 0, cleartext, cleartextOffset, sig.length);
 		cleartextOffset += sig.length;
 		System.arraycopy(data, 0, cleartext, cleartextOffset, data.length);
 		cleartextOffset += data.length;
 
-		int cleartextToEncypherOffset = JFK_PREFIX_INITIATOR.length + ivLength;
-		pcfb.blockEncipher(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
-
+		int cleartextToEncypherOffset = JFK_PREFIX_INITIATOR.length + ivSize;
+		
+		byte[] ciphertext = null;
+	    try {
+	    	CryptBucket cb = new CryptBucket(CryptBucketType.RijndaelPCFB, cleartext.length, jfkKe);
+		    cb.setIV(iv);
+			cb.addBytes(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
+			cb.encrypt();
+			ciphertext = cb.toByteArray();
+	    } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		// We compute the HMAC of (prefix + cyphertext) Includes the IV!
 		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
-		byte[] hmac = mac.getMAC(cleartext);
+		byte[] hmac = mac.getMAC(ciphertext);
 
 		// copy stuffs back to the message
 		System.arraycopy(hmac, 0, message3, offset, hmac.length);
 		offset += hmac.length;
-		System.arraycopy(iv, 0, message3, offset, ivLength);
-		offset += ivLength;
-		System.arraycopy(cleartext, cleartextToEncypherOffset, message3, offset, cleartext.length-cleartextToEncypherOffset);
+		System.arraycopy(iv, 0, message3, offset, ivSize);
+		offset += ivSize;
+		System.arraycopy(ciphertext, cleartextToEncypherOffset, message3, offset, ciphertext.length-cleartextToEncypherOffset);
 
 		return message3;
 	}
@@ -501,18 +510,19 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	 * used by the responder to verify that the round-trip has been done
 	 *
 	 */
-	private byte[] assembleJFKAuthenticator(byte[] gR, byte[] gI, byte[] nR, byte[] nI, byte[] address) {
-		byte[] authData=new byte[gR.length + gI.length + nR.length + nI.length + address.length];
+	private byte[] assembleJFKAuthenticator(byte[] address) {
+		byte[] authData=new byte[exponentialR.length + exponentialI.length + 
+		                         nonceR.length + nonceI.length + address.length];
 		int offset = 0;
 
-		System.arraycopy(gR, 0, authData, offset ,gR.length);
-		offset += gR.length;
-		System.arraycopy(gI, 0, authData, offset, gI.length);
-		offset += gI.length;
-		System.arraycopy(nR, 0,authData, offset, nR.length);
-		offset += nR.length;
-		System.arraycopy(nI, 0,authData, offset, nI.length);
-		offset += nI.length;
+		System.arraycopy(exponentialR, 0, authData, offset ,exponentialR.length);
+		offset += exponentialR.length;
+		System.arraycopy(exponentialI, 0, authData, offset, exponentialI.length);
+		offset += exponentialI.length;
+		System.arraycopy(nonceR, 0,authData, offset, nonceR.length);
+		offset += nonceR.length;
+		System.arraycopy(nonceI, 0,authData, offset, nonceI.length);
+		offset += nonceI.length;
 		System.arraycopy(address, 0, authData, offset, address.length);
 
 		return authData;

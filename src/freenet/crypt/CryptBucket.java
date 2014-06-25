@@ -25,6 +25,7 @@ import com.db4o.ObjectContainer;
 
 import freenet.support.api.Bucket;
 import freenet.support.api.BucketFactory;
+import freenet.support.io.ArrayBucket;
 import freenet.support.io.ArrayBucketFactory;
 
 public final class CryptBucket implements Bucket {
@@ -34,6 +35,7 @@ public final class CryptBucket implements Bucket {
 	private final Bucket underlying;
     private SecretKey key;
     private boolean readOnly;
+    private byte[] iv = null;
     
 //    private FilterInputStream is;
     private FilterOutputStream outStream;
@@ -45,6 +47,10 @@ public final class CryptBucket implements Bucket {
     	this(defaultType, size);
     }
     
+    public CryptBucket(CryptBucketType type, long size, byte[] key) throws IOException{
+    	this(type, new ArrayBucketFactory(), size, key);
+    }
+    
     public CryptBucket(CryptBucketType type, long size) throws IOException{
     	this(type, new ArrayBucketFactory(), size);
     }
@@ -53,21 +59,20 @@ public final class CryptBucket implements Bucket {
     	this(type, bf.makeBucket(size));
     }
     
+    private CryptBucket(CryptBucketType type, BucketFactory bf, long size, byte[] key) throws IOException{
+    	this(type, bf.makeBucket(size), key);
+    }
+    
     public CryptBucket(Bucket underlying, byte[] key){
-    	this(defaultType, underlying, new SecretKeySpec(key, "AES"), false);
+    	this(defaultType, underlying, key);
+    }
+    
+    public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key){
+    	this(type, underlying, KeyUtils.getSecretKey(key, type.keyType), false);
     }
     
     public CryptBucket(CryptBucketType type, Bucket underlying){
-    	this(type, underlying, null, false);
-		try {
-			KeyGenerator kg = KeyGenerator.getInstance(type.cipherName, 
-					PreferredAlgorithms.keyGenProviders.get(type.cipherName));
-	    	kg.init(type.keySize);
-	    	this.key = kg.generateKey();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    	this(type, underlying, KeyUtils.genSecretKey(type.keyType), false);
     }
     
     public CryptBucket(CryptBucketType type, Bucket underlying, SecretKey key, boolean readOnly) {
@@ -170,8 +175,10 @@ public final class CryptBucket implements Bucket {
 					new AESLightEngine(), isOld);
 		}
 		else{
-			byte[] iv = new byte[type.blockSize >> 3];
-			rand.nextBytes(iv);
+			if(iv == null){
+				iv = new byte[type.blockSize >> 3];
+				rand.nextBytes(iv);
+			}
 			
 			try {
 				return new SymmetricOutputStream(underlying.getOutputStream(), type, key.getEncoded(), iv);
@@ -227,6 +234,14 @@ public final class CryptBucket implements Bucket {
 		this.readOnly = true;
 	}
 	
+	public final byte[] getIV(){
+		return iv;
+	}
+	
+	public final void setIV(byte[] iv){
+		this.iv = iv;
+	}
+	
 	@Override
 	public final void free() {
         underlying.free();
@@ -250,5 +265,9 @@ public final class CryptBucket implements Bucket {
         CryptBucket ret = new CryptBucket(undershadow, key.getEncoded());
         ret.setReadOnly();
 		return ret;
+	}
+	
+	public byte[] toByteArray(){
+		return ((ArrayBucket)underlying).toByteArray();
 	}
 }
