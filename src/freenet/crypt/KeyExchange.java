@@ -594,6 +594,10 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return data;
 	}
 	
+//	public byte[] genMessage4(byte[] identity, byte[] refs, byte[] sig){
+//		
+//	}
+	
 	
 	/*
 	 * Assemble what will be the jfk-Authenticator :

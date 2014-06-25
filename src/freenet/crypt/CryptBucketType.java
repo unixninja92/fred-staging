@@ -6,11 +6,11 @@ package freenet.crypt;
 public enum CryptBucketType {
 	RijndaelECB(1, "Rijndael", 256),
 	RigndaelECB(2, "Rijndael", 256, 128),
-	RijndaelCTR(4, "Rijndael", 256, 128),
+	RijndaelCTR(4, "Rijndael", 256),
 	RijndaelPCFB(8, "Rijndael", 256),
-	AESCTR(16, "AES", 256, "AES/CTR/NOPADDING", KeyType.AES256),
-	AEADAESOCBDraft00(32, "AES", 128, KeyType.AES256),
-	AEADAESOCB(64, "AES", 128, KeyType.AES256);
+	AESCTR(16, "AES", "AES/CTR/NOPADDING", KeyType.AES256),
+	AEADAESOCBDraft00(32, "AES", KeyType.AES128),
+	AEADAESOCB(64, "AES", KeyType.AES128);
 	
 	public final int bitmask;
 	public final int keySize;
@@ -28,10 +28,10 @@ public enum CryptBucketType {
 		keyType = null;
 	}
 	
-	CryptBucketType(int bitmask, String cipherName, int keySize, KeyType keyType){
+	CryptBucketType(int bitmask, String cipherName, KeyType keyType){
 		this.bitmask = bitmask;
 		this.cipherName = cipherName;
-		this.keySize = keySize;
+		this.keySize = keyType.keySize;
 		this.blockSize = keySize;
 		algName = name();
 		this.keyType = keyType;
@@ -46,10 +46,10 @@ public enum CryptBucketType {
 		keyType = null;
 	}
 	
-	CryptBucketType(int bitmask, String cipherName, int keySize, String algName, KeyType keyType){
+	CryptBucketType(int bitmask, String cipherName, String algName, KeyType keyType){
 		this.bitmask = bitmask;
 		this.cipherName = cipherName;
-		this.keySize = keySize;
+		this.keySize = keyType.keySize;
 		this.blockSize = keySize;
 		this.algName = algName;
 		this.keyType = keyType;
