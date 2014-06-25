@@ -12,6 +12,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 
@@ -169,14 +170,14 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * 
      * **THE OUTPUT SHOULD ALWAYS GO THROUGH A KDF**
      */
-	public byte[] getSharedSecrect(ECPublicKey peerExponential){
+	public byte[] getSharedSecrect(PublicKey publicKey){
 		byte[] sharedKey = null;
 		synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
 		}
 
 		try {
-			ka.doPhase(peerExponential, true);
+			ka.doPhase(publicKey, true);
 			sharedKey = ka.generateSecret();
 		} catch (InvalidKeyException e) {
 			Logger.error(this, "InvalidKeyException : "+e.getMessage(),e);
@@ -190,7 +191,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 				Logger.debug(
 						this,
 						"Peer's exponential: "
-								+ HexUtil.bytesToHex(peerExponential.getEncoded()));
+								+ HexUtil.bytesToHex(publicKey.getEncoded()));
 				Logger.debug(this,
 						"SharedSecret = " + HexUtil.bytesToHex(sharedKey));
 			}
@@ -229,10 +230,63 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return sharedSecret.toByteArray();
 	}
 	
+	public byte[] getSharedSecrect(byte[] peerExponential){
+		if(underlyingExch.type == KeyExchType.DH){
+			return getSharedSecrect(new NativeBigInteger(1, peerExponential));
+		}
+		else{
+			try {
+				return getSharedSecrect(KeyUtils.getPublicKey(peerExponential));
+			} catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	
 	@Deprecated
 	public byte[] getHMACKey(NativeBigInteger peerExponential){
 		return getSharedSecrect(peerExponential);
 	}
+	
+	/**
+	 * 
+	 * @param exponential: computedExponential
+	 * @param n'I: nonceInitiatorHashed
+	 * @param nR: nonceResponder
+	 * @param what: what kind of key
+	 * @return
+	 */
+	public final byte[] getSharedSecrect(String what) {
+		byte[] exponential;
+		
+		if(type == KeyExchType.JFKi){
+			exponential = underlyingExch.getSharedSecrect(exponentialR);
+		}else{
+			exponential = underlyingExch.getSharedSecrect(exponentialI);
+		}
+		
+		assert("0".equals(what) || "1".equals(what) || "2".equals(what) || "3".equals(what)
+				|| "4".equals(what) || "5".equals(what) || "6".equals(what) || "7".equals(what));
+		byte[] number = null;
+		try {
+			number = what.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new Error("Impossible: JVM doesn't support UTF-8: " + e, e);
+		}
+
+		byte[] toHash = new byte[hashnI.length + nonceR.length + number.length];
+		int offset = 0;
+		System.arraycopy(hashnI, 0, toHash, offset, hashnI.length);
+		offset += hashnI.length;
+		System.arraycopy(nonceR, 0, toHash, offset, nonceR.length);
+		offset += nonceR.length;
+		System.arraycopy(number, 0, toHash, offset, number.length);
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, exponential);
+		return mac.getMAC(toHash);
+	}
+	
 	
 	//sent by initiator
 	public final byte[] genMessage1(boolean hash, boolean unknownInitiator){
@@ -278,11 +332,10 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	//done by initiator
-	public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] publicKeyR, byte[] locallyExpectedExponentials, byte[] sigR, byte[] authenticator){
+	public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] publicKeyR, byte[] locallyExpectedExponentials, byte[] sigR){
 		this.nonceR = nonceR;
 		this.exponentialR = exponentialR;
 		
-
 		try {
 			CryptSignature sig;
 			if(underlyingExch.type == KeyExchType.DH){
@@ -290,20 +343,14 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 						new NativeBigInteger(1,exponentialR))){
 					Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
 				}
-				sig = new CryptSignature(SigType.DSA, publicKeyR);
-				if(!sig.verify(sigR, locallyExpectedExponentials)){
-					Logger.error(this, "The signature verification has failed in JFK(2)!! "+peer.getPeer());
-					return;
-				}
-			} else{
-				sig = new CryptSignature(PreferredAlgorithms.preferredSignature, publicKeyR);
-				if(!sig.verify(sigR, locallyExpectedExponentials)){
-			    	  Logger.error(this, "The ECDSA signature verification has failed in JFK(2)!! "+peer.getPeer());
-		              if(logDEBUG) Logger.debug(this, "Expected signature on "+HexUtil.bytesToHex(exponentialR)+
-		            		  " with "+HexUtil.bytesToHex(publicKeyR)+
-		            		  " signature "+HexUtil.bytesToHex(sigR));
-		              return;
-				}
+			}
+			sig = new CryptSignature(underlyingExch.type.sigType, publicKeyR);
+			if(!sig.verify(sigR, locallyExpectedExponentials)){
+				Logger.error(this, "The signature verification has failed in JFK(2)!! "+peer.getPeer());
+				if(logDEBUG) Logger.debug(this, "Expected signature on "+HexUtil.bytesToHex(exponentialR)+
+						" with "+HexUtil.bytesToHex(publicKeyR)+
+						" signature "+HexUtil.bytesToHex(sigR));
+				return;
 			}
 		} catch (GeneralSecurityException e) {
 			// TODO Auto-generated catch block
@@ -315,9 +362,17 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
+	
+//	public byte[] genMessage3(byte[] sig){
+//		final byte[] message3 = new byte[nonceI.length*2 + // nI, nR
+//				                           modulusLength*2 + // g^i, g^r
+//				                           hashnI.length + // authenticator
+//				                           hashnI.length + // HMAC(cyphertext)
+//				                           (c.getBlockSize() >> 3) + // IV
+//				                           sig.length + // Signature
+//				                           data.length]; // The bootid+noderef
+//	}
 	
 	
 	/*
@@ -343,34 +398,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return authData;
 	}
 	
-	/**
-	 * 
-	 * @param exponential: computedExponential
-	 * @param nI: nonceInitiatorHashed
-	 * @param nR: nonceResponder
-	 * @param what: what kind of key
-	 * @return
-	 */
-	public static final byte[] computeJFKSharedKey(byte[] exponential, byte[] nI, byte[] nR, String what) {
-		assert("0".equals(what) || "1".equals(what) || "2".equals(what) || "3".equals(what)
-				|| "4".equals(what) || "5".equals(what) || "6".equals(what) || "7".equals(what));
-		byte[] number = null;
-		try {
-			number = what.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new Error("Impossible: JVM doesn't support UTF-8: " + e, e);
-		}
-
-		byte[] toHash = new byte[nI.length + nR.length + number.length];
-		int offset = 0;
-		System.arraycopy(nI, 0, toHash, offset, nI.length);
-		offset += nI.length;
-		System.arraycopy(nR, 0, toHash, offset, nR.length);
-		offset += nR.length;
-		System.arraycopy(number, 0, toHash, offset, number.length);
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, exponential);
-		return mac.getMAC(toHash);
-	}
+	
 	
 	public ECPublicKey getPublicKey() {
         return (ECPublicKey) keys.getPublic();

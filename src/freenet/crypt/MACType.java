@@ -8,25 +8,28 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 
 public enum MACType {
-	HMACSHA1(1, "HMACSHA1"),
-	HMACSHA256(2, "HmacSHA256"),
-	Poly1305(4, "POLY1305-AES", 16);
+	HMACSHA1(1, "HMACSHA1", KeyType.HMACSHA1),
+	HMACSHA256(2, "HmacSHA256", KeyType.HMACSHA256),
+	Poly1305(4, "POLY1305-AES", 16, KeyType.POLY1305);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
 	public final String mac;
 	public final int ivlen;
+	public final KeyType keyType;
 	
-	MACType(int bitmask, String mac){
+	MACType(int bitmask, String mac, KeyType type){
 		this.bitmask = bitmask;
 		this.mac = mac;
 		ivlen = -1;
+		keyType = type;
 	}
 	
-	MACType(int bitmask, String mac, int ivlen){
+	MACType(int bitmask, String mac, int ivlen, KeyType type){
 		this.bitmask = bitmask;
 		this.mac = mac;
 		this.ivlen = ivlen;
+		keyType = type;
 	}
 	
 	public final Mac get() throws NoSuchAlgorithmException{

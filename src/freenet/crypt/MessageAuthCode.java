@@ -28,11 +28,11 @@ public final class MessageAuthCode {
 	}
 	
 	public MessageAuthCode(MACType type) throws NoSuchAlgorithmException {
-		this(type, KeyGenerator.getInstance(defaultType.mac).generateKey());
+		this(type, KeyUtils.genSecretKey(type.keyType));
 	}
 	
 	public MessageAuthCode(MACType type, byte[] cryptoKey) {
-		this(type, new SecretKeySpec(cryptoKey, type.mac));	
+		this(type, KeyUtils.getSecretKey(cryptoKey, type.keyType));	
 	}
 	
 	public MessageAuthCode(MACType type, SecretKey cryptoKey) {
@@ -62,11 +62,11 @@ public final class MessageAuthCode {
 	}
 	
 	public MessageAuthCode(byte[] key, byte[] iv){
-		this(new SecretKeySpec(key, defaultType.mac), iv);
+		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
 	}
 	
 	public MessageAuthCode(byte[] key, IvParameterSpec iv){
-		this(new SecretKeySpec(key, defaultType.mac), iv);
+		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
 	}
 	
 	public MessageAuthCode(SecretKey key, byte[] iv){

@@ -9,10 +9,10 @@ import java.security.spec.ECGenParameterSpec;
 import javax.crypto.KeyAgreement;
 
 public enum KeyExchType {
-	DH(1),//128
+	DH(1, SigType.DSA),//128
 	JFKi(2),
 	JFKr(4),
-	ECDHP256(8, "ECDH", "secp256r1", 91, 32);
+	ECDHP256(8, "ECDH", "secp256r1", 91, 32, SigType.ECDSAP256);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
@@ -23,6 +23,7 @@ public enum KeyExchType {
 	public final int modulusSize;
     /** Maximum (padded) size of a DER-encoded signature (network-format) */
 	public final int maxSigSize;
+	public final SigType sigType;
 	
 	KeyExchType(int bitmask){
 		this.bitmask = bitmask;
@@ -30,14 +31,25 @@ public enum KeyExchType {
 		algName = specName;
 		this.modulusSize = -1;
 		maxSigSize = -1;
+		sigType = null;
 	}
 	
-	KeyExchType(int bitmask, String algName, String specName, int modulusSize, int maxSigSize){
+	KeyExchType(int bitmask, SigType sigType){
+		this.bitmask = bitmask;
+		specName = name();
+		algName = specName;
+		this.modulusSize = -1;
+		maxSigSize = -1;
+		this.sigType = sigType;
+	}
+	
+	KeyExchType(int bitmask, String algName, String specName, int modulusSize, int maxSigSize, SigType sigType){
 		this.bitmask = bitmask;
 		this.algName = algName;
 		this.specName = specName;
 		this.modulusSize = modulusSize;
 		this.maxSigSize = maxSigSize;
+		this.sigType = sigType;
 	}
 	
 	public final KeyAgreement get() throws NoSuchAlgorithmException{

@@ -12,13 +12,13 @@ import java.security.spec.ECGenParameterSpec;
 
 public enum SigType{
 	DSA(1),
-	ECDSAP256(2, "secp256r1", "SHA256withECDSA", 91, 72),
-	ECDSAP384(4, "secp384r1", "SHA384withECDSA", 120, 104),
-	ECDSAP512(8, "secp521r1", "SHA512withECDSA", 158, 139);
+	ECDSAP256(2, KeyPairType.ECP256, "SHA256withECDSA", 91, 72),
+	ECDSAP384(4, KeyPairType.ECP384, "SHA384withECDSA", 120, 104),
+	ECDSAP512(8, KeyPairType.ECP512, "SHA512withECDSA", 158, 139);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
-	public final String specName;
+	public final KeyPairType keyType;
 	/** Name for Signature purposes. Can contain dashes. */
 	public final String algName;
     /** Expected size of a DER encoded pubkey in bytes */
@@ -28,15 +28,15 @@ public enum SigType{
 	
 	SigType(int bitmask){
 		this.bitmask = bitmask;
-		this.specName = null;
+		this.keyType = null;
 		this.algName = this.name();
 		modulusSize = -1;
 		maxSigSize = -1;
 	}
 	
-	SigType(int bitmask, String curve, String alg, int modulus, int maxSize){
+	SigType(int bitmask, KeyPairType curve, String alg, int modulus, int maxSize){
 		this.bitmask = bitmask;
-		specName = curve;
+		keyType = curve;
 		algName = alg;
 		modulusSize = modulus;
 		maxSigSize = maxSize;
@@ -59,7 +59,4 @@ public enum SigType{
 		return new DSASignature(r, s);
 	}
 	
-	public ECGenParameterSpec getSpec(){
-		return new ECGenParameterSpec(specName);
-	}
 }

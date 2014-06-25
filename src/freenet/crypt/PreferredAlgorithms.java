@@ -231,7 +231,7 @@ public final class PreferredAlgorithms{
 		
 		Provider provider = keyPairProvider;//sig.getProvider();
 		
-        ECGenParameterSpec spec = new ECGenParameterSpec(type.specName);
+        ECGenParameterSpec spec = type.keyType.spec;
         KeyPairGenerator kpg = KeyPairGenerator.getInstance(preferredKeyPairGen, provider);
 		kpg.initialize(spec);
         

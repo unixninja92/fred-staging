@@ -65,11 +65,7 @@ public final class CryptSignature{
 			random = null;
 			dsaGroup = null;
 			try {
-				KeyPairGenerator kg = KeyPairGenerator.getInstance(
-						PreferredAlgorithms.preferredKeyPairGen, 
-						PreferredAlgorithms.keyPairProvider);
-				kg.initialize(type.getSpec());
-				keys = kg.generateKeyPair();
+				keys = KeyUtils.genKeyPair(type.keyType);
 				
 				sig = type.get();
 				sig.initSign(keys.getPrivate());
@@ -92,15 +88,8 @@ public final class CryptSignature{
 			dsaPubK = new DSAPublicKey(publicKey);
 		}
 		else{
-            KeyFactory kf = KeyFactory.getInstance(
-            		PreferredAlgorithms.preferredKeyPairGen, 
-            		PreferredAlgorithms.keyPairProvider);
-			X509EncodedKeySpec xks = new X509EncodedKeySpec(publicKey);
-            ECPublicKey pubK = (ECPublicKey)kf.generatePublic(xks);
-            
-            keys = new KeyPair(pubK, null);
-            
-			sig.initVerify(pubK);
+            keys = KeyUtils.getPublicKeyPair(publicKey);
+			sig.initVerify(keys.getPublic());
 		}
 	}
 	
@@ -112,25 +101,14 @@ public final class CryptSignature{
         try {
     		byte[] pub = null;
             byte[] pri = null;
-            KeyFactory kf = KeyFactory.getInstance(
-            		PreferredAlgorithms.preferredKeyPairGen, 
-            		PreferredAlgorithms.keyPairProvider);
-            
             pub = Base64.decode(sfs.get("pub"));
-            if (pub.length > type.modulusSize)
-                throw new InvalidKeyException();
-            X509EncodedKeySpec xks = new X509EncodedKeySpec(pub);
-            ECPublicKey pubK = (ECPublicKey)kf.generatePublic(xks);
-            
             pri = Base64.decode(sfs.get("pri"));
-            PKCS8EncodedKeySpec pks = new PKCS8EncodedKeySpec(pri);
-            ECPrivateKey privK = (ECPrivateKey) kf.generatePrivate(pks);
             
-            keys = new KeyPair(pubK, privK);
+            keys = KeyUtils.getKeyPair(pub, pri);
             
             sig = type.get();
-			sig.initSign(privK);
-			sig.initVerify(pubK);
+			sig.initSign(keys.getPrivate());
+			sig.initVerify(keys.getPublic());
         }  catch (NoSuchAlgorithmException e) {
             Logger.error(ECDSA.class, "NoSuchAlgorithmException : "+e.getMessage(),e);
             e.printStackTrace();
