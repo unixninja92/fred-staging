@@ -10,24 +10,22 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
 
 import org.bouncycastle.util.Arrays;
 
 import net.i2p.util.NativeBigInteger;
-import freenet.crypt.ciphers.Rijndael;
-import freenet.io.comm.Peer;
 import freenet.node.NodeCrypto;
 import freenet.node.PeerNode;
 import freenet.support.Fields;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
+import freenet.support.api.Bucket;
+import freenet.support.io.ArrayBucketFactory;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
 	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
@@ -384,8 +382,6 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	
 	//send by initiator 
 	public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, byte[] authenticator){
-//		BlockCipher c = null;
-//		try { c = new Rijndael(256, 256); } catch (UnsupportedCipherException e) { throw new RuntimeException(e); }
 		int blockSize = CryptBucketType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
 		
@@ -404,7 +400,6 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 				                           ivSize + // IV
 				                           sig.length + // Signature
 				                           data.length]; // The bootid+noderef'
-		
 		
 		int offset = 0;
 		// Ni
@@ -425,12 +420,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		System.arraycopy(authenticator, 0, message3, offset, authenticator.length);
 		offset += authenticator.length;
 		
-		byte[] computedExponential;
-		if(type == KeyExchType.JFKi){
-			computedExponential = underlyingExch.getSharedSecrect(exponentialR);
-		}else{
-			computedExponential = underlyingExch.getSharedSecrect(exponentialI);
-		}
+		byte[] computedExponential = underlyingExch.getSharedSecrect(exponentialR);
+		
 		
 		outgoingKey = getSharedSecrect(computedExponential, "0");
 		incommingKey = getSharedSecrect(computedExponential, "7");
@@ -479,7 +470,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		
 		byte[] ciphertext = null;
 	    try {
-	    	CryptBucket cb = new CryptBucket(CryptBucketType.RijndaelPCFB, cleartext.length, jfkKe);
+	    	CryptBucket cb = new CryptBucket(CryptBucketType.RijndaelPCFB, cleartext.length-cleartextToEncypherOffset, jfkKe);
 		    cb.setIV(iv);
 			cb.addBytes(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
 			cb.encrypt();
@@ -501,6 +492,106 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		System.arraycopy(ciphertext, cleartextToEncypherOffset, message3, offset, ciphertext.length-cleartextToEncypherOffset);
 
 		return message3;
+	}
+	
+	//processes by reciver
+	public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, byte[] identity, byte[] publicKeyI){
+		int blockSize = CryptBucketType.RijndaelPCFB.blockSize;
+		int ivSize = blockSize >> 3;
+	    		
+		byte[] computedExponential = underlyingExch.getSharedSecrect(exponentialI);
+		
+		outgoingKey = getSharedSecrect(computedExponential, "0");
+		incommingKey = getSharedSecrect(computedExponential, "7");
+		jfkKe = getSharedSecrect(computedExponential, "1");
+		jfkKa = getSharedSecrect(computedExponential, "2");
+
+		hmacKey = getSharedSecrect(computedExponential, "3");
+		ivKey = getSharedSecrect(computedExponential, "4");
+		ivNonce = getSharedSecrect(computedExponential, "5");
+		
+		/* Bytes  1-4:  Initial sequence number for the initiator
+		 * Bytes  5-8:  Initial sequence number for the responder
+		 * Bytes  9-12: Initial message id for the initiator
+		 * Bytes 13-16: Initial message id for the responder
+		 * Note that we are the responder */
+		byte[] sharedData = getSharedSecrect(computedExponential, "6");
+		Arrays.fill(computedExponential, (byte)0);
+		theirInitialSeqNum = ((sharedData[0] & 0xFF) << 24)
+				| ((sharedData[1] & 0xFF) << 16)
+				| ((sharedData[2] & 0xFF) << 8)
+				| (sharedData[3] & 0xFF);
+		ourInitialSeqNum = ((sharedData[4] & 0xFF) << 24)
+				| ((sharedData[5] & 0xFF) << 16)
+				| ((sharedData[6] & 0xFF) << 8)
+				| (sharedData[7] & 0xFF);
+		theirInitialMsgID= ((sharedData[8] & 0xFF) << 24)
+				| ((sharedData[9] & 0xFF) << 16)
+				| ((sharedData[10] & 0xFF) << 8)
+				| (sharedData[11] & 0xFF);
+		ourInitialMsgID= ((sharedData[12] & 0xFF) << 24)
+				| ((sharedData[13] & 0xFF) << 16)
+				| ((sharedData[14] & 0xFF) << 8)
+				| (sharedData[15] & 0xFF);
+		
+		int ivLength = ivSize;
+		// We compute the HMAC of ("I"+cyphertext) : the cyphertext includes the IV!
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
+		if(!mac.verifyData(hmac, cypheredPayload)) {
+			Logger.error(this, "The inner-HMAC doesn't match; let's discard the packet JFK(3) - "+peer);
+			return null;
+		}
+		
+		byte[] iv = new byte[ivSize];
+		System.arraycopy(cypheredPayload, decypheredPayloadOffset, iv, 0, ivLength);
+		decypheredPayloadOffset += ivLength;
+		byte[] cleartext = null;
+	    try {
+	    	ArrayBucketFactory abf = new ArrayBucketFactory();
+	    	Bucket bucket = abf.makeBucket(cypheredPayload.length-decypheredPayloadOffset);
+	    	bucket.getOutputStream().write(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);
+	    	CryptBucket cb = new CryptBucket(CryptBucketType.RijndaelPCFB, bucket, jfkKe);
+		    cb.setIV(iv);
+			cleartext = cb.decrypt();
+	    } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
+	    int sigLength;
+	    if(underlyingExch.type == KeyExchType.DH){
+	    	sigLength = this.dsaSig.length;
+	    }
+	    else{
+	    	sigLength = this.ecdsaSig.length;
+	    }
+		byte[] sigI = new byte[sigLength];
+		System.arraycopy(cleartext, decypheredPayloadOffset, sigI, 0, sigLength);
+		decypheredPayloadOffset += sigLength;
+		byte[] data = new byte[cleartext.length - decypheredPayloadOffset];
+		System.arraycopy(cleartext, decypheredPayloadOffset, data, 0, cleartext.length - decypheredPayloadOffset);
+		
+		byte[] toVerify = assembleDHParams(identity, data);
+		
+		try {
+			CryptSignature sig;
+			sig = new CryptSignature(underlyingExch.type.sigType, publicKeyI);
+			if(!sig.verify(sigI, toVerify)){
+				Logger.error(this, "The signature verification has failed!! JFK(3) - "+peer.getPeer());
+				return null;
+			}
+		} catch (GeneralSecurityException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CryptFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return data;
 	}
 	
 	
@@ -528,6 +619,37 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return authData;
 	}
 	
+	/*
+	 * Prepare DH parameters of message2 for them to be signed (useful in message3 to check the sig)
+	 */
+//	private byte[] assembleDHParams(byte[] exponential, DSAGroup group) {
+//		byte[] _myGroup = group.getP().toByteArray();
+//		byte[] toSign = new byte[exponential.length + _myGroup.length];
+//
+//		System.arraycopy(exponential, 0, toSign, 0, exponential.length);
+//		System.arraycopy(_myGroup, 0, toSign, exponential.length, _myGroup.length);
+//
+//		return toSign;
+//	}
+
+	private byte[] assembleDHParams(byte[] id, byte[] sa) {
+		byte[] result = new byte[nonceI.length + nonceR.length + exponentialI.length + exponentialR.length + id.length + sa.length];
+		int offset = 0;
+
+		System.arraycopy(nonceI, 0,result,offset,nonceI.length);
+		offset += nonceI.length;
+		System.arraycopy(nonceR,0 ,result,offset,nonceR.length);
+		offset += nonceR.length;
+		System.arraycopy(exponentialI, 0, result,offset, exponentialI.length);
+		offset += exponentialI.length;
+		System.arraycopy(exponentialR, 0, result, offset, exponentialR.length);
+		offset += exponentialR.length;
+		System.arraycopy(id, 0, result , offset,id.length);
+		offset += id.length;
+		System.arraycopy(sa, 0, result , offset,sa.length);
+
+		return result;
+	}
 	
 	
 	public ECPublicKey getPublicKey() {
