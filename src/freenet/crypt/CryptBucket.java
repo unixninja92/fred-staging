@@ -35,12 +35,11 @@ public final class CryptBucket implements Bucket {
 	private final Bucket underlying;
     private SecretKey key;
     private boolean readOnly;
-    private byte[] iv = null;
     
-//    private FilterInputStream is;
+//    private byte[] iv = null;
+    
     private FilterOutputStream outStream;
     
-  //FIXME make per type
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
     
     public CryptBucket(long size) throws IOException{
@@ -174,20 +173,20 @@ public final class CryptBucket implements Bucket {
 					key.getEncoded(), nonce, new AESFastEngine(), 
 					new AESLightEngine(), isOld);
 		}
-		else{
-			if(iv == null){
-				iv = new byte[type.blockSize >> 3];
-				rand.nextBytes(iv);
-			}
-			
-			try {
-				return new SymmetricOutputStream(underlying.getOutputStream(), type, key.getEncoded(), iv);
-			} catch (InvalidKeyException | NoSuchAlgorithmException
-					| NoSuchPaddingException | UnsupportedCipherException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+//		else{
+//			if(iv == null){
+//				iv = new byte[type.blockSize >> 3];
+//				rand.nextBytes(iv);
+//			}
+//			
+//			try {
+//				return new SymmetricOutputStream(underlying.getOutputStream(), type, key.getEncoded(), iv);
+//			} catch (InvalidKeyException | NoSuchAlgorithmException
+//					| NoSuchPaddingException | UnsupportedCipherException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//		}
         throw new IOException();
 	}
 	
@@ -202,15 +201,15 @@ public final class CryptBucket implements Bucket {
         			key.getEncoded(), new AESFastEngine(), new AESLightEngine(), 
         			type.equals(CryptBucketType.AEADAESOCBDraft00));
         }
-        else{
-        	try {
-				return new SymmetricInputStream(underlying.getInputStream(), type, key.getEncoded(), type.blockSize >> 3);
-			} catch (InvalidKeyException | NoSuchAlgorithmException
-					| NoSuchPaddingException | UnsupportedCipherException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-        }
+//        else{
+//        	try {
+//				return new SymmetricInputStream(underlying.getInputStream(), type, key.getEncoded(), type.blockSize >> 3);
+//			} catch (InvalidKeyException | NoSuchAlgorithmException
+//					| NoSuchPaddingException | UnsupportedCipherException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//        }
         throw new IOException();
 	}
 	
@@ -234,13 +233,13 @@ public final class CryptBucket implements Bucket {
 		this.readOnly = true;
 	}
 	
-	public final byte[] getIV(){
-		return iv;
-	}
-	
-	public final void setIV(byte[] iv){
-		this.iv = iv;
-	}
+//	public final byte[] getIV(){
+//		return iv;
+//	}
+//	
+//	public final void setIV(byte[] iv){
+//		this.iv = iv;
+//	}
 	
 	@Override
 	public final void free() {
