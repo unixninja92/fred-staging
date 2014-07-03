@@ -28,7 +28,7 @@ import org.bouncycastle.util.Arrays;
  * This is a non-binding summary of a legal document (the link above). The parameters of the license
  * are specified in the license document and that document is controlling. </blockquote>
  */
-public class OldOCBBlockCipher
+public class OCBBlockCipher_v149
     implements AEADBlockCipher
 {
 
@@ -70,7 +70,7 @@ public class OldOCBBlockCipher
     // NOTE: The MAC value is preserved after doFinal
     private byte[] macBlock;
 
-    public OldOCBBlockCipher(BlockCipher hashCipher, BlockCipher mainCipher)
+    public OCBBlockCipher_v149(BlockCipher hashCipher, BlockCipher mainCipher)
     {
         if (hashCipher == null)
         {

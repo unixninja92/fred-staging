@@ -30,7 +30,7 @@ public enum CryptBucketType {
 		BlockCipher hashCipher = new AESLightEngine();
 		BlockCipher mainCipher = new AESFastEngine();
 		if(nonceSize == 16){
-			return new OldOCBBlockCipher(hashCipher, mainCipher);
+			return new OCBBlockCipher_v149(hashCipher, mainCipher);
 		}
 		else{
 			return new OCBBlockCipher(hashCipher, mainCipher);

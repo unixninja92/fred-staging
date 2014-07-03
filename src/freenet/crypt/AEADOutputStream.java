@@ -37,7 +37,7 @@ public class AEADOutputStream extends FilterOutputStream {
             BlockCipher mainCipher) throws IOException {
         super(os);
         os.write(nonce);
-        cipher = new OldOCBBlockCipher(hashCipher, mainCipher);
+        cipher = new OCBBlockCipher_v149(hashCipher, mainCipher);
         KeyParameter keyParam = new KeyParameter(key);
         AEADParameters params = new AEADParameters(keyParam, MAC_SIZE_BITS, nonce);
         cipher.init(true, params);
