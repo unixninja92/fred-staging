@@ -48,17 +48,17 @@ public final class CryptBucket implements Bucket {
     private FilterOutputStream outStream;
     
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
-    
-    public CryptBucket(Bucket underlying, byte[] key){
-    	this(defaultType, underlying, key);
-    }
+
+    public CryptBucket(CryptBucketType type, Bucket underlying){
+    	this(type, underlying, KeyUtils.genSecretKey(type.keyType));
+    }  
     
     public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key){
-    	this(type, underlying, KeyUtils.getSecretKey(key, type.keyType), false);
+    	this(type, underlying, KeyUtils.getSecretKey(key, type.keyType));
     }
     
-    public CryptBucket(CryptBucketType type, Bucket underlying){
-    	this(type, underlying, KeyUtils.genSecretKey(type.keyType), false);
+    public CryptBucket(CryptBucketType type, Bucket underlying, SecretKey key){
+    	this(type, underlying, key, false);
     }
     
     /**
@@ -75,8 +75,8 @@ public final class CryptBucket implements Bucket {
         this.key = key;
         this.readOnly = readOnly;
     }
-    
-    /**
+
+	/**
      * Decrypts the data in the underlying bucket.
      * @return Returns the unencrypted data in a byte[]
      */
@@ -248,7 +248,7 @@ public final class CryptBucket implements Bucket {
 	@Override
 	public final Bucket createShadow() {
         Bucket undershadow = underlying.createShadow();
-        CryptBucket ret = new CryptBucket(undershadow, key.getEncoded());
+        CryptBucket ret = new CryptBucket(type, undershadow, key);
         ret.setReadOnly();
 		return ret;
 	}
