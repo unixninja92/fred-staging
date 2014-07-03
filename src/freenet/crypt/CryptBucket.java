@@ -185,8 +185,7 @@ public final class CryptBucket implements Bucket {
 		nonce[0] &= 0x7F;
 
 		return new AEADOutputStream(underlying.getOutputStream(), 
-				key.getEncoded(), nonce, new AESFastEngine(), 
-				new AESLightEngine(), isOld);
+				key.getEncoded(), nonce, type);
 	}
 	
 	@Override
@@ -196,8 +195,7 @@ public final class CryptBucket implements Bucket {
 	
 	private final FilterInputStream genInputStream() throws IOException {
 		return new AEADInputStream(underlying.getInputStream(), 
-        			key.getEncoded(), new AESFastEngine(), new AESLightEngine(), 
-        			type.equals(CryptBucketType.AEADAESOCBDraft00));
+        			key.getEncoded(), type);
 	}
 	
 	@Override

@@ -16,11 +16,13 @@ public enum CryptBucketType {
 	
 	public final int bitmask;
 	public final KeyType keyType;
+	public final int blockSize;
 	public final int nonceSize;
 	
 	CryptBucketType(int bitmask, KeyType keyType, int nonceSize){
 		this.bitmask = bitmask;
 		this.keyType = keyType;
+		this.blockSize = 128;
 		this.nonceSize = nonceSize;
 	}
 	

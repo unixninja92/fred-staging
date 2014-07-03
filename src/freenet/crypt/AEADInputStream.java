@@ -33,22 +33,28 @@ public class AEADInputStream extends FilterInputStream {
      * @param hashCipher The BlockCipher for the final hash. E.g. AES, not a block mode. This will
      * not be used very much so should be e.g. an AESLightEngine. */
     public AEADInputStream(InputStream is, byte[] key, BlockCipher hashCipher, 
-            BlockCipher mainCipher, boolean oldOCB) throws IOException {
+            BlockCipher mainCipher) throws IOException {
         super(is);
-        byte[] nonce;
-        if(oldOCB){
-        	nonce = new byte[16];
-        	cipher = new OldOCBBlockCipher(hashCipher, mainCipher);
-        }
-        else{
-        	nonce = new byte[15];
-        	cipher = new OCBBlockCipher(hashCipher, mainCipher);
-        }
+        byte[] nonce= new byte[16];
+        cipher = new OldOCBBlockCipher(hashCipher, mainCipher);
         new DataInputStream(is).readFully(nonce);
         KeyParameter keyParam = new KeyParameter(key);
         AEADParameters params = new AEADParameters(keyParam, MAC_SIZE_BITS, nonce);
         cipher.init(false, params);
         excess = new byte[mainCipher.getBlockSize()];
+        excessEnd = 0;
+        excessPtr = 0;
+    }
+    
+    public AEADInputStream(InputStream is, byte[] key, CryptBucketType type) throws IOException {
+        super(is);
+        byte[] nonce = new byte[type.nonceSize];
+        cipher = type.getBlockCipher();
+        new DataInputStream(is).readFully(nonce);
+        KeyParameter keyParam = new KeyParameter(key);
+        AEADParameters params = new AEADParameters(keyParam, MAC_SIZE_BITS, nonce);
+        cipher.init(false, params);
+        excess = new byte[type.blockSize];
         excessEnd = 0;
         excessPtr = 0;
     }
@@ -200,7 +206,7 @@ public class AEADInputStream extends FilterInputStream {
     public static AEADInputStream createAES(InputStream is, byte[] key) throws IOException {
         AESEngine mainCipher = new AESEngine();
         AESLightEngine hashCipher = new AESLightEngine();
-        return new AEADInputStream(is, key, hashCipher, mainCipher, true);
+        return new AEADInputStream(is, key, hashCipher, mainCipher);
     }
 
 }
