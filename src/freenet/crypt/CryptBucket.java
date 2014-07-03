@@ -9,14 +9,9 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.crypto.engines.AESFastEngine;
 import org.bouncycastle.crypto.engines.AESLightEngine;
@@ -24,9 +19,6 @@ import org.bouncycastle.crypto.engines.AESLightEngine;
 import com.db4o.ObjectContainer;
 
 import freenet.support.api.Bucket;
-import freenet.support.api.BucketFactory;
-import freenet.support.io.ArrayBucket;
-import freenet.support.io.ArrayBucketFactory;
 
 /**
  * CryptBucket is a bucket filter that encrypts all data going to the underlying
@@ -49,6 +41,10 @@ public final class CryptBucket implements Bucket {
     
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
 
+    public CryptBucket(Bucket underlying){
+    	this(defaultType, underlying, KeyUtils.genSecretKey(defaultType.keyType));
+    }
+    
     public CryptBucket(CryptBucketType type, Bucket underlying){
     	this(type, underlying, KeyUtils.genSecretKey(type.keyType));
     }  
@@ -184,12 +180,7 @@ public final class CryptBucket implements Bucket {
 	private final FilterOutputStream genOutputStream() throws IOException {
 		boolean isOld = type.equals(CryptBucketType.AEADAESOCBDraft00);
 
-		byte[] nonce;
-		if(isOld){
-			nonce = new byte[16];
-		}else{
-			nonce = new byte[15];
-		}
+		byte[] nonce = new byte[type.nonceSize];
 		rand.nextBytes(nonce);
 		nonce[0] &= 0x7F;
 
@@ -203,7 +194,8 @@ public final class CryptBucket implements Bucket {
 		return genInputStream();
 	}
 	
-	private final FilterInputStream genInputStream() throws IOException {return new AEADInputStream(underlying.getInputStream(), 
+	private final FilterInputStream genInputStream() throws IOException {
+		return new AEADInputStream(underlying.getInputStream(), 
         			key.getEncoded(), new AESFastEngine(), new AESLightEngine(), 
         			type.equals(CryptBucketType.AEADAESOCBDraft00));
 	}
@@ -248,12 +240,7 @@ public final class CryptBucket implements Bucket {
 	@Override
 	public final Bucket createShadow() {
         Bucket undershadow = underlying.createShadow();
-        CryptBucket ret = new CryptBucket(type, undershadow, key);
-        ret.setReadOnly();
+        CryptBucket ret = new CryptBucket(type, undershadow, key, true);
 		return ret;
-	}
-	
-	public byte[] toByteArray(){
-		return ((ArrayBucket)underlying).toByteArray();
 	}
 }
