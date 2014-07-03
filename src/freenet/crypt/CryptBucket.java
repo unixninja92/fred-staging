@@ -34,22 +34,50 @@ public final class CryptBucket implements Bucket {
     private SecretKey key;
     private boolean readOnly;
     
+    /*
+     * The output stream that addBytes methods will work with. 
+     */
     private FilterOutputStream outStream;
     
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
 
+    /**
+     * Creates instance of CryptBucket using the default algorithm and generates a key
+     * to encrypt and decrypt the underlying bucket
+     * @param underlying The bucket that will be storing the encrypted data
+     */
     public CryptBucket(Bucket underlying){
     	this(defaultType, underlying, KeyUtils.genSecretKey(defaultType.keyType));
     }
     
+    /**
+     * Creates instance of CryptBucket using the algorithm type and generates a key
+     * to encrypt and decrypt the underlying bucket
+     * @param type What kind of cipher and mode to use for encryption
+     * @param underlying The bucket that will be storing the encrypted data
+     */
     public CryptBucket(CryptBucketType type, Bucket underlying){
     	this(type, underlying, KeyUtils.genSecretKey(type.keyType));
     }  
     
+    /**
+     * Creates instance of CryptBucket using the algorithm type with the specified key
+     * to encrypt and decrypt the underlying bucket
+     * @param type What kind of cipher and mode to use for encryption
+     * @param underlying The bucket that will be storing the encrypted data
+     * @param key The key that will be used for encryption
+     */
     public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key){
     	this(type, underlying, KeyUtils.getSecretKey(key, type.keyType));
     }
     
+    /**
+     * Creates instance of CryptBucket using the algorithm type with the specified key
+     * to encrypt and decrypt the underlying bucket
+     * @param type What kind of cipher and mode to use for encryption
+     * @param underlying The bucket that will be storing the encrypted data
+     * @param key The key that will be used for encryption
+     */
     public CryptBucket(CryptBucketType type, Bucket underlying, SecretKey key){
     	this(type, underlying, key, false);
     }
@@ -152,7 +180,7 @@ public final class CryptBucket implements Bucket {
     }
     
     /**
-     * 
+     * Completes the encryption of the underlying bucket and closes the output stream. 
      * @throws IOException
      */
     public final void encrypt() throws IOException{
@@ -164,6 +192,11 @@ public final class CryptBucket implements Bucket {
     	outStream = null;
     }
     
+    /**
+     * Encrypts input and places the encrypted result in the underlying bucket. 
+     * @param input They byte[]s to be encrypted
+     * @throws IOException
+     */
     public final void encrypt(byte[]... input) throws IOException{
     	addBytes(input);
     	encrypt();
@@ -174,6 +207,11 @@ public final class CryptBucket implements Bucket {
     	return genOutputStream();
     }
 	
+	/**
+	 * Generates a random nonce and returns an encrypting FilterOutputStream
+	 * @return Returns an AEADOutputStream
+	 * @throws IOException
+	 */
 	private final FilterOutputStream genOutputStream() throws IOException {
 		byte[] nonce = new byte[type.nonceSize];
 		rand.nextBytes(nonce);
@@ -188,6 +226,11 @@ public final class CryptBucket implements Bucket {
 		return genInputStream();
 	}
 	
+	/**
+	 * Returns an encrypting FilterInputStream
+	 * @return Returns an AEADInputStream
+	 * @throws IOException
+	 */
 	private final FilterInputStream genInputStream() throws IOException {
 		return new AEADInputStream(underlying.getInputStream(), 
         			key.getEncoded(), type);
