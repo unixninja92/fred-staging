@@ -31,7 +31,7 @@ public class CryptBitSet {
 			if(type == CryptBitSetType.RijndaelPCFB){
 				bCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				bCipher.initialize(key.getEncoded());
-				pcfb = PCFBMode.create(bCipher, iv);
+//				pcfb = PCFBMode.create(bCipher, iv);
 			}
 			else if(type.cipherName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
@@ -56,12 +56,24 @@ public class CryptBitSet {
 					switch(type){
 					case RijndaelPCFB:
 						return pcfb.blockDecipher(input, offset, len);
+					case RijndaelECB:
+						break;
+					case RijndaelECB128:
+						break;
+					case RijndaelCTR:
+						break;
 					}
 				}
 				else{
 					switch(type){
 					case RijndaelPCFB:
 						return pcfb.blockEncipher(input, offset, len);
+					case RijndaelECB:
+						break;
+					case RijndaelECB128:
+						break;
+					case RijndaelCTR:
+						break;
 					}
 				}
 			}
@@ -86,7 +98,23 @@ public class CryptBitSet {
 		return processesBytes(1, input, offset, len);
 	}
 	
+	public byte[] encrypt(byte[] input){
+		return encrypt(input, 0, input.length);
+	}
+	
+	public BitSet encrypt(BitSet input){
+		return BitSet.valueOf(encrypt(input.toByteArray()));
+	}
+	
 	public byte[] decrypt(byte[] input, int offset, int len){
 		return processesBytes(0, input, offset, len);
+	}
+	
+	public byte[] decrypt(byte[] input){
+		return decrypt(input, 0, input.length);
+	}
+	
+	public BitSet decrypt(BitSet input){
+		return BitSet.valueOf(decrypt(input.toByteArray()));
 	}
 }

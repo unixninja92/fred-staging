@@ -3,7 +3,7 @@ package freenet.crypt;
 
 public enum CryptBitSetType {
 	RijndaelECB(1, KeyType.Rijndael256),
-	RigndaelECB(2, KeyType.Rijndael256, 128),
+	RijndaelECB128(2, KeyType.Rijndael256, 128),
 	RijndaelCTR(4, KeyType.Rijndael256),
 	RijndaelPCFB(8, KeyType.Rijndael256),
 	AESCTR(16, "AES/CTR/NOPADDING", KeyType.AES256),
