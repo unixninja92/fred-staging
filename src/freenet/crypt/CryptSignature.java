@@ -8,21 +8,13 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-
-import org.bouncycastle.crypto.util.PublicKeyFactory;
 
 import net.i2p.util.NativeBigInteger;
 import freenet.node.FSParseException;
@@ -39,7 +31,6 @@ public final class CryptSignature{
 	/* variables for ECDSA signatures */
 	private final SigType type;
 	private KeyPair keys;
-	private PublicKey pubK;
 	private Signature sig;
 	
 	/* Variables for DSA signatures */
@@ -219,7 +210,7 @@ public final class CryptSignature{
 	}
 	
 	/**
-	 * Add the specified portiong of the passed in byte[] to the bytes that 
+	 * Add the specified portion of the passed in byte[] to the bytes that 
 	 * will be signed.
 	 * @param data Byte[] to be signed
 	 * @param offset Where to start reading bytes for signature
@@ -234,6 +225,10 @@ public final class CryptSignature{
 		}
 	}
 	
+	/**
+	 * Adds the ByteBuffer to the bytes that will be signed.
+	 * @param input ByteBuffer to be signed
+	 */
 	public void addBytes(ByteBuffer input){
 		try {
 			sig.update(input);
@@ -243,6 +238,11 @@ public final class CryptSignature{
 		}
 	}
 	
+	/**
+	 * Signs the byte[]s passed in
+	 * @param data byte[]s to be signed
+	 * @return The signature of the signed data
+	 */
 	public byte[] sign(byte[]... data) {
         byte[] result = null;
         if(!verifyOnly){
@@ -282,10 +282,20 @@ public final class CryptSignature{
         return result;
     }
 	
+	/**
+	 * Signs byte[]s to DSASignature
+	 * @param data Byte[]s to sign
+	 * @return Returns the DSASignature of the data
+	 */
 	public DSASignature signToDSASignature(byte[]... data){
 		return signToDSASignature(new NativeBigInteger(1, sha256.getHash(data)));
 	}
 	
+	/**
+	 * Signs data m to DSASignature
+	 * @param m BitIteger to be signed
+	 * @return Returns the DSASignature of m
+	 */
 	public DSASignature signToDSASignature(BigInteger m){
 		DSASignature result = null;
         if(!verifyOnly){
@@ -330,7 +340,13 @@ public final class CryptSignature{
         }
         return plainsig;
     }
-
+    
+    /**
+     * Verifies that a signature is signed by the public key the class was 
+     * instantiated with
+     * @param signature The signature to verify
+     * @return If the signature is valid it returns true, otherwise it returns false.
+     */
 	public boolean verify(byte[] signature){
 		try {
 			return sig.verify(signature);
@@ -341,8 +357,15 @@ public final class CryptSignature{
 		return false;
 	}
 	
+	/**
+	 * Verifies that the Signature of the byte[] data matches the signature passed in
+	 * @param signature Signature to be verified
+	 * @param data Data to be signed
+	 * @return True if the signature matches the signature generated for the passed in 
+	 * data, otherwise false
+	 */
     public boolean verify(byte[] signature, byte[]... data){
-    	if(type == SigType.DSA) { //&& Arrays.equals(sign(data), signature)){
+    	if(type == SigType.DSA) {
     		//FIXME needs to be tested to make sure that it splits the array correctly.
     		int x = 0;
     		byte[] bufR = new byte[SIGNATURE_PARAMETER_LENGTH];
@@ -356,20 +379,19 @@ public final class CryptSignature{
 			NativeBigInteger s = new NativeBigInteger(1, bufS);
     		return verify(r, s, data);
     	}
-    	else{
-    		try {
-    			for(byte[] b: data){
-    				addBytes(b);
-    			}
-    			return sig.verify(signature);
-    		} catch (SignatureException e) {
-    			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-    			e.printStackTrace();
-    		}
+    	else if(MessageDigest.isEqual(sign(data), signature)){
+    		return true;
     	}
     	return false;
     }
     
+    /**
+	 * Verifies that the signature of m matches the signature passed in
+	 * @param sig Signature to be verified
+	 * @param m Data to be signed
+	 * @return True if the signature matches the signature generated for the passed in 
+	 * data, otherwise false
+	 */
     public boolean verify(DSASignature sig, BigInteger m){
     	return DSA.verify(dsaPubK, sig, m, false);
     }
