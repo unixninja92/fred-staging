@@ -18,6 +18,7 @@ import freenet.crypt.ciphers.Rijndael;
 /**
  * CryptBitSet will encrypt and decrypt both byte[]s and BitSets with a specified
  * algorithm, key, and also an iv if the algorithm requires one. 
+ * @author unixninja92
 */
 public class CryptBitSet {
 	public final static CryptBitSetType defaultType = CryptBitSetType.ChaCha;

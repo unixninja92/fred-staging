@@ -28,6 +28,15 @@ import freenet.support.api.BucketFactory;
 import freenet.support.io.ArrayBucket;
 import freenet.support.io.ArrayBucketFactory;
 
+/**
+ * CryptBucket is a bucket filter that encrypts all data going to the underlying
+ * bucket and decrypts all data read from the underlying bucket. This is done using
+ * AEAD.
+ * Warning: 
+ * Avoid using Closer.close() on InputStream's opened on this Bucket. The MAC is only 
+ * checked when the end of the bucket is reached, which may be in read() or may 
+ * be in close().
+ */
 public final class CryptBucket implements Bucket {
 	private static final CryptBucketType defaultType = PreferredAlgorithms.preferredCryptBucketAlg;
 	private static final SecureRandom rand = PreferredAlgorithms.sRandom;
@@ -36,31 +45,9 @@ public final class CryptBucket implements Bucket {
     private SecretKey key;
     private boolean readOnly;
     
-//    private byte[] iv = null;
-    
     private FilterOutputStream outStream;
     
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
-    
-    public CryptBucket(long size) throws IOException{
-    	this(defaultType, size);
-    }
-    
-    public CryptBucket(CryptBucketType type, long size, byte[] key) throws IOException{
-    	this(type, new ArrayBucketFactory(), size, key);
-    }
-    
-    public CryptBucket(CryptBucketType type, long size) throws IOException{
-    	this(type, new ArrayBucketFactory(), size);
-    }
-    
-    private CryptBucket(CryptBucketType type, BucketFactory bf, long size) throws IOException{
-    	this(type, bf.makeBucket(size));
-    }
-    
-    private CryptBucket(CryptBucketType type, BucketFactory bf, long size, byte[] key) throws IOException{
-    	this(type, bf.makeBucket(size), key);
-    }
     
     public CryptBucket(Bucket underlying, byte[] key){
     	this(defaultType, underlying, key);
@@ -74,6 +61,14 @@ public final class CryptBucket implements Bucket {
     	this(type, underlying, KeyUtils.genSecretKey(type.keyType), false);
     }
     
+    /**
+     * Creates instance of CryptBucket using the algorithm type with the specified key
+     * to decrypt the underlying bucket and encrypt it as well if it is not readOnly
+     * @param type What kind of cipher and mode to use for encryption
+     * @param underlying The bucket that will be storing the encrypted data
+     * @param key The key that will be used for encryption
+     * @param readOnly Sets if the bucket will be read-only 
+     */
     public CryptBucket(CryptBucketType type, Bucket underlying, SecretKey key, boolean readOnly) {
     	this.type = type;
         this.underlying = underlying;
@@ -81,6 +76,10 @@ public final class CryptBucket implements Bucket {
         this.readOnly = readOnly;
     }
     
+    /**
+     * Decrypts the data in the underlying bucket.
+     * @return Returns the unencrypted data in a byte[]
+     */
     public final byte[] decrypt(){
     	byte[] plain = new byte[(int) size()];
     	try {
@@ -94,6 +93,11 @@ public final class CryptBucket implements Bucket {
 		return plain;
     }
     
+    /**
+     * Checks if an output/encryption stream has been generated yet.
+     * If one hasen't then it generates one. 
+     * @throws IOException
+     */
     private final void checkOutStream() throws IOException{
     	if(!readOnly){
     		if(outStream == null){
@@ -105,6 +109,11 @@ public final class CryptBucket implements Bucket {
     	}
     }
     
+    /**
+     * Adds a byte to be encrypted into the underlying bucket
+     * @param input Byte to be encrypted
+     * @throws IOException
+     */
     public final void addByte(byte input) throws IOException{
     	checkOutStream();
     	try {
@@ -115,6 +124,11 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
+    /**
+     * Adds byte[]s to be encrypted into the underlying bucket
+     * @param input Any number of byte[]s to be encrypted
+     * @throws IOException
+     */
     public final void addBytes(byte[]... input) throws IOException{
     	checkOutStream();
     	try {
@@ -127,6 +141,13 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
+    /**
+     * Adds a selection of a byte[] to be encrypted into the underlying bucket
+     * @param input The byte[] to encrypt
+     * @param offset Where in the byte[] to start encrypting
+     * @param len How many bytes after offset to encrypt and send to underlying bucket
+     * @throws IOException
+     */
     public final void addBytes(byte[] input, int offset, int len) throws IOException{
     	checkOutStream();
     	try {
@@ -137,6 +158,10 @@ public final class CryptBucket implements Bucket {
 		}
     }
     
+    /**
+     * 
+     * @throws IOException
+     */
     public final void encrypt() throws IOException{
     	if(outStream == null){
     		throw new IOException();
@@ -157,37 +182,20 @@ public final class CryptBucket implements Bucket {
     }
 	
 	private final FilterOutputStream genOutputStream() throws IOException {
-		if(type.equals(CryptBucketType.AEADAESOCB) || type.equals(CryptBucketType.AEADAESOCBDraft00)){
-			boolean isOld = type.equals(CryptBucketType.AEADAESOCBDraft00);
+		boolean isOld = type.equals(CryptBucketType.AEADAESOCBDraft00);
 
-			byte[] nonce;
-			if(isOld){
-				nonce = new byte[16];
-			}else{
-				nonce = new byte[15];
-			}
-			rand.nextBytes(nonce);
-			nonce[0] &= 0x7F;
-
-			return new AEADOutputStream(underlying.getOutputStream(), 
-					key.getEncoded(), nonce, new AESFastEngine(), 
-					new AESLightEngine(), isOld);
+		byte[] nonce;
+		if(isOld){
+			nonce = new byte[16];
+		}else{
+			nonce = new byte[15];
 		}
-//		else{
-//			if(iv == null){
-//				iv = new byte[type.blockSize >> 3];
-//				rand.nextBytes(iv);
-//			}
-//			
-//			try {
-//				return new SymmetricOutputStream(underlying.getOutputStream(), type, key.getEncoded(), iv);
-//			} catch (InvalidKeyException | NoSuchAlgorithmException
-//					| NoSuchPaddingException | UnsupportedCipherException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
-        throw new IOException();
+		rand.nextBytes(nonce);
+		nonce[0] &= 0x7F;
+
+		return new AEADOutputStream(underlying.getOutputStream(), 
+				key.getEncoded(), nonce, new AESFastEngine(), 
+				new AESLightEngine(), isOld);
 	}
 	
 	@Override
@@ -195,22 +203,9 @@ public final class CryptBucket implements Bucket {
 		return genInputStream();
 	}
 	
-	private final FilterInputStream genInputStream() throws IOException {
-        if(type.equals(CryptBucketType.AEADAESOCB) || type.equals(CryptBucketType.AEADAESOCBDraft00)){
-        	return new AEADInputStream(underlying.getInputStream(), 
+	private final FilterInputStream genInputStream() throws IOException {return new AEADInputStream(underlying.getInputStream(), 
         			key.getEncoded(), new AESFastEngine(), new AESLightEngine(), 
         			type.equals(CryptBucketType.AEADAESOCBDraft00));
-        }
-//        else{
-//        	try {
-//				return new SymmetricInputStream(underlying.getInputStream(), type, key.getEncoded(), type.blockSize >> 3);
-//			} catch (InvalidKeyException | NoSuchAlgorithmException
-//					| NoSuchPaddingException | UnsupportedCipherException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//        }
-        throw new IOException();
 	}
 	
 	@Override
@@ -232,14 +227,6 @@ public final class CryptBucket implements Bucket {
 	public final synchronized void setReadOnly() {
 		this.readOnly = true;
 	}
-	
-//	public final byte[] getIV(){
-//		return iv;
-//	}
-//	
-//	public final void setIV(byte[] iv){
-//		this.iv = iv;
-//	}
 	
 	@Override
 	public final void free() {
