@@ -13,9 +13,6 @@ import java.security.SecureRandom;
 
 import javax.crypto.SecretKey;
 
-import org.bouncycastle.crypto.engines.AESFastEngine;
-import org.bouncycastle.crypto.engines.AESLightEngine;
-
 import com.db4o.ObjectContainer;
 
 import freenet.support.api.Bucket;
@@ -178,8 +175,6 @@ public final class CryptBucket implements Bucket {
     }
 	
 	private final FilterOutputStream genOutputStream() throws IOException {
-		boolean isOld = type.equals(CryptBucketType.AEADAESOCBDraft00);
-
 		byte[] nonce = new byte[type.nonceSize];
 		rand.nextBytes(nonce);
 		nonce[0] &= 0x7F;
