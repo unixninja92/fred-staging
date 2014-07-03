@@ -43,11 +43,11 @@ public final class CryptSignature{
 	
 	/** Length of signature parameters R and S */
 	private static final int SIGNATURE_PARAMETER_LENGTH = 32;
-	private final Hash sha256 = new Hash();
-	private final RandomSource random;
+	private final Hash sha256 = new Hash(HashType.SHA256);
+	private RandomSource random;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
-	private final DSAGroup dsaGroup;
+	private DSAGroup dsaGroup;
 	
 	public CryptSignature(){
 		this(defaultType);
@@ -62,8 +62,6 @@ public final class CryptSignature{
 			dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		}
 		else {
-			random = null;
-			dsaGroup = null;
 			try {
 				keys = KeyUtils.genKeyPair(type.keyType);
 				

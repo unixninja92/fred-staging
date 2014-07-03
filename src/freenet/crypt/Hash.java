@@ -22,8 +22,12 @@ public final class Hash{
 	private MessageDigest digest;
 	
 	public Hash(){
+		this(defaultType);
+	}
+	
+	public Hash(HashType type){
 		try {
-			digest = defaultType.get();
+			digest = type.get();
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
 			System.err.println("Check your JVM settings especially the JCE!" + e);
