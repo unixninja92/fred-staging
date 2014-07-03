@@ -382,7 +382,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	
 	//send by initiator 
 	public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, byte[] authenticator){
-		int blockSize = CryptBucketType.RijndaelPCFB.blockSize;
+		int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
 		
 		byte[] data = new byte[8 + 8 + ref.length];
@@ -468,17 +468,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 
 		int cleartextToEncypherOffset = JFK_PREFIX_INITIATOR.length + ivSize;
 		
-		byte[] ciphertext = null;
-	    try {
-	    	CryptBucket cb = new CryptBucket(CryptBucketType.RijndaelPCFB, cleartext.length-cleartextToEncypherOffset, jfkKe);
-		    cb.setIV(iv);
-			cb.addBytes(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
-			cb.encrypt();
-			ciphertext = cb.toByteArray();
-	    } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		CryptBitSet cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
+		byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
 		
 		// We compute the HMAC of (prefix + cyphertext) Includes the IV!
 		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
@@ -496,7 +487,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	
 	//processes by reciver
 	public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, byte[] identity, byte[] publicKeyI){
-		int blockSize = CryptBucketType.RijndaelPCFB.blockSize;
+		int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
 	    		
 		byte[] computedExponential = underlyingExch.getSharedSecrect(exponentialI);
@@ -545,18 +536,10 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		byte[] iv = new byte[ivSize];
 		System.arraycopy(cypheredPayload, decypheredPayloadOffset, iv, 0, ivLength);
 		decypheredPayloadOffset += ivLength;
-		byte[] cleartext = null;
-	    try {
-	    	ArrayBucketFactory abf = new ArrayBucketFactory();
-	    	Bucket bucket = abf.makeBucket(cypheredPayload.length-decypheredPayloadOffset);
-	    	bucket.getOutputStream().write(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);
-	    	CryptBucket cb = new CryptBucket(CryptBucketType.RijndaelPCFB, bucket, jfkKe);
-		    cb.setIV(iv);
-			cleartext = cb.decrypt();
-	    } catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		CryptBitSet cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
+		byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);
+	    
 	    
 	    int sigLength;
 	    if(underlyingExch.type == KeyExchType.DH){

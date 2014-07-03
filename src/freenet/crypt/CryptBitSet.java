@@ -28,12 +28,7 @@ public class CryptBitSet {
 		this.type = type;
 
 		try {
-			if(type == CryptBitSetType.RijndaelPCFB){
-				bCipher = new Rijndael(type.keyType.keySize, type.blockSize);
-				bCipher.initialize(key.getEncoded());
-//				pcfb = PCFBMode.create(bCipher, iv);
-			}
-			else if(type.cipherName == "AES"){
+			if(type.cipherName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
 				cipher.init(0, KeyUtils.getSecretKey(key.getEncoded(), type.keyType));
 			}
@@ -43,12 +38,22 @@ public class CryptBitSet {
 		} catch (NoSuchPaddingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	public CryptBitSet(CryptBitSetType rijndaelpcfb, byte[] key, byte[] iv) {
+		try{
+			if(type == CryptBitSetType.RijndaelPCFB){
+				bCipher = new Rijndael(type.keyType.keySize, type.blockSize);
+				bCipher.initialize(key);
+				pcfb = PCFBMode.create(bCipher, iv);
+			}
 		} catch (UnsupportedCipherException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	private byte[] processesBytes(int mode, byte[] input, int offset, int len){
 		try {
 			if(type.cipherName == "Rijndael"){
