@@ -1,3 +1,6 @@
+/* This code is part of Freenet. It is distributed under the GNU General
+ * Public License, version 2 (or at your option any later version). See
+ * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
 import java.security.InvalidKeyException;
@@ -17,20 +20,18 @@ public class CryptBitSet {
 	private CryptBitSetType type;
 	private Cipher cipher;
 	private SecretKey key;
-	private BitSet encryptedData;
 	
-	private BlockCipher bCipher;
+	private BlockCipher blockCipher;
 	private PCFBMode pcfb;
-	
 	private byte[] iv;
 	
-	public CryptBitSet(CryptBitSetType type, SecretKey key) throws InvalidKeyException{
+	public CryptBitSet(CryptBitSetType type, SecretKey key){
 		this.type = type;
 
 		try {
 			if(type.cipherName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
-				cipher.init(0, KeyUtils.getSecretKey(key.getEncoded(), type.keyType));
+				this.key = key;
 			}
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
@@ -41,17 +42,28 @@ public class CryptBitSet {
 		}
 	}
 	
-	public CryptBitSet(CryptBitSetType rijndaelpcfb, byte[] key, byte[] iv) {
+	public CryptBitSet(CryptBitSetType type, byte[] key){
+		this(type, KeyUtils.getSecretKey(key, type.keyType));
+	}
+	
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) {
+		this.type = type;
+		this.key = key;
+		this.iv = iv;
 		try{
 			if(type == CryptBitSetType.RijndaelPCFB){
-				bCipher = new Rijndael(type.keyType.keySize, type.blockSize);
-				bCipher.initialize(key);
-				pcfb = PCFBMode.create(bCipher, iv);
+				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
+				blockCipher.initialize(key.getEncoded());
+				pcfb = PCFBMode.create(blockCipher, iv);
 			}
 		} catch (UnsupportedCipherException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) {
+		this(type, KeyUtils.getSecretKey(key, type.keyType), iv);
 	}
 
 	private byte[] processesBytes(int mode, byte[] input, int offset, int len){
