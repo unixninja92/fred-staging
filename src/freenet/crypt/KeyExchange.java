@@ -587,17 +587,43 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		// Now encrypt the cleartext[Signature]
 		int cleartextToEncypherOffset = JFK_PREFIX_RESPONDER.length + ivLength;
 		
-		//set iv
-		byte[] cleartext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, cyphertext.length - cleartextToEncypherOffset);
-	    
-		
+		cyphertext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, cyphertext.length - cleartextToEncypherOffset);
+	    	
 		// We compute the HMAC of (prefix + iv + signature)
 		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
 		byte[] hmac = mac.getMAC(cyphertext);
 		
 		byte[] message4 = new byte[hashnI.length + ivLength + (cyphertext.length - cleartextToEncypherOffset)];
-		
+		int offset = 0;
+		System.arraycopy(hmac, 0, message4, offset, hashnI.length);
+		offset += hashnI.length;
+		System.arraycopy(iv, 0, message4, offset, ivLength);
+		offset += ivLength;
+		System.arraycopy(cyphertext, cleartextToEncypherOffset, message4, offset, cyphertext.length - cleartextToEncypherOffset);
+
 		return message4;
+	}
+	
+	public byte[] processesMessage4(byte[] payload, int inputOffset, byte[] hmac){
+		int ivLength = CryptBitSetType.RijndaelPCFB.blockSize >>3;
+		int encypheredPayloadOffset = 0;
+		// We compute the HMAC of ("R"+cyphertext) : the cyphertext includes the IV!
+		byte[] encypheredPayload = Arrays.copyOf(JFK_PREFIX_RESPONDER, JFK_PREFIX_RESPONDER.length + payload.length - inputOffset);
+		encypheredPayloadOffset += JFK_PREFIX_RESPONDER.length;
+		System.arraycopy(payload, inputOffset, encypheredPayload, encypheredPayloadOffset, payload.length-inputOffset);
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa); 
+		if(!mac.verifyData(hmac, encypheredPayload)) {
+			Logger.normal(this, "The digest-HMAC doesn't match; let's discard the packet - "+peer.getPeer());
+			return null;
+		}
+		
+		CryptBitSet cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, encypheredPayload, encypheredPayloadOffset);
+		encypheredPayloadOffset += ivLength;
+		
+		byte[] decypheredPayload = cryptBits.decrypt(encypheredPayload, encypheredPayloadOffset, encypheredPayload.length - encypheredPayloadOffset);
+		int decypheredPayloadOffset = 0;
+		
+		return decypheredPayload;
 	}
 	
 	

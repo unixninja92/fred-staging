@@ -32,6 +32,7 @@ public class CryptBitSet {
 	private BlockCipher blockCipher;
 	private PCFBMode pcfb;
 	private byte[] iv;
+	private int ivLength;
 	
 	/**
 	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
@@ -46,11 +47,19 @@ public class CryptBitSet {
 			if(type.cipherName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
 				this.key = key;
+			} else if(type == CryptBitSetType.RijndaelPCFB){
+				ivLength = type.blockSize >> 3;
+				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
+				blockCipher.initialize(key.getEncoded());
+				pcfb = PCFBMode.create(blockCipher, genIV());
 			}
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedCipherException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -68,10 +77,11 @@ public class CryptBitSet {
 	 * @param key
 	 * @param iv
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) {
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) {
 		this.type = type;
 		this.key = key;
-		this.iv = iv;
+		ivLength = type.blockSize >> 3;
+		System.arraycopy(iv, offset, this.iv, 0, ivLength);
 		try{
 			if(type == CryptBitSetType.RijndaelPCFB){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
@@ -84,8 +94,16 @@ public class CryptBitSet {
 		}
 	}
 	
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv){
+		this(type, key, iv, 0);
+	}
+	
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) {
+		this(type, KeyUtils.getSecretKey(key, type.keyType), iv, offset);
+	}
+	
 	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) {
-		this(type, KeyUtils.getSecretKey(key, type.keyType), iv);
+		this(type, key, iv, 0);
 	}
 
 	/**
@@ -206,7 +224,7 @@ public class CryptBitSet {
 	}
 	
 	public byte[] genIV(){
-		byte[] newIV = new byte[type.blockSize >> 3];
+		byte[] newIV = new byte[ivLength];
 		PreferredAlgorithms.random.nextBytes(newIV);
 		this.iv = newIV;
 		return newIV;
