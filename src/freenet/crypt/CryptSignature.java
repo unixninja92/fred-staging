@@ -97,16 +97,8 @@ public final class CryptSignature{
 			dsaPubK = new DSAPublicKey(publicKey);
 		}
 		else{
-            try {
-				keys = KeyUtils.getPublicKeyPair(publicKey);
-				sig.initVerify(keys.getPublic());
-			} catch (InvalidKeySpecException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			keys = KeyUtils.getPublicKeyPair(publicKey);
+			sig.initVerify(keys.getPublic());
 		}
 	}
 	
@@ -133,10 +125,7 @@ public final class CryptSignature{
         }  catch (NoSuchAlgorithmException e) {
             Logger.error(CryptSignature.class, "NoSuchAlgorithmException : "+e.getMessage(),e);
             e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            Logger.error(CryptSignature.class, "InvalidKeySpecException : "+e.getMessage(), e);
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
+        }catch (InvalidKeyException e) {
             Logger.error(CryptSignature.class, "InvalidKeyException : "+e.getMessage(), e);
 			e.printStackTrace();
 		} catch (Exception e) {
