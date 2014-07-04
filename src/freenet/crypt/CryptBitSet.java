@@ -47,11 +47,13 @@ public class CryptBitSet {
 			if(type.cipherName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
 				this.key = key;
-			} else if(type == CryptBitSetType.RijndaelPCFB){
-				ivLength = type.blockSize >> 3;
+			} else if(type.cipherName == "Rijndael"){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
-				pcfb = PCFBMode.create(blockCipher, genIV());
+				if(type == CryptBitSetType.RijndaelPCFB){
+					ivLength = type.blockSize >> 3;
+					pcfb = PCFBMode.create(blockCipher, genIV());
+				}
 			}
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
@@ -124,9 +126,11 @@ public class CryptBitSet {
 					case RijndaelPCFB:
 						return pcfb.blockDecipher(input, offset, len);
 					case RijndaelECB:
-						break;
 					case RijndaelECB128:
-						break;
+						byte[] actualInput = extractSmallerArray(input, offset, len);
+						byte[] result = new byte[len];
+						blockCipher.decipher(actualInput, result);
+						return result;
 					case RijndaelCTR:
 						break;
 					}
@@ -136,9 +140,11 @@ public class CryptBitSet {
 					case RijndaelPCFB:
 						return pcfb.blockEncipher(input, offset, len);
 					case RijndaelECB:
-						break;
 					case RijndaelECB128:
-						break;
+						byte[] actualInput = extractSmallerArray(input, offset, len);
+						byte[] result = new byte[len];
+						blockCipher.encipher(actualInput, result);
+						return result;
 					case RijndaelCTR:
 						break;
 					}
@@ -232,5 +238,16 @@ public class CryptBitSet {
 	
 	public byte[] getIV(){
 		return iv;
+	}
+	
+	private byte[] extractSmallerArray(byte[] input, int offset, int len){
+		if(input.length == len){
+			return input;
+		}
+		else{
+			byte[] result = new byte[len];
+			System.arraycopy(input, offset, result, 0, len);
+			return result;
+		}
 	}
 }
