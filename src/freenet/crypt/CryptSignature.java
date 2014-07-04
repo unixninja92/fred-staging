@@ -84,17 +84,16 @@ public final class CryptSignature{
 	 * @param type Type of Signature algorithm used
 	 * @param publicKey The public key that can be used to verify signatures
 	 * @throws CryptFormatException
-	 * @throws IOException
 	 * @throws InvalidKeyException
 	 */
-	public CryptSignature(SigType type, byte[] publicKey) throws CryptFormatException, IOException, InvalidKeyException{
+	public CryptSignature(SigType type, byte[] publicKey) throws CryptFormatException, InvalidKeyException{
 		this.type = type;
 		verifyOnly = true;
 		if(type.name()=="DSA"){
 			random = PreferredAlgorithms.random;
 			dsaGroup = Global.DSAgroupBigA;
 			dsaPrivK = null;
-			dsaPubK = new DSAPublicKey(publicKey);
+			dsaPubK = DSAPublicKey.create(publicKey);
 		}
 		else{
 			keys = KeyUtils.getPublicKeyPair(publicKey);

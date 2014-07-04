@@ -482,7 +482,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return message3;
 	}
 	
-	//processes by reciver
+	//Processed by reciver
 	public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, byte[] identity, byte[] publicKeyI){
 		int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
@@ -554,8 +554,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		byte[] toVerify = assembleDHParams(identity, data);
 		
 		try {
-			CryptSignature sig;
-			sig = new CryptSignature(underlyingExch.type.sigType, publicKeyI);
+			CryptSignature sig = new CryptSignature(underlyingExch.type.sigType, publicKeyI);
 			if(!sig.verify(sigI, toVerify)){
 				Logger.error(this, "The signature verification has failed!! JFK(3) - "+peer.getPeer());
 				return null;
