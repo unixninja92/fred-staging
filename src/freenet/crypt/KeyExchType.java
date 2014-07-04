@@ -9,6 +9,7 @@ import java.security.spec.ECGenParameterSpec;
 import javax.crypto.KeyAgreement;
 
 public enum KeyExchType {
+	@Deprecated
 	DH(1, SigType.DSA),//128
 	JFKi(2),
 	JFKr(4),
