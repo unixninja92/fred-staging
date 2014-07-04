@@ -200,4 +200,19 @@ public class CryptBitSet {
 	public BitSet decrypt(BitSet input){
 		return BitSet.valueOf(decrypt(input.toByteArray()));
 	}
+	
+	public void setIV(byte[] iv){
+		this.iv = iv;
+	}
+	
+	public byte[] genIV(){
+		byte[] newIV = new byte[type.blockSize >> 3];
+		PreferredAlgorithms.random.nextBytes(newIV);
+		this.iv = newIV;
+		return newIV;
+	}
+	
+	public byte[] getIV(){
+		return iv;
+	}
 }

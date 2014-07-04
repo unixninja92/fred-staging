@@ -567,9 +567,38 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return data;
 	}
 	
-//	public byte[] genMessage4(byte[] identity, byte[] refs, byte[] sig){
-//		
-//	}
+	//sent by reciver
+	public byte[] genMessage4(byte[] identity, byte[] data, byte[] refI, byte[] sig, CryptBitSet cryptBits, byte[] newTrackerID, boolean sameAsOldTrackerID, byte[] outgoingBootID, long bootID, SigType sigType){
+		byte[] iv = cryptBits.genIV();
+		int ivLength = iv.length;
+		
+		int dataLength = data.length - refI.length;
+		
+		byte[] cyphertext = new byte[JFK_PREFIX_RESPONDER.length + ivLength + sig.length + dataLength];
+		int cleartextOffset = 0;
+		System.arraycopy(JFK_PREFIX_RESPONDER, 0, cyphertext, cleartextOffset, JFK_PREFIX_RESPONDER.length);
+		cleartextOffset += JFK_PREFIX_RESPONDER.length;
+		System.arraycopy(iv, 0, cyphertext, cleartextOffset, ivLength);
+		cleartextOffset += ivLength;
+		System.arraycopy(sig, 0, cyphertext, cleartextOffset, sig.length);
+		cleartextOffset += sig.length;
+		System.arraycopy(data, 0, cyphertext, cleartextOffset, dataLength);
+		cleartextOffset += dataLength;
+		// Now encrypt the cleartext[Signature]
+		int cleartextToEncypherOffset = JFK_PREFIX_RESPONDER.length + ivLength;
+		
+		//set iv
+		byte[] cleartext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, cyphertext.length - cleartextToEncypherOffset);
+	    
+		
+		// We compute the HMAC of (prefix + iv + signature)
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
+		byte[] hmac = mac.getMAC(cyphertext);
+		
+		byte[] message4 = new byte[hashnI.length + ivLength + (cyphertext.length - cleartextToEncypherOffset)];
+		
+		return message4;
+	}
 	
 	
 	/*
