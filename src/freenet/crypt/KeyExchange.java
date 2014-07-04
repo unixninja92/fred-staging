@@ -368,9 +368,6 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		} catch (GeneralSecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (CryptFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -560,9 +557,6 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 				return null;
 			}
 		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (CryptFormatException e) {
