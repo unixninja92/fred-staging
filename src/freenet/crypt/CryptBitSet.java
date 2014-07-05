@@ -8,6 +8,7 @@ import java.util.BitSet;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 import freenet.crypt.ciphers.Rijndael;
 import freenet.support.Logger;
@@ -21,6 +22,7 @@ public class CryptBitSet {
 	public final static CryptBitSetType defaultType = CryptBitSetType.ChaCha;
 	private CryptBitSetType type;
 	private SecretKey key;
+	private IvParameterSpec iv;
 
 	//Used for AES and ChaCha ciphers
 	private Cipher cipher;
@@ -28,8 +30,6 @@ public class CryptBitSet {
 	//These variables are used with Rijndael ciphers
 	private BlockCipher blockCipher;
 	private PCFBMode pcfb;
-	private byte[] iv;
-	private int ivLength;
 	
 	/**
 	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
@@ -44,11 +44,11 @@ public class CryptBitSet {
 			if(type.cipherName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
 				this.key = key;
+				genIV();
 			} else if(type.cipherName == "Rijndael"){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
 				if(type == CryptBitSetType.RijndaelPCFB){
-					ivLength = type.blockSize >> 3;
 					pcfb = PCFBMode.create(blockCipher, genIV());
 				}
 			}
@@ -74,19 +74,24 @@ public class CryptBitSet {
 	 * @throws UnsupportedTypeException 
 	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws UnsupportedTypeException {
+		if(type.equals(CryptBitSetType.RijndaelECB)|| type.equals(CryptBitSetType.RijndaelECB128)){
+			throw new UnsupportedTypeException(type, "Only RigndaelPCFB takes an IV.");
+		}
 		this.type = type;
 		this.key = key;
-		ivLength = type.blockSize >> 3;
-		System.arraycopy(iv, offset, this.iv, 0, ivLength);
+		byte[] actualIV = extractSmallerArray(iv, offset, type.getIVSize());
 		try{
 			if(type == CryptBitSetType.RijndaelPCFB){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
-				pcfb = PCFBMode.create(blockCipher, iv);
+				pcfb = PCFBMode.create(blockCipher, actualIV);
+			} else if( type.algName == "AES"){
+				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
+				this.key = key;
+				this.iv = new IvParameterSpec(actualIV);
 			}
-			else {
-				throw new UnsupportedTypeException(type, "Only RigndaelPCFB takes an IV.");
-			}
+		} catch (GeneralSecurityException e) {
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} catch (UnsupportedCipherException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		}
@@ -117,7 +122,7 @@ public class CryptBitSet {
 	private byte[] processesBytes(int mode, byte[] input, int offset, int len){
 		try {
 			if(type.cipherName == "Rijndael"){
-				if(mode == 0){
+				if(mode == Cipher.DECRYPT_MODE){
 					switch(type){
 					case RijndaelPCFB:
 						return pcfb.blockDecipher(input, offset, len);
@@ -131,7 +136,7 @@ public class CryptBitSet {
 						break;
 					}
 				}
-				else{
+				else if(mode == Cipher.ENCRYPT_MODE){
 					switch(type){
 					case RijndaelPCFB:
 						return pcfb.blockEncipher(input, offset, len);
@@ -145,9 +150,12 @@ public class CryptBitSet {
 						break;
 					}
 				}
+				else{
+					//throw unsupported mode error
+				}
 			}
 			else if(type.cipherName == "AES"){
-				cipher.init(mode, key);
+				cipher.init(mode, key, iv);
 				return cipher.doFinal(input, offset, len);
 			}
 		} catch (GeneralSecurityException e) {
@@ -214,18 +222,18 @@ public class CryptBitSet {
 		return BitSet.valueOf(decrypt(input.toByteArray()));
 	}
 	
-	public void setIV(byte[] iv){
+	public void setIV(IvParameterSpec iv){
 		this.iv = iv;
 	}
 	
 	public byte[] genIV(){
-		byte[] newIV = new byte[ivLength];
+		byte[] newIV = new byte[type.getIVSize()];
 		PreferredAlgorithms.random.nextBytes(newIV);
-		this.iv = newIV;
+		this.iv = new IvParameterSpec(newIV);
 		return newIV;
 	}
 	
-	public byte[] getIV(){
+	public IvParameterSpec getIV(){
 		return iv;
 	}
 	

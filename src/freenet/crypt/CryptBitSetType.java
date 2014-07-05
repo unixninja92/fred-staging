@@ -41,4 +41,8 @@ public enum CryptBitSetType {
 		this.algName = algName;
 		this.keyType = keyType;
 	}
+	
+	public int getIVSize(){
+		return this.blockSize >> 3;
+	}
 }
