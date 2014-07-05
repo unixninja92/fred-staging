@@ -3,6 +3,7 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.BitSet;
@@ -14,6 +15,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import freenet.crypt.ciphers.Rijndael;
+import freenet.support.Logger;
 
 /**
  * CryptBitSet will encrypt and decrypt both byte[]s and BitSets with a specified
@@ -55,16 +57,11 @@ public class CryptBitSet {
 					pcfb = PCFBMode.create(blockCipher, genIV());
 				}
 			}
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		}  catch (GeneralSecurityException e) {
+			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
 		} catch (UnsupportedCipherException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
+		} 
 	}
 	
 	public CryptBitSet(CryptBitSetType type, byte[] key){
@@ -74,7 +71,8 @@ public class CryptBitSet {
 	
 	/**
 	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
-	 * sets of bytes using the algorithm type with the specified key and iv.
+	 * sets of bytes using the algorithm type with the specified key and iv. Should 
+	 * only be used with RijndaelPCFB
 	 * @param type
 	 * @param key
 	 * @param iv
@@ -91,8 +89,7 @@ public class CryptBitSet {
 				pcfb = PCFBMode.create(blockCipher, iv);
 			}
 		} catch (UnsupportedCipherException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
 		}
 	}
 	
@@ -154,16 +151,9 @@ public class CryptBitSet {
 				cipher.init(mode, key);
 				return cipher.doFinal(input, offset, len);
 			}
-		} catch (IllegalBlockSizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} catch (GeneralSecurityException e) {
+			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
+		} 
 		return null;
 	}
 	

@@ -15,6 +15,7 @@ import javax.crypto.SecretKey;
 
 import com.db4o.ObjectContainer;
 
+import freenet.support.Logger;
 import freenet.support.api.Bucket;
 
 /**
@@ -108,8 +109,7 @@ public final class CryptBucket implements Bucket {
 			is.read(plain);
 			is.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(CryptBucket.class, "Unexpected IO error, something is wrong with the underlying bucket;  please report:", e);
 		}
 		return plain;
     }
@@ -140,8 +140,7 @@ public final class CryptBucket implements Bucket {
     	try {
     		outStream.write(input);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
 		}
     }
     
@@ -157,8 +156,7 @@ public final class CryptBucket implements Bucket {
 				outStream.write(b);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
 		}
     }
     
@@ -174,8 +172,7 @@ public final class CryptBucket implements Bucket {
     	try {
     		outStream.write(input, offset, len);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
 		}
     }
     
@@ -185,11 +182,15 @@ public final class CryptBucket implements Bucket {
      */
     public final void encrypt() throws IOException{
     	if(outStream == null){
-    		throw new IOException();
+    		throw new IOException("No data to encrypt");
     	}
     	checkOutStream();
-    	outStream.close();
-    	outStream = null;
+    	try{
+    		outStream.close();
+    		outStream = null;
+    	} catch(IOException e){
+			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
+    	}
     }
     
     /**
