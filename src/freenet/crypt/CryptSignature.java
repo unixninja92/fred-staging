@@ -69,7 +69,7 @@ public final class CryptSignature{
 				sig.initSign(keys.getPrivate());
 				sig.initVerify(keys.getPublic());
 			} catch (GeneralSecurityException e) {
-				Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
 		}
 		verifyOnly = false;
@@ -105,6 +105,7 @@ public final class CryptSignature{
 	 * @throws FSParseException
 	 */
 	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{
+		//TODO add DSA support
 		this.type = type;
 		verifyOnly = false;
         try {
@@ -119,7 +120,7 @@ public final class CryptSignature{
 			sig.initSign(keys.getPrivate());
 			sig.initVerify(keys.getPublic());
         }  catch (NoSuchAlgorithmException e) {
-			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
         }catch (InvalidKeyException e) {
             Logger.error(CryptSignature.class, "InvalidKeyException : ", e);
 		} catch (Exception e) {
@@ -169,12 +170,16 @@ public final class CryptSignature{
 	/**
 	 * Add the passed in byte to the bytes that will be signed.
 	 * @param input Byte to be signed
+	 * @throws UnsupportedTypeException 
 	 */
-	public void addByte(byte input){
+	public void addByte(byte input) throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			sig.update(input);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -182,11 +187,14 @@ public final class CryptSignature{
 	 * Add the passed in byte[] to the bytes that will be signed.
 	 * @param input Byte[] to be signed
 	 */
-	public void addBytes(byte[] input){
+	public void addBytes(byte[] input) throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			sig.update(input);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -197,11 +205,14 @@ public final class CryptSignature{
 	 * @param offset Where to start reading bytes for signature
 	 * @param length How many bytes after offset to use for signature
 	 */
-	public void addBytes(byte[] data, int offset, int length){
+	public void addBytes(byte[] data, int offset, int length) throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			sig.update(data, offset, length);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -209,11 +220,14 @@ public final class CryptSignature{
 	 * Adds the ByteBuffer to the bytes that will be signed.
 	 * @param input ByteBuffer to be signed
 	 */
-	public void addBytes(ByteBuffer input){
+	public void addBytes(ByteBuffer input) throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			sig.update(input);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -226,10 +240,15 @@ public final class CryptSignature{
         byte[] result = null;
         if(!verifyOnly){
         	if(type == SigType.DSA){
-        		DSASignature sig = signToDSASignature(data);
-        		result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
-        		System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
-        		System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+				try {
+	        		DSASignature sig;
+					sig = signToDSASignature(data);
+					result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
+	        		System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
+	        		System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+				} catch (UnsupportedTypeException e) {
+					Logger.error(CryptSignature.class, "Internal error; please report:", e);
+				}
         	}
         	else{
         		try{
@@ -247,8 +266,10 @@ public final class CryptSignature{
         					Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
         			}
         		} catch(GeneralSecurityException e){
-        			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
-        		}
+        			Logger.error(CryptSignature.class, "Internal error; please report:", e);
+        		} catch (UnsupportedTypeException e) {
+        			Logger.error(CryptSignature.class, "Internal error; please report:", e);
+				}
         	}
         }
         else{
@@ -261,8 +282,12 @@ public final class CryptSignature{
 	 * Signs byte[]s to DSASignature
 	 * @param data Byte[]s to sign
 	 * @return Returns the DSASignature of the data
+	 * @throws UnsupportedTypeException 
 	 */
-	public DSASignature signToDSASignature(byte[]... data){
+	public DSASignature signToDSASignature(byte[]... data) throws UnsupportedTypeException{
+		if(type != SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		return signToDSASignature(new NativeBigInteger(1, sha256.getHash(data)));
 	}
 	
@@ -270,20 +295,15 @@ public final class CryptSignature{
 	 * Signs data m to DSASignature
 	 * @param m BitIteger to be signed
 	 * @return Returns the DSASignature of m
+	 * @throws UnsupportedTypeException 
 	 */
-	public DSASignature signToDSASignature(BigInteger m){
+	public DSASignature signToDSASignature(BigInteger m) throws UnsupportedTypeException{
+		if(type != SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		DSASignature result = null;
         if(!verifyOnly){
-        	if(type == SigType.DSA){
-        		result = DSA.sign(dsaGroup, dsaPrivK, m, random);
-        	}
-        	else {
-        		try {
-        			throw new Exception();
-        		} catch (Exception e) {
-        			Logger.error(CryptSignature.class, "Only SigType DSA can return a DSASignature",e);
-        		}
-        	}
+        	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
         } else{
         	//TODO log this
         }
@@ -321,11 +341,14 @@ public final class CryptSignature{
      * @param signature The signature to verify
      * @return If the signature is valid it returns true, otherwise it returns false.
      */
-	public boolean verify(byte[] signature){
+	public boolean verify(byte[] signature) throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			return sig.verify(signature);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
 		return false;
 	}
@@ -350,7 +373,11 @@ public final class CryptSignature{
 
 			NativeBigInteger r = new NativeBigInteger(1, bufR);
 			NativeBigInteger s = new NativeBigInteger(1, bufS);
-    		return verify(r, s, data);
+    		try {
+				return verify(r, s, data);
+			} catch (UnsupportedTypeException e) {
+				Logger.error(CryptSignature.class, "Internal error; please report:", e);
+			}
     	}
     	else if(MessageDigest.isEqual(sign(data), signature)){
     		return true;
@@ -365,23 +392,32 @@ public final class CryptSignature{
 	 * @return True if the signature matches the signature generated for the passed in 
 	 * data, otherwise false
 	 */
-    public boolean verify(DSASignature sig, BigInteger m){
+    public boolean verify(DSASignature sig, BigInteger m) throws UnsupportedTypeException{
+		if(type != SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
     	return DSA.verify(dsaPubK, sig, m, false);
     }
     
-    public boolean verify(BigInteger r, BigInteger s, BigInteger m){
+    public boolean verify(BigInteger r, BigInteger s, BigInteger m) throws UnsupportedTypeException{
+		if(type != SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
     	return DSA.verify(dsaPubK, new DSASignature(r, s), m, false);
     }
     
-    public boolean verify(DSASignature sig, byte[]... data){
+    public boolean verify(DSASignature sig, byte[]... data) throws UnsupportedTypeException{
     	return verify(sig, new NativeBigInteger(1, sha256.getHash(data)));
     }
     
-    public boolean verify(BigInteger r, BigInteger s, byte[]... data){
+    public boolean verify(BigInteger r, BigInteger s, byte[]... data) throws UnsupportedTypeException{
     	return verify(r, s, new NativeBigInteger(1, sha256.getHash(data)));
     }
     
-    public ECPublicKey getPublicKey() {
+    public ECPublicKey getPublicKey() throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
         return (ECPublicKey) keys.getPublic();
     }
     
@@ -395,7 +431,10 @@ public final class CryptSignature{
      * @param includePrivate - include the (secret) private key
      * @return SimpleFieldSet
      */
-    public SimpleFieldSet asFieldSet(boolean includePrivate) {
+    public SimpleFieldSet asFieldSet(boolean includePrivate) throws UnsupportedTypeException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
         SimpleFieldSet fs = new SimpleFieldSet(true);
         SimpleFieldSet fsCurve = new SimpleFieldSet(true);
         fsCurve.putSingle("pub", Base64.encode(keys.getPublic().getEncoded()));
