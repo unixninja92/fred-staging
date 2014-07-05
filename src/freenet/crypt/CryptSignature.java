@@ -3,7 +3,6 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
@@ -14,7 +13,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.ECPublicKey;
-import java.security.spec.InvalidKeySpecException;
 
 import net.i2p.util.NativeBigInteger;
 import freenet.node.FSParseException;
@@ -71,8 +69,7 @@ public final class CryptSignature{
 				sig.initSign(keys.getPrivate());
 				sig.initVerify(keys.getPublic());
 			} catch (GeneralSecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
 			}
 		}
 		verifyOnly = false;
@@ -122,11 +119,9 @@ public final class CryptSignature{
 			sig.initSign(keys.getPrivate());
 			sig.initVerify(keys.getPublic());
         }  catch (NoSuchAlgorithmException e) {
-            Logger.error(CryptSignature.class, "NoSuchAlgorithmException : "+e.getMessage(),e);
-            e.printStackTrace();
+			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
         }catch (InvalidKeyException e) {
-            Logger.error(CryptSignature.class, "InvalidKeyException : "+e.getMessage(), e);
-			e.printStackTrace();
+            Logger.error(CryptSignature.class, "InvalidKeyException : ", e);
 		} catch (Exception e) {
             throw new FSParseException(e);
         }
@@ -179,8 +174,7 @@ public final class CryptSignature{
 		try {
 			sig.update(input);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-			e.printStackTrace();
+			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
 		}
 	}
 	
@@ -192,8 +186,7 @@ public final class CryptSignature{
 		try {
 			sig.update(input);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-			e.printStackTrace();
+			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
 		}
 	}
 	
@@ -208,8 +201,7 @@ public final class CryptSignature{
 		try {
 			sig.update(data, offset, length);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-			e.printStackTrace();
+			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
 		}
 	}
 	
@@ -221,8 +213,7 @@ public final class CryptSignature{
 		try {
 			sig.update(input);
 		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-			e.printStackTrace();
+			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
 		}
 	}
 	
@@ -255,12 +246,8 @@ public final class CryptSignature{
         				else
         					Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
         			}
-        		} catch(SignatureException e){
-        			Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-        			e.printStackTrace();
-        		} catch (InvalidKeyException e) {
-        			// TODO Auto-generated catch block
-        			e.printStackTrace();
+        		} catch(GeneralSecurityException e){
+        			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
         		}
         	}
         }
@@ -295,7 +282,6 @@ public final class CryptSignature{
         			throw new Exception();
         		} catch (Exception e) {
         			Logger.error(CryptSignature.class, "Only SigType DSA can return a DSASignature",e);
-        			System.out.println("Only SigType DSA can return a DSASignature");
         		}
         	}
         } else{
@@ -339,8 +325,7 @@ public final class CryptSignature{
 		try {
 			return sig.verify(signature);
 		} catch (SignatureException e) {
-            Logger.error(CryptSignature.class, "SignatureException : "+e.getMessage(),e);
-			e.printStackTrace();
+			Logger.error(CryptSignature.class, "Unexpected error; please report:", e);
 		}
 		return false;
 	}
