@@ -3,11 +3,9 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -24,8 +22,6 @@ import freenet.node.PeerNode;
 import freenet.support.Fields;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
-import freenet.support.api.Bucket;
-import freenet.support.io.ArrayBucketFactory;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
 	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
@@ -113,12 +109,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 				keys = KeyUtils.genKeyPair(type.sigType.keyType);
 
 				ka.init(keys.getPrivate());	
-			} catch (NoSuchAlgorithmException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InvalidKeyException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (GeneralSecurityException e) {
+				Logger.error(KeyExchange.class, "Internal error; please report:", e);
 			}
 		}
 	}
@@ -366,11 +358,9 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 				return;
 			}
 		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(KeyExchange.class, "Internal error; please report:", e);
 		} catch (CryptFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(KeyExchange.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -462,7 +452,12 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 
 		int cleartextToEncypherOffset = JFK_PREFIX_INITIATOR.length + ivSize;
 		
-		CryptBitSet cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
+		CryptBitSet cryptBits = null;
+		try {
+			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
+		} catch (UnsupportedTypeException e) {
+			Logger.error(KeyExchange.class, "Internal error; please report:", e);
+		}
 		byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
 		
 		// We compute the HMAC of (prefix + cyphertext) Includes the IV!
@@ -531,7 +526,12 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		System.arraycopy(cypheredPayload, decypheredPayloadOffset, iv, 0, ivLength);
 		decypheredPayloadOffset += ivLength;
 		
-		CryptBitSet cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
+		CryptBitSet cryptBits = null;
+		try {
+			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
+		} catch (UnsupportedTypeException e1) {
+			Logger.error(KeyExchange.class, "Internal error; please report:", e1);
+		}
 		byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);
 	    
 	    
@@ -617,7 +617,12 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 			return null;
 		}
 		
-		CryptBitSet cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, encypheredPayload, encypheredPayloadOffset);
+		CryptBitSet cryptBits = null;
+		try {
+			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, encypheredPayload, encypheredPayloadOffset);
+		} catch (UnsupportedTypeException e) {
+			Logger.error(KeyExchange.class, "Internal error; please report:", e);
+		}
 		encypheredPayloadOffset += ivLength;
 		
 		byte[] decypheredPayload = cryptBits.decrypt(encypheredPayload, encypheredPayloadOffset, encypheredPayload.length - encypheredPayloadOffset);
