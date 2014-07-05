@@ -76,8 +76,9 @@ public class CryptBitSet {
 	 * @param type
 	 * @param key
 	 * @param iv
+	 * @throws UnsupportedTypeException 
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) {
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws UnsupportedTypeException {
 		this.type = type;
 		this.key = key;
 		ivLength = type.blockSize >> 3;
@@ -88,20 +89,23 @@ public class CryptBitSet {
 				blockCipher.initialize(key.getEncoded());
 				pcfb = PCFBMode.create(blockCipher, iv);
 			}
+			else {
+				throw new UnsupportedTypeException(type);
+			}
 		} catch (UnsupportedCipherException e) {
 			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
 		}
 	}
 	
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv){
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) throws UnsupportedTypeException{
 		this(type, key, iv, 0);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) {
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws UnsupportedTypeException {
 		this(type, KeyUtils.getSecretKey(key, type.keyType), iv, offset);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) {
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) throws UnsupportedTypeException {
 		this(type, key, iv, 0);
 	}
 
