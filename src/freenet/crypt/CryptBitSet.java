@@ -73,28 +73,31 @@ public class CryptBitSet {
 	 * @param iv
 	 * @throws UnsupportedTypeException 
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws UnsupportedTypeException {
+	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) throws UnsupportedTypeException {
 		if(type.equals(CryptBitSetType.RijndaelECB)|| type.equals(CryptBitSetType.RijndaelECB128)){
-			throw new UnsupportedTypeException(type, "Only RigndaelPCFB takes an IV.");
+			throw new UnsupportedTypeException(type, "Rigndael in ECB does not take an IV.");
 		}
 		this.type = type;
 		this.key = key;
-		byte[] actualIV = extractSmallerArray(iv, offset, type.getIVSize());
+		this.iv = iv;
 		try{
 			if(type == CryptBitSetType.RijndaelPCFB){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
-				pcfb = PCFBMode.create(blockCipher, actualIV);
+				pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
 			} else if( type.algName == "AES"){
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
 				this.key = key;
-				this.iv = new IvParameterSpec(actualIV);
 			}
 		} catch (GeneralSecurityException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} catch (UnsupportedCipherException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		}
+	}
+	
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws UnsupportedTypeException {
+		this(type, key, new IvParameterSpec(iv, offset, type.getIVSize()));
 	}
 	
 	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) throws UnsupportedTypeException{
