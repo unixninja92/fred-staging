@@ -4,14 +4,9 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.BitSet;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import freenet.crypt.ciphers.Rijndael;
@@ -58,9 +53,9 @@ public class CryptBitSet {
 				}
 			}
 		}  catch (GeneralSecurityException e) {
-			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} catch (UnsupportedCipherException e) {
-			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} 
 	}
 	
@@ -90,10 +85,10 @@ public class CryptBitSet {
 				pcfb = PCFBMode.create(blockCipher, iv);
 			}
 			else {
-				throw new UnsupportedTypeException(type);
+				throw new UnsupportedTypeException(type, "Only RigndaelPCFB takes an IV.");
 			}
 		} catch (UnsupportedCipherException e) {
-			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -156,7 +151,7 @@ public class CryptBitSet {
 				return cipher.doFinal(input, offset, len);
 			}
 		} catch (GeneralSecurityException e) {
-			Logger.error(CryptBitSet.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} 
 		return null;
 	}

@@ -109,7 +109,7 @@ public final class CryptBucket implements Bucket {
 			is.read(plain);
 			is.close();
 		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Unexpected IO error, something is wrong with the underlying bucket;  please report:", e);
+			Logger.error(CryptBucket.class, "Internal IO error, something is wrong with the underlying bucket;  please report:", e);
 		}
 		return plain;
     }
@@ -140,7 +140,7 @@ public final class CryptBucket implements Bucket {
     	try {
     		outStream.write(input);
 		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBucket.class, "Internal error; please report:", e);
 		}
     }
     
@@ -156,7 +156,7 @@ public final class CryptBucket implements Bucket {
 				outStream.write(b);
 			}
 		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBucket.class, "Internal error; please report:", e);
 		}
     }
     
@@ -172,7 +172,7 @@ public final class CryptBucket implements Bucket {
     	try {
     		outStream.write(input, offset, len);
 		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBucket.class, "Internal error; please report:", e);
 		}
     }
     
@@ -189,7 +189,7 @@ public final class CryptBucket implements Bucket {
     		outStream.close();
     		outStream = null;
     	} catch(IOException e){
-			Logger.error(CryptBucket.class, "Unexpected error; please report:", e);
+			Logger.error(CryptBucket.class, "Internal error; please report:", e);
     	}
     }
     

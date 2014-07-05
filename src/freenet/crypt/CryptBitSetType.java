@@ -19,11 +19,11 @@ public enum CryptBitSetType {
 	public final KeyType keyType;
 	
 	CryptBitSetType(int bitmask, KeyType keyType){
-	this.bitmask = bitmask;
-	this.keyType = keyType;
-	this.cipherName = keyType.alg;
-	this.blockSize = keyType.keySize;
-	algName = name();
+		this.bitmask = bitmask;
+		this.keyType = keyType;
+		this.cipherName = keyType.alg;
+		this.blockSize = keyType.keySize;
+		algName = name();
 	}
 	
 	CryptBitSetType(int bitmask, KeyType keyType, int blockSize){
