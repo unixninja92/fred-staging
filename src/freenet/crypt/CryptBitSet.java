@@ -39,19 +39,19 @@ public class CryptBitSet {
 	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key){
 		this.type = type;
-
 		try {
-			if(type.cipherName == "AES"){
-				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
-				this.key = key;
-				genIV();
-			} else if(type.cipherName == "Rijndael"){
+			 if(type.cipherName == "Rijndael"){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
 				if(type == CryptBitSetType.RijndaelPCFB){
 					pcfb = PCFBMode.create(blockCipher, genIV());
 				}
-			}
+			 } 
+			 else {
+				 cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
+				 this.key = key;
+				 genIV();
+			 }
 		}  catch (GeneralSecurityException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} catch (UnsupportedCipherException e) {
@@ -61,6 +61,14 @@ public class CryptBitSet {
 	
 	public CryptBitSet(CryptBitSetType type, byte[] key){
 		this(type, KeyUtils.getSecretKey(key, type.keyType));
+	}
+	
+	public CryptBitSet(CryptBitSetType type){
+		this(type, KeyUtils.genSecretKey(type.keyType));
+	}
+	
+	public CryptBitSet(){
+		this(defaultType);
 	}
 	
 	
@@ -75,7 +83,7 @@ public class CryptBitSet {
 	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) throws UnsupportedTypeException {
 		if(type.equals(CryptBitSetType.RijndaelECB)|| type.equals(CryptBitSetType.RijndaelECB128)){
-			throw new UnsupportedTypeException(type, "Rigndael in ECB does not take an IV.");
+			throw new UnsupportedTypeException(type, "Rijndael in ECB mode does not take an IV.");
 		}
 		this.type = type;
 		this.key = key;
@@ -85,7 +93,7 @@ public class CryptBitSet {
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
 				pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
-			} else if( type.algName == "AES"){
+			} else{
 				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
 				this.key = key;
 			}
@@ -135,8 +143,6 @@ public class CryptBitSet {
 						byte[] result = new byte[len];
 						blockCipher.decipher(actualInput, result);
 						return result;
-					case RijndaelCTR:
-						break;
 					}
 				}
 				else if(mode == Cipher.ENCRYPT_MODE){
@@ -149,15 +155,13 @@ public class CryptBitSet {
 						byte[] result = new byte[len];
 						blockCipher.encipher(actualInput, result);
 						return result;
-					case RijndaelCTR:
-						break;
 					}
 				}
 				else{
 					//throw unsupported mode error
 				}
 			}
-			else if(type.cipherName == "AES"){
+			else{
 				cipher.init(mode, key, iv);
 				return cipher.doFinal(input, offset, len);
 			}
