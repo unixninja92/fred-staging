@@ -10,6 +10,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 
+import freenet.support.Logger;
+
 public enum SigType{
 	DSA(1),
 	ECDSAP256(2, KeyPairType.ECP256, "SHA256withECDSA", 91, 72),
@@ -42,20 +44,34 @@ public enum SigType{
 		maxSigSize = maxSize;
 	}
 	
-	public Signature get() throws NoSuchAlgorithmException{
-		return Signature.getInstance(algName, 
-				PreferredAlgorithms.sigProviders.get(algName));
+	public Signature get(){
+		try {
+			return Signature.getInstance(algName, 
+					PreferredAlgorithms.sigProviders.get(algName));
+		} catch (NoSuchAlgorithmException e) {
+			Logger.error(SigType.class, "Internal error; please report:", e);
+		}
+		return null;
 	}
 	
-	public DSASignature get(String sig){
+	public DSASignature get(String sig) throws UnsupportedTypeException{
+		if(this != DSA){
+			throw new UnsupportedTypeException(this);
+		}
 		return new DSASignature(sig);
 	}
 	
-	public DSASignature get(InputStream in) throws IOException{
+	public DSASignature get(InputStream in) throws IOException, UnsupportedTypeException{
+		if(this != DSA){
+			throw new UnsupportedTypeException(this);
+		}
 		return new DSASignature(in);
 	}
 	
-	public DSASignature get(BigInteger r, BigInteger s){
+	public DSASignature get(BigInteger r, BigInteger s) throws UnsupportedTypeException{
+		if(this != DSA){
+			throw new UnsupportedTypeException(this);
+		}
 		return new DSASignature(r, s);
 	}
 	

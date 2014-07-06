@@ -119,9 +119,7 @@ public final class CryptSignature{
             sig = type.get();
 			sig.initSign(keys.getPrivate());
 			sig.initVerify(keys.getPublic());
-        }  catch (NoSuchAlgorithmException e) {
-			Logger.error(CryptSignature.class, "Internal error; please report:", e);
-        }catch (Exception e) {
+        }  catch (Exception e) {
             throw new FSParseException(e);
         }
 	}
