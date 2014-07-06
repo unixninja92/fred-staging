@@ -1,5 +1,6 @@
 package freenet.crypt;
 
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -32,13 +33,9 @@ public class KeyUtils {
 					PreferredAlgorithms.keyPairProvider);
 			kg.initialize(type.spec);
 			return kg.generateKeyPair();
-		} catch (InvalidAlgorithmParameterException e) {
-            Logger.error(KeyUtils.class, "InvalidAlgorithmParameterException : "+e.getMessage(), e);
-            e.printStackTrace();
-        }  catch (NoSuchAlgorithmException e) {
-            Logger.error(KeyUtils.class, "NoSuchAlgorithmException : "+e.getMessage(), e);
-			e.printStackTrace();
-		}
+		} catch (GeneralSecurityException e) {
+			Logger.error(KeyUtils.class, "Internal error; please report:", e);
+        } 
 		return null;
 	}
 	
@@ -55,12 +52,8 @@ public class KeyUtils {
 
 	        X509EncodedKeySpec xks = new X509EncodedKeySpec(pub);
 	        return kf.generatePublic(xks);
-		} catch (NoSuchAlgorithmException e) {
-            Logger.error(KeyUtils.class, "NoSuchAlgorithmException : "+e.getMessage(), e);
-			e.printStackTrace();
-		} catch (InvalidKeySpecException e) {
-            Logger.error(KeyUtils.class, "InvalidKeySpecException : "+e.getMessage(), e);
-			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			Logger.error(KeyUtils.class, "Internal error; please report:", e);
 		}
 		return null;
 	}
@@ -93,12 +86,8 @@ public class KeyUtils {
 	        PrivateKey privK = kf.generatePrivate(pks);
 
 	        return getKeyPair(pubK, privK);
-		} catch (InvalidKeySpecException e) {
-            Logger.error(KeyUtils.class, "InvalidKeySpecException : "+e.getMessage(), e);
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-            Logger.error(KeyUtils.class, "NoSuchAlgorithmException : "+e.getMessage(), e);
-			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			Logger.error(KeyUtils.class, "Internal error; please report:", e);
 		}
         return null;
 	}
@@ -127,8 +116,7 @@ public class KeyUtils {
 			}
 	    	return kg.generateKey();
 		} catch (NoSuchAlgorithmException e) {
-            Logger.error(KeyUtils.class, "NoSuchAlgorithmException : "+e.getMessage(), e);
-			e.printStackTrace();
+			Logger.error(KeyUtils.class, "Internal error; please report:", e);
 		}
     	return null;
 	}

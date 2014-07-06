@@ -8,12 +8,12 @@ import java.security.spec.ECGenParameterSpec;
 
 import javax.crypto.KeyAgreement;
 
+import freenet.support.Logger;
+
 public enum KeyExchType {
 	@Deprecated
 	DH(1, SigType.DSA),//128
-	JFKi(2),
-	JFKr(4),
-	ECDHP256(8, "ECDH", "secp256r1", 91, 32, SigType.ECDSAP256);
+	ECDHP256(2, "ECDH", "secp256r1", 91, 32, SigType.ECDSAP256);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
@@ -53,21 +53,23 @@ public enum KeyExchType {
 		this.sigType = sigType;
 	}
 	
-	public final KeyAgreement get() throws NoSuchAlgorithmException{
+	public final KeyAgreement get()throws UnsupportedTypeException{
+		if(this == DH){
+			throw new UnsupportedTypeException(this);
+		}
 		//FIXME switch to preferred provider
-		return KeyAgreement.getInstance(algName, PreferredAlgorithms.BC);
+		try {
+			return KeyAgreement.getInstance(algName, PreferredAlgorithms.BC);
+		} catch (NoSuchAlgorithmException e) {
+			Logger.error(KeyExchType.class, "Internal error; please report:", e);
+		}
+		return null;
 	}
 	
-//	public KeyAgreementSchemeContext getSchemeContext(){
-//		if(name() == "DH"){
-//			return new DiffieHellmanLightContext();
-//		}
-//		else{
-//			return new ECDHLightContext();
-//		}
-//	}
-	
-	public final ECGenParameterSpec getSpec(){
+	public final ECGenParameterSpec getSpec()throws UnsupportedTypeException{
+		if(this == DH){
+			throw new UnsupportedTypeException(this);
+		}
 		return new ECGenParameterSpec(specName);
 	}
 }

@@ -53,12 +53,13 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		}
 		else{
 			try {
-				ka = type.get();
-				
 				keys = KeyUtils.genKeyPair(type.sigType.keyType);
-
+				
+				ka = type.get();
 				ka.init(keys.getPrivate());	
 			} catch (GeneralSecurityException e) {
+				Logger.error(KeyExchange.class, "Internal error; please report:", e);
+			} catch (UnsupportedTypeException e) {
 				Logger.error(KeyExchange.class, "Internal error; please report:", e);
 			}
 		}
