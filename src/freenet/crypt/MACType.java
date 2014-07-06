@@ -7,6 +7,8 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.Mac;
 
+import freenet.support.Logger;
+
 public enum MACType {
 	HMACSHA1(1, "HMACSHA1", KeyType.HMACSHA1),
 	HMACSHA256(2, "HmacSHA256", KeyType.HMACSHA256),
@@ -32,8 +34,13 @@ public enum MACType {
 		keyType = type;
 	}
 	
-	public final Mac get() throws NoSuchAlgorithmException{
-		return Mac.getInstance(mac, PreferredAlgorithms.macProviders.get(mac));
+	public final Mac get(){
+		try {
+			return Mac.getInstance(mac, PreferredAlgorithms.macProviders.get(mac));
+		} catch (NoSuchAlgorithmException e) {
+			Logger.error(MACType.class, "Internal error; please report:", e);
+		}
+		return null;
 	}
 	
 }
