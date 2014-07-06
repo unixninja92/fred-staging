@@ -18,7 +18,6 @@ import freenet.support.Logger;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
 	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
-    private static final RandomSource rand = PreferredAlgorithms.random;
     private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
 
@@ -66,6 +65,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	//DH
+	@Deprecated
 	public KeyExchange(DHGroup group, NativeBigInteger myExponent, NativeBigInteger myExponential){
 		type = KeyExchType.DH;
 		dhGroup = group;
@@ -74,14 +74,17 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		this.myExponential = myExponential;
 	}
 	
+	@Deprecated
 	public KeyExchange(DHGroup group, NativeBigInteger myExponent){
 		this(group, myExponent, (NativeBigInteger) group.getG().modPow(myExponent, group.getP()));
 	}
 	
+	@Deprecated
 	public KeyExchange(NativeBigInteger myExponent, NativeBigInteger myExponential){
 		this(Global.DHgroupA, myExponent, myExponential);
 	}
 	
+	@Deprecated
 	public KeyExchange(NativeBigInteger myExponent){
 		this(Global.DHgroupA, myExponent);
 	}
@@ -96,7 +99,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	 * @throws UnsupportedTypeException **
      */
 	public byte[] getSharedSecrect(PublicKey publicKey) throws InvalidKeyException, UnsupportedTypeException{
-		if(type == KeyExchType.DH){
+		if(type.algName == "DH"){
 			throw new UnsupportedTypeException(type);
 		}
 		byte[] sharedKey = null;
@@ -132,6 +135,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * @return a SecretKey or null if it fails
      * 
      */
+	@Deprecated
 	public byte[] getSharedSecrect(NativeBigInteger peerExponential) throws UnsupportedTypeException{
 		if(type != KeyExchType.DH){
 			throw new UnsupportedTypeException(type);
@@ -163,6 +167,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
         return keys.getPublic();
     }
 	
+	@Deprecated
 	public static boolean checkExponentialValidity(BigInteger exp){
 		return DiffieHellman.checkDHExponentialValidity(KeyExchange.class, exp);
 	}
