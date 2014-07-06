@@ -7,7 +7,6 @@ package freenet.crypt;
 public enum CryptBitSetType {
 	RijndaelECB(1, KeyType.Rijndael256),
 	RijndaelECB128(2, KeyType.Rijndael256, 128),
-//	RijndaelCTR(4, KeyType.Rijndael256),
 	RijndaelPCFB(8, KeyType.Rijndael256),
 	AESCTR(16, "AES/CTR/NOPADDING", KeyType.AES256),
 	ChaCha(32, KeyType.ChaCha);
@@ -43,9 +42,11 @@ public enum CryptBitSetType {
 	}
 	
 	public int getIVSize(){//number bytes
-		if(name() == this.ChaCha.name()){
+		if(this == ChaCha){
 			return 8;
 		}
-		return this.blockSize >> 3;
+		else{
+			return this.blockSize >> 3;
+		}
 	}
 }

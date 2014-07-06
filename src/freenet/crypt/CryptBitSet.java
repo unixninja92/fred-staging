@@ -134,11 +134,10 @@ public class CryptBitSet {
 		try {
 			if(type.cipherName == "Rijndael"){
 				if(mode == Cipher.DECRYPT_MODE){
-					switch(type){
-					case RijndaelPCFB:
+					if(type == CryptBitSetType.RijndaelPCFB){
 						return pcfb.blockDecipher(input, offset, len);
-					case RijndaelECB:
-					case RijndaelECB128:
+					} 
+					else{
 						byte[] actualInput = extractSmallerArray(input, offset, len);
 						byte[] result = new byte[len];
 						blockCipher.decipher(actualInput, result);
@@ -146,11 +145,10 @@ public class CryptBitSet {
 					}
 				}
 				else if(mode == Cipher.ENCRYPT_MODE){
-					switch(type){
-					case RijndaelPCFB:
+					if(type == CryptBitSetType.RijndaelPCFB){
 						return pcfb.blockEncipher(input, offset, len);
-					case RijndaelECB:
-					case RijndaelECB128:
+					} 
+					else{
 						byte[] actualInput = extractSmallerArray(input, offset, len);
 						byte[] result = new byte[len];
 						blockCipher.encipher(actualInput, result);
