@@ -8,6 +8,8 @@ import java.security.NoSuchAlgorithmException;
 
 import org.bitpedia.util.TigerTree;
 
+import freenet.support.Logger;
+
 public enum HashType {
 	// warning: keep in sync with Util.mdProviders!
 	SHA1(1, 20),
@@ -36,7 +38,7 @@ public enum HashType {
 		this.hashLength = hashLength;
 	}
 
-	public MessageDigest get() throws NoSuchAlgorithmException {
+	public MessageDigest get() {
 		if(javaName == null) {
 			if(this.name().equals("ED2K"))
 				return new Ed2MessageDigest();
@@ -47,7 +49,12 @@ public enum HashType {
 			// User the pool
 			return freenet.crypt.SHA256.getMessageDigest();
 		} else {
-			return MessageDigest.getInstance(javaName, PreferredAlgorithms.mdProviders.get(javaName));
+			try {
+				return MessageDigest.getInstance(javaName, PreferredAlgorithms.mdProviders.get(javaName));
+			} catch (NoSuchAlgorithmException e) {
+				Logger.error(HashType.class, "Internal error; please report:", e);
+			}
+			return null;
 		}
 	}
 	
