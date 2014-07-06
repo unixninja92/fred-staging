@@ -92,9 +92,13 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * @return a SecretKey or null if it fails
      * 
      * **THE OUTPUT SHOULD ALWAYS GO THROUGH A KDF
-	 * @throws InvalidKeyException **
+	 * @throws InvalidKeyException 
+	 * @throws UnsupportedTypeException **
      */
-	public byte[] getSharedSecrect(PublicKey publicKey) throws InvalidKeyException{
+	public byte[] getSharedSecrect(PublicKey publicKey) throws InvalidKeyException, UnsupportedTypeException{
+		if(type == KeyExchType.DH){
+			throw new UnsupportedTypeException(type);
+		}
 		byte[] sharedKey = null;
 		synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
@@ -105,14 +109,12 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		if (logMINOR) {
 			Logger.minor(this, "Curve in use: " + type.name().substring(4));
 			if(logDEBUG) {
-				Logger.debug(this,
-						"My exponential: " + HexUtil.bytesToHex(getPublicKey().getEncoded()));
-				Logger.debug(
-						this,
-						"Peer's exponential: "
-								+ HexUtil.bytesToHex(publicKey.getEncoded()));
-				Logger.debug(this,
-						"SharedSecret = " + HexUtil.bytesToHex(sharedKey));
+				Logger.debug(this, "My exponential: " + 
+						HexUtil.bytesToHex(getPublicKey().getEncoded()));
+				Logger.debug(this, "Peer's exponential: " + 
+						HexUtil.bytesToHex(publicKey.getEncoded()));
+				Logger.debug(this, "SharedSecret = " + 
+						HexUtil.bytesToHex(sharedKey));
 			}
 		}
 		
@@ -120,7 +122,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	@Deprecated
-	public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException{
+	public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException, UnsupportedTypeException{
 		return getSharedSecrect(peerExponential);
 	}
 	
@@ -130,7 +132,10 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * @return a SecretKey or null if it fails
      * 
      */
-	public byte[] getSharedSecrect(NativeBigInteger peerExponential) {
+	public byte[] getSharedSecrect(NativeBigInteger peerExponential) throws UnsupportedTypeException{
+		if(type != KeyExchType.DH){
+			throw new UnsupportedTypeException(type);
+		}
 		synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
 		}
@@ -150,7 +155,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	@Deprecated
-	public byte[] getHMACKey(NativeBigInteger peerExponential){
+	public byte[] getHMACKey(NativeBigInteger peerExponential) throws UnsupportedTypeException{
 		return getSharedSecrect(peerExponential);
 	}
 	
