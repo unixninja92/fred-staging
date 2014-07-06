@@ -25,19 +25,19 @@ public final class MessageAuthCode {
 	private SecretKey key;
 	private IvParameterSpec iv;
 	
-	public MessageAuthCode(){
+	public MessageAuthCode() throws InvalidKeyException{
 		this(defaultType);
 	}
 	
-	public MessageAuthCode(MACType type){
+	public MessageAuthCode(MACType type) throws InvalidKeyException{
 		this(type, KeyUtils.genSecretKey(type.keyType));
 	}
 	
-	public MessageAuthCode(MACType type, byte[] cryptoKey) {
+	public MessageAuthCode(MACType type, byte[] cryptoKey) throws InvalidKeyException {
 		this(type, KeyUtils.getSecretKey(cryptoKey, type.keyType));	
 	}
 	
-	public MessageAuthCode(MACType type, SecretKey cryptoKey) {
+	public MessageAuthCode(MACType type, SecretKey cryptoKey) throws InvalidKeyException {
 		this.type = type;
 		try {
 			mac = type.get();
@@ -52,26 +52,26 @@ public final class MessageAuthCode {
 			else{
 				mac.init(key);
 			}
-		} catch (GeneralSecurityException e) {
+		}catch (UnsupportedTypeException e) {
 			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
-		} catch (UnsupportedTypeException e) {
+		} catch (InvalidAlgorithmParameterException e) {
 			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		}
 	}
 	
-	public MessageAuthCode(byte[] key, byte[] iv){
+	public MessageAuthCode(byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
 	}
 	
-	public MessageAuthCode(byte[] key, IvParameterSpec iv){
+	public MessageAuthCode(byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
 	}
 	
-	public MessageAuthCode(SecretKey key, byte[] iv){
+	public MessageAuthCode(SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(key, new IvParameterSpec(iv, 0, 16));
 	}
 	
-	public MessageAuthCode(SecretKey key, IvParameterSpec iv) throws IllegalArgumentException{
+	public MessageAuthCode(SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		type = defaultType;
 		try{
 			mac = type.get();
@@ -79,8 +79,6 @@ public final class MessageAuthCode {
 			this.key = key;
 			this.iv = iv;
 			mac.init(key, this.iv);
-		} catch (GeneralSecurityException e) {
-			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		} catch (UnsupportedTypeException e) {
 			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		}
@@ -153,10 +151,6 @@ public final class MessageAuthCode {
 		}
 		return iv;
 	}
-	
-	public final void changeIV(byte[] iv) throws InvalidAlgorithmParameterException, UnsupportedTypeException {
-		changeIV(new IvParameterSpec(iv, 0, 16));
-	}
 
 	public final void changeIV(IvParameterSpec iv) throws InvalidAlgorithmParameterException, UnsupportedTypeException{
 		if(type != MACType.Poly1305){
@@ -166,8 +160,11 @@ public final class MessageAuthCode {
 		try {
 			mac.init(key, iv);
 		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		}
+	}
+	
+	public final void changeIV(byte[] iv) throws InvalidAlgorithmParameterException, UnsupportedTypeException {
+		changeIV(new IvParameterSpec(iv, 0, 16));
 	}
 }

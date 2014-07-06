@@ -34,7 +34,7 @@ public class JFKReceiver extends JFKExchange {
 	}
 	
 	//sent by receiver
-	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig){
+	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig) throws InvalidKeyException{
 		byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
 		                           sig.length + hashnR.length];
 
@@ -49,7 +49,7 @@ public class JFKReceiver extends JFKExchange {
 		System.arraycopy(sig, 0, message2, offset, sig.length);
 		offset += sig.length;
 
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
+		mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
 
 		byte[] authenticator = mac.getMAC(assembleJFKAuthenticator(replyToAddress));
 
@@ -61,7 +61,7 @@ public class JFKReceiver extends JFKExchange {
 	
 	
 	//Processed by reciver
-	public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, byte[] identity, byte[] publicKeyI){
+	public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, byte[] identity, byte[] publicKeyI) throws InvalidKeyException{
 		int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
 	    		
@@ -108,7 +108,7 @@ public class JFKReceiver extends JFKExchange {
 		
 		int ivLength = ivSize;
 		// We compute the HMAC of ("I"+cyphertext) : the cyphertext includes the IV!
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
+		mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
 		if(!mac.verifyData(hmac, cypheredPayload)) {
 			Logger.error(this, "The inner-HMAC doesn't match; let's discard the packet JFK(3) - "+peer);
 			return null;
@@ -160,7 +160,7 @@ public class JFKReceiver extends JFKExchange {
 	}
 	
 	//sent by reciver
-	public byte[] genMessage4(byte[] identity, byte[] data, byte[] refI, byte[] sig, CryptBitSet cryptBits, byte[] newTrackerID, boolean sameAsOldTrackerID, byte[] outgoingBootID, long bootID, SigType sigType){
+	public byte[] genMessage4(byte[] identity, byte[] data, byte[] refI, byte[] sig, CryptBitSet cryptBits, byte[] newTrackerID, boolean sameAsOldTrackerID, byte[] outgoingBootID, long bootID, SigType sigType) throws InvalidKeyException{
 		byte[] iv = cryptBits.genIV();
 		int ivLength = iv.length;
 		
@@ -182,7 +182,6 @@ public class JFKReceiver extends JFKExchange {
 		cyphertext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, cyphertext.length - cleartextToEncypherOffset);
 	    	
 		// We compute the HMAC of (prefix + iv + signature)
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
 		byte[] hmac = mac.getMAC(cyphertext);
 		
 		byte[] message4 = new byte[hashnI.length + ivLength + (cyphertext.length - cleartextToEncypherOffset)];

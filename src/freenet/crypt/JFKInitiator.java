@@ -51,9 +51,9 @@ public class JFKInitiator extends JFKExchange {
 				return;
 			}
 		} catch (GeneralSecurityException e) {
-			Logger.error(KeyExchange.class, "Internal error; please report:", e);
+			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		} catch (CryptFormatException e) {
-			Logger.error(KeyExchange.class, "Internal error; please report:", e);
+			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		}
 	}
 
@@ -154,12 +154,16 @@ public class JFKInitiator extends JFKExchange {
 		try {
 			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
 		} catch (UnsupportedTypeException e) {
-			Logger.error(KeyExchange.class, "Internal error; please report:", e);
+			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		}
 		byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
 
 		// We compute the HMAC of (prefix + cyphertext) Includes the IV!
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
+		try {
+			mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
+		} catch (InvalidKeyException e) {
+			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
+		}
 		byte[] hmac = mac.getMAC(ciphertext);
 
 		// copy stuffs back to the message
@@ -179,7 +183,7 @@ public class JFKInitiator extends JFKExchange {
 		byte[] encypheredPayload = Arrays.copyOf(JFK_PREFIX_RESPONDER, JFK_PREFIX_RESPONDER.length + payload.length - inputOffset);
 		encypheredPayloadOffset += JFK_PREFIX_RESPONDER.length;
 		System.arraycopy(payload, inputOffset, encypheredPayload, encypheredPayloadOffset, payload.length-inputOffset);
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa); 
+
 		if(!mac.verifyData(hmac, encypheredPayload)) {
 			Logger.normal(this, "The digest-HMAC doesn't match; let's discard the packet - "+peer.getPeer());
 			return null;
@@ -189,7 +193,7 @@ public class JFKInitiator extends JFKExchange {
 		try {
 			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, encypheredPayload, encypheredPayloadOffset);
 		} catch (UnsupportedTypeException e) {
-			Logger.error(KeyExchange.class, "Internal error; please report:", e);
+			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		}
 		encypheredPayloadOffset += ivLength;
 		

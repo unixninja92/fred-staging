@@ -11,6 +11,7 @@ public abstract class JFKExchange {
 	protected static final RandomSource rand = PreferredAlgorithms.random;
     protected static volatile boolean logMINOR;
     protected static volatile boolean logDEBUG;
+    protected MessageAuthCode mac;
     
 	protected byte[] nonceI; //Initiators nonce 
 	protected byte[] nonceR; //Responders nonce
@@ -88,7 +89,11 @@ public abstract class JFKExchange {
 		System.arraycopy(nonceR, 0, toHash, offset, nonceR.length);
 		offset += nonceR.length;
 		System.arraycopy(number, 0, toHash, offset, number.length);
-		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, exponential);
+		try {
+			mac = new MessageAuthCode(MACType.HMACSHA256, exponential);
+		} catch (InvalidKeyException e) {
+			Logger.error(JFKExchange.class, "Internal error; please report:", e);
+		}
 		return mac.getMAC(toHash);
 	}
 
