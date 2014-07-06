@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
-import java.security.spec.ECGenParameterSpec;
 
 import freenet.support.Logger;
 
