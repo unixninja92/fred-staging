@@ -4,6 +4,7 @@
 package freenet.crypt;
 
 import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -15,8 +16,11 @@ import javax.crypto.spec.IvParameterSpec;
 
 import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
 
+import freenet.support.Logger;
+
 public final class MessageAuthCode {
 	private static final MACType defaultType = PreferredAlgorithms.preferredMAC;
+	private MACType type;
 	private Mac mac;
 	private SecretKey key;
 	private IvParameterSpec iv;
@@ -34,6 +38,7 @@ public final class MessageAuthCode {
 	}
 	
 	public MessageAuthCode(MACType type, SecretKey cryptoKey) {
+		this.type = type;
 		try {
 			mac = type.get();
 			key = cryptoKey;
@@ -47,15 +52,10 @@ public final class MessageAuthCode {
 			else{
 				mac.init(key);
 			}
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidAlgorithmParameterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
+		} catch (UnsupportedTypeException e) {
+			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		}
 	}
 	
@@ -71,32 +71,26 @@ public final class MessageAuthCode {
 		this(key, new IvParameterSpec(iv, 0, 16));
 	}
 	
-	public MessageAuthCode(SecretKey key, IvParameterSpec iv){
+	public MessageAuthCode(SecretKey key, IvParameterSpec iv) throws IllegalArgumentException{
+		type = defaultType;
 		try{
-			mac = defaultType.get();
+			mac = type.get();
 			checkPoly1305Key(key.getEncoded());
 			this.key = key;
 			this.iv = iv;
 			mac.init(key, this.iv);
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidAlgorithmParameterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (GeneralSecurityException e) {
+			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
+		} catch (UnsupportedTypeException e) {
+			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		}
 	}
 	
-	private final void checkPoly1305Key(byte[] encodedKey){
-		try{
-			Poly1305KeyGenerator.checkKey(encodedKey);
-		} catch (IllegalArgumentException e){
-			//FIXME log error
-			//fail("Generated key for algo " + mac.getAlgorithm() + " does not match required Poly1305 format.");
+	private final void checkPoly1305Key(byte[] encodedKey) throws UnsupportedTypeException{
+		if(type != MACType.Poly1305){
+			throw new UnsupportedTypeException(type);
 		}
+		Poly1305KeyGenerator.checkKey(encodedKey);
 	}
 	
 	public final void addByte(byte input){
@@ -146,20 +140,34 @@ public final class MessageAuthCode {
 		return key.getEncoded();
 	}
 	
-	public final byte[] getIV() {
+	public final byte[] getIV() throws UnsupportedTypeException{
+		if(type != MACType.Poly1305){
+			throw new UnsupportedTypeException(type);
+		}
 		return iv.getIV();
 	}
 	
-	public final IvParameterSpec getIVSpec(){
+	public final IvParameterSpec getIVSpec() throws UnsupportedTypeException{
+		if(type != MACType.Poly1305){
+			throw new UnsupportedTypeException(type);
+		}
 		return iv;
 	}
 	
-	public final void changeIV(byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public final void changeIV(byte[] iv) throws InvalidAlgorithmParameterException, UnsupportedTypeException {
 		changeIV(new IvParameterSpec(iv, 0, 16));
 	}
 
-	public final void changeIV(IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public final void changeIV(IvParameterSpec iv) throws InvalidAlgorithmParameterException, UnsupportedTypeException{
+		if(type != MACType.Poly1305){
+			throw new UnsupportedTypeException(type);
+		}
 		this.iv = iv;
-		mac.init(key, iv);
+		try {
+			mac.init(key, iv);
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
