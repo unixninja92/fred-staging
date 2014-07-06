@@ -6,16 +6,10 @@ package freenet.crypt;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import net.i2p.util.NativeBigInteger;
 
-import org.tanukisoftware.wrapper.WrapperManager;
-
-import freenet.node.NodeInitException;
 import freenet.support.HexUtil;
-import freenet.support.Logger;
 
 public final class Hash{
 	private static final HashType defaultType = PreferredAlgorithms.preferredMesageDigest;
@@ -28,12 +22,6 @@ public final class Hash{
 	public Hash(HashType type){
 		try {
 			digest = type.get();
-		} catch (NoSuchAlgorithmException e) {
-			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
-			System.err.println("Check your JVM settings especially the JCE!" + e);
-			e.printStackTrace();
-			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
-			throw new RuntimeException();
 		} finally {
 			defaultType.recycle(digest);
 		}
@@ -99,16 +87,8 @@ public final class Hash{
 	}	
 	
 	public final static boolean verify(HashResult hash, byte[] intput){
-		try {
-			HashType type = hash.type;
-			return verify(hash, new HashResult(type, type.get().digest(intput)));
-		} catch (NoSuchAlgorithmException e) {
-			Logger.error(Hash.class, "Check your JVM settings especially the JCE!" + e);
-			System.err.println("Check your JVM settings especially the JCE!" + e);
-			e.printStackTrace();
-			WrapperManager.stop(NodeInitException.EXIT_CRAPPY_JVM);
-			throw new RuntimeException();
-		}
+		HashType type = hash.type;
+		return verify(hash, new HashResult(type, type.get().digest(intput)));
 	}
 	
 	public final static boolean verify(HashResult hash1, HashResult hash2){
