@@ -15,7 +15,6 @@ import javax.crypto.SecretKey;
 
 import com.db4o.ObjectContainer;
 
-import freenet.support.Logger;
 import freenet.support.api.Bucket;
 
 /**
@@ -101,17 +100,14 @@ public final class CryptBucket implements Bucket {
 	/**
      * Decrypts the data in the underlying bucket.
      * @return Returns the unencrypted data in a byte[]
+	 * @throws IOException 
      */
-    public final byte[] decrypt(){
+    public final byte[] decrypt() throws IOException{
     	byte[] plain = new byte[(int) size()];
-    	try {
-    		FilterInputStream is = genInputStream();
-			is.read(plain);
-			is.close();
-		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Internal IO error, something is wrong with the underlying bucket;  please report:", e);
-		}
-		return plain;
+    	FilterInputStream is = genInputStream();
+    	is.read(plain);
+    	is.close();
+    	return plain;
     }
     
     /**
@@ -137,11 +133,7 @@ public final class CryptBucket implements Bucket {
      */
     public final void addByte(byte input) throws IOException{
     	checkOutStream();
-    	try {
-    		outStream.write(input);
-		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Internal error; please report:", e);
-		}
+    	outStream.write(input);
     }
     
     /**
@@ -151,13 +143,9 @@ public final class CryptBucket implements Bucket {
      */
     public final void addBytes(byte[]... input) throws IOException{
     	checkOutStream();
-    	try {
-			for(byte[] b: input){
-				outStream.write(b);
-			}
-		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Internal error; please report:", e);
-		}
+    	for(byte[] b: input){
+    		outStream.write(b);
+    	}
     }
     
     /**
@@ -169,11 +157,7 @@ public final class CryptBucket implements Bucket {
      */
     public final void addBytes(byte[] input, int offset, int len) throws IOException{
     	checkOutStream();
-    	try {
-    		outStream.write(input, offset, len);
-		} catch (IOException e) {
-			Logger.error(CryptBucket.class, "Internal error; please report:", e);
-		}
+    	outStream.write(input, offset, len);
     }
     
     /**
@@ -185,12 +169,8 @@ public final class CryptBucket implements Bucket {
     		throw new IOException("No data to encrypt");
     	}
     	checkOutStream();
-    	try{
-    		outStream.close();
-    		outStream = null;
-    	} catch(IOException e){
-			Logger.error(CryptBucket.class, "Internal error; please report:", e);
-    	}
+    	outStream.close();
+    	outStream = null;
     }
     
     /**
