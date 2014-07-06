@@ -1,6 +1,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 
 import net.i2p.util.NativeBigInteger;
 
@@ -16,26 +17,19 @@ public class JFKInitiator extends JFKExchange {
 
 	public JFKInitiator(KeyExchType underlying, int nonceSize, PeerNode pn){
 		super(underlying, nonceSize, pn);
-		type = KeyExchType.JFKi;
 	}
 	
-
-	//sent by initiator
 	public final byte[] genMessage1(boolean hash, boolean unknownInitiator){
-		if(type==KeyExchType.JFKi){
-			int offset = 0;
-			int nonceSize = hash ? hashnI.length: nonceI.length;
-			byte[] message1 = new byte[nonceSize+modulusLength
-			                           +(unknownInitiator ? NodeCrypto.IDENTITY_LENGTH : 0)];
-			System.arraycopy((hash ? hashnI : nonceI), 0, message1, offset, nonceSize);
-			offset += nonceSize;
-			System.arraycopy(exponentialI, 0, message1, offset, modulusLength);
-			return message1;
-		}
-		return null;
+		int offset = 0;
+		int nonceSize = hash ? hashnI.length: nonceI.length;
+		byte[] message1 = new byte[nonceSize+modulusLength
+		                           +(unknownInitiator ? NodeCrypto.IDENTITY_LENGTH : 0)];
+		System.arraycopy((hash ? hashnI : nonceI), 0, message1, offset, nonceSize);
+		offset += nonceSize;
+		System.arraycopy(exponentialI, 0, message1, offset, modulusLength);
+		return message1;
 	}
 
-	//done by initiator
 	public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] publicKeyR, byte[] locallyExpectedExponentials, byte[] sigR){
 		this.nonceR = nonceR;
 		this.exponentialR = exponentialR;
@@ -63,7 +57,6 @@ public class JFKInitiator extends JFKExchange {
 		}
 	}
 
-	//send by initiator 
 	public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, byte[] authenticator){
 		int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
@@ -103,7 +96,13 @@ public class JFKInitiator extends JFKExchange {
 		System.arraycopy(authenticator, 0, message3, offset, authenticator.length);
 		offset += authenticator.length;
 
-		byte[] computedExponential = getSharedSecrect(exponentialR);
+		byte[] computedExponential = null;
+		try {
+			computedExponential = getSharedSecrect(exponentialR);
+		} catch (InvalidKeyException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 
 		outgoingKey = getSharedSecrect(computedExponential, "0");

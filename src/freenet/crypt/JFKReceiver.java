@@ -1,6 +1,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 
 import net.i2p.util.NativeBigInteger;
 
@@ -12,7 +13,6 @@ import freenet.support.Logger;
 public class JFKReceiver extends JFKExchange {
 	public JFKReceiver(KeyExchType underlying, PeerNode peerNode, int nonceSize, byte[] nonceI, byte[] exponentialI){
 		super(underlying, nonceSize, peerNode);
-		type = KeyExchType.JFKr;
 		this.processMessage1(nonceSize, nonceI, exponentialI);
 	}
 	
@@ -35,30 +35,27 @@ public class JFKReceiver extends JFKExchange {
 	
 	//sent by receiver
 	public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig){
-		if(type==KeyExchType.JFKr){
-			byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
-			                           sig.length + hashnR.length];
+		byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
+		                           sig.length + hashnR.length];
 
-			int offset = 0;
-			System.arraycopy(nonceI, 0, message2, offset, nonceI.length);
-			offset += nonceI.length;
-			System.arraycopy(nonceR, 0, message2, offset, nonceR.length);
-			offset += nonceR.length;
-			System.arraycopy(exponentialR, 0, message2, offset, modulusLength);
-			offset += modulusLength;
+		int offset = 0;
+		System.arraycopy(nonceI, 0, message2, offset, nonceI.length);
+		offset += nonceI.length;
+		System.arraycopy(nonceR, 0, message2, offset, nonceR.length);
+		offset += nonceR.length;
+		System.arraycopy(exponentialR, 0, message2, offset, modulusLength);
+		offset += modulusLength;
 
-			System.arraycopy(sig, 0, message2, offset, sig.length);
-			offset += sig.length;
+		System.arraycopy(sig, 0, message2, offset, sig.length);
+		offset += sig.length;
 
-			MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
+		MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
 
-			byte[] authenticator = mac.getMAC(assembleJFKAuthenticator(replyToAddress));
+		byte[] authenticator = mac.getMAC(assembleJFKAuthenticator(replyToAddress));
 
-			System.arraycopy(authenticator, 0, message2, offset, hashnR.length);
+		System.arraycopy(authenticator, 0, message2, offset, hashnR.length);
 
-			return message2;
-		}
-		return null;
+		return message2;
 	}
 	
 	
@@ -68,7 +65,13 @@ public class JFKReceiver extends JFKExchange {
 		int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
 		int ivSize = blockSize >> 3;
 	    		
-		byte[] computedExponential = getSharedSecrect(exponentialI);
+		byte[] computedExponential = null;
+		try {
+			computedExponential = getSharedSecrect(exponentialI);
+		} catch (InvalidKeyException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 		
 		outgoingKey = getSharedSecrect(computedExponential, "0");
 		incommingKey = getSharedSecrect(computedExponential, "7");
@@ -126,10 +129,10 @@ public class JFKReceiver extends JFKExchange {
 	    
 	    int sigLength;
 	    if(underlyingExch.type == KeyExchType.DH){
-	    	sigLength = this.dsaSig.length;
+	    	sigLength = underlyingExch.dsaSig.length;
 	    }
 	    else{
-	    	sigLength = this.ecdsaSig.length;
+	    	sigLength = underlyingExch.ecdsaSig.length;
 	    }
 		byte[] sigI = new byte[sigLength];
 		System.arraycopy(cleartext, decypheredPayloadOffset, sigI, 0, sigLength);

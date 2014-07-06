@@ -1,11 +1,16 @@
 package freenet.crypt;
 
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
 
 import net.i2p.util.NativeBigInteger;
 import freenet.node.PeerNode;
 
-public class JFKExchange extends KeyExchange {
+public abstract class JFKExchange {
+	protected static final RandomSource rand = PreferredAlgorithms.random;
+    protected static volatile boolean logMINOR;
+    protected static volatile boolean logDEBUG;
+    
 	protected byte[] nonceI; //Initiators nonce 
 	protected byte[] nonceR; //Responders nonce
 	protected byte[] hashnI; //N'i
@@ -86,12 +91,12 @@ public class JFKExchange extends KeyExchange {
 		return mac.getMAC(toHash);
 	}
 
-	public byte[] getSharedSecrect(byte[] peerExponential){
+	public byte[] getSharedSecrect(byte[] peerExponential) throws InvalidKeyException{
 		if(underlyingExch.type == KeyExchType.DH){
-			return getSharedSecrect(new NativeBigInteger(1, peerExponential));
+			return underlyingExch.getSharedSecrect(new NativeBigInteger(1, peerExponential));
 		}
 		else{
-			return getSharedSecrect(KeyUtils.getPublicKey(peerExponential));
+			return underlyingExch.getSharedSecrect(KeyUtils.getPublicKey(peerExponential));
 		}
 	}
 	

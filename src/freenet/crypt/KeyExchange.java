@@ -3,33 +3,26 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 
 import javax.crypto.KeyAgreement;
 
-import org.bouncycastle.util.Arrays;
-
 import net.i2p.util.NativeBigInteger;
-import freenet.node.NodeCrypto;
-import freenet.node.PeerNode;
-import freenet.support.Fields;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
 	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
-    protected static final RandomSource rand = PreferredAlgorithms.random;
-    protected static volatile boolean logMINOR;
-    protected static volatile boolean logDEBUG;
+    private static final RandomSource rand = PreferredAlgorithms.random;
+    private static volatile boolean logMINOR;
+    private static volatile boolean logDEBUG;
 
-    protected KeyExchType type;	
+    protected final KeyExchType type;	
     
     //ECDH
 	private KeyAgreement ka;
@@ -93,31 +86,22 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		this(Global.DHgroupA, myExponent);
 	}
 	
-	public KeyExchange(DHGroup group){
-		this(KeyExchType.DH);
-		dhGroup = group;
-	}
-	
 	/**
      * Completes the ECDH exchange: this is CPU intensive
      * @param pubkey
      * @return a SecretKey or null if it fails
      * 
-     * **THE OUTPUT SHOULD ALWAYS GO THROUGH A KDF**
+     * **THE OUTPUT SHOULD ALWAYS GO THROUGH A KDF
+	 * @throws InvalidKeyException **
      */
-	public byte[] getSharedSecrect(PublicKey publicKey){
+	public byte[] getSharedSecrect(PublicKey publicKey) throws InvalidKeyException{
 		byte[] sharedKey = null;
 		synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
 		}
-
-		try {
-			ka.doPhase(publicKey, true);
-			sharedKey = ka.generateSecret();
-		} catch (InvalidKeyException e) {
-			Logger.error(this, "InvalidKeyException : "+e.getMessage(),e);
-			e.printStackTrace();
-		}
+		ka.doPhase(publicKey, true);
+		sharedKey = ka.generateSecret();
+		
 		if (logMINOR) {
 			Logger.minor(this, "Curve in use: " + type.name().substring(4));
 			if(logDEBUG) {
@@ -136,7 +120,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	@Deprecated
-	public byte[] getHMACKey(ECPublicKey peerExponential){
+	public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException{
 		return getSharedSecrect(peerExponential);
 	}
 	
@@ -170,12 +154,12 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		return getSharedSecrect(peerExponential);
 	}
 	
-	public ECPublicKey getPublicKey() {
-        return (ECPublicKey) keys.getPublic();
+	public PublicKey getPublicKey() {
+        return keys.getPublic();
     }
 	
-	public boolean checkExponentialValidity(BigInteger exp){
-		return DiffieHellman.checkDHExponentialValidity(getClass(), exp);
+	public static boolean checkExponentialValidity(BigInteger exp){
+		return DiffieHellman.checkDHExponentialValidity(KeyExchange.class, exp);
 	}
 	
 	public byte[] getPublicKeyNetworkFormat() {
