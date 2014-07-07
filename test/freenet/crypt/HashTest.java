@@ -24,10 +24,13 @@ public class HashTest extends TestCase {
 		abcVectors.put(HashType.SHA384, "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7");
 		abcVectors.put(HashType.SHA512, "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
 	}
+	
 	//also tests addBytes(byte[]... input) and getHash()
 	public void testGetHashByteArrayArray() {
 		for(HashType type: abcVectors.keySet()){
 			Hash hash = new Hash(type);
+			
+			//test that output is same as MessageDigest
 			byte[] toHash = "This string will test hashing.".getBytes();
 			try {
 				MessageDigest md = MessageDigest.getInstance(type.javaName);
@@ -40,23 +43,26 @@ public class HashTest extends TestCase {
 				throw new Error("Can't load from any provider."+type.javaName);
 			}
 			
+			//test that output is same as expected
 			byte[] abcResult = hash.getHash(abc);
 			byte[] expectedABCResult = getABCByteArray(type);
 			
-			assertEquals(MessageDigest.isEqual(abcResult, expectedABCResult), true);
+			assertTrue(MessageDigest.isEqual(abcResult, expectedABCResult));
+			
+			//test for null input
+//			System.out.println(hash.getHash(null));
 		}
 	}
 	
 	//tests getHashResult() as well
 	public void testGetHashResultHashResultByteArray() {
 		for(HashType type: abcVectors.keySet()){
-			byte[] hashResult = getABCByteArray(type);
-			HashResult hash2 = new HashResult(type, hashResult);
+			HashResult hash2 = new HashResult(type, getABCByteArray(type));
 
 			Hash hash = new Hash(type);
 			HashResult hash1 = hash.getHashResult(abc);
 
-			assertEquals(true, Hash.verify(hash1, hash2));
+			assertTrue(Hash.verify(hash1, hash2));
 		}
 	}
 	
@@ -91,7 +97,7 @@ public class HashTest extends TestCase {
 			}
 			byte[] result2 = hash.getHash();
 
-			assertEquals(true, MessageDigest.isEqual(result, result2));	
+			assertTrue(MessageDigest.isEqual(result, result2));	
 		}
 	}
 	
@@ -104,7 +110,7 @@ public class HashTest extends TestCase {
 			hash.addBytes(message, 0, message.length/2);
 			hash.addBytes(message, message.length/2, message.length-message.length/2);
 			byte[] result2 = hash.getHash();
-			assertEquals(true, MessageDigest.isEqual(result, result2));	
+			assertTrue(MessageDigest.isEqual(result, result2));	
 		}
 	}
 
@@ -113,7 +119,7 @@ public class HashTest extends TestCase {
 			Hash hash = new Hash(type);
 			boolean verified = hash.verify(getABCByteArray(type), abc);
 			
-			assertEquals(true, verified);
+			assertTrue(verified);
 		}
 	}
 
@@ -122,7 +128,7 @@ public class HashTest extends TestCase {
 			byte[] hashResult = getABCByteArray(type);
 			HashResult hash1 = new HashResult(type, hashResult);
 
-			assertEquals(true, Hash.verify(hash1, hashResult));
+			assertTrue(Hash.verify(hash1, hashResult));
 		}
 	}
 	
@@ -132,7 +138,7 @@ public class HashTest extends TestCase {
 			HashResult hash1 = new HashResult(type, hashResult);
 			HashResult hash2 = new HashResult(type, hashResult);
 
-			assertEquals(true, Hash.verify(hash1, hash2));
+			assertTrue(Hash.verify(hash1, hash2));
 		}
 	}
 	

@@ -18,6 +18,7 @@ import freenet.support.HexUtil;
  */
 public final class Hash{
 	private static final HashType defaultType = PreferredAlgorithms.preferredMesageDigest;
+	private final HashType type;
 	private MessageDigest digest;
 	
 	/**
@@ -32,6 +33,7 @@ public final class Hash{
 	 * @param type The hashing algorithm to use. 
 	 */
 	public Hash(HashType type){
+		this.type = type;
 		try {
 			digest = type.get();
 		} finally {
@@ -62,7 +64,7 @@ public final class Hash{
 	 * @return Hash as HashResult of all the bytes added since last reset.
 	 */
 	public final HashResult getHashResult() {
-		return new HashResult(defaultType, getHash());
+		return new HashResult(type, getHash());
 	}
 	
 	/**
