@@ -46,7 +46,7 @@ public enum HashType {
 				return new TigerTree();
 		}
 		if(name().equals("SHA256")) {
-			// User the pool
+			// Use the pool
 			return freenet.crypt.SHA256.getMessageDigest();
 		} else {
 			try {
