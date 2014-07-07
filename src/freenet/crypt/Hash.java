@@ -22,26 +22,21 @@ public final class Hash{
 		try {
 			digest = type.get();
 		} finally {
-			defaultType.recycle(digest);
+			type.recycle(digest);
 		}
 	}
 	
-	private final byte[] digest(){
-		byte[] result = digest.digest();
-		return result;
-	}
-	
 	public final byte[] getHash(){
-		return digest();
+		return digest.digest();
 	}
 	
 	public final byte[] getHash(byte[]... input) {
 		addBytes(input);
-		return digest();
+		return getHash();
 	}
 	
 	public final HashResult getHashResult() {
-		return new HashResult(defaultType, digest());
+		return new HashResult(defaultType, getHash());
 	}
 	
 	public final HashResult getHashResult(byte[]... input){
@@ -50,14 +45,14 @@ public final class Hash{
 	}
 	
 	public final String getHexHash() {
-		return HexUtil.bytesToHex(digest());
+		return HexUtil.bytesToHex(getHash());
 	}
 	
 	public final NativeBigInteger getNativeBigIntegerHash(){
-		return new NativeBigInteger(1, digest());
+		return new NativeBigInteger(1, getHash());
 	}
 	
-	public final NativeBigInteger getNativeBigIntegerHash(byte[] data){
+	public final NativeBigInteger getNativeBigIntegerHash(byte[]... data){
 		addBytes(data);
 		return getNativeBigIntegerHash();
 	}
@@ -82,6 +77,7 @@ public final class Hash{
 	
 	public final boolean verify(byte[] hash, byte[] data){
 		digest.reset();
+		addBytes(data);
 		return MessageDigest.isEqual(hash, getHash());
 	}	
 	

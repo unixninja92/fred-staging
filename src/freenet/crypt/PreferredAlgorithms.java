@@ -52,6 +52,7 @@ public final class PreferredAlgorithms{
 	public static final MACType preferredMAC = MACType.Poly1305;
 	public static final KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
 	public static final CryptBucketType preferredCryptBucketAlg = CryptBucketType.AEADAESOCB;
+	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
