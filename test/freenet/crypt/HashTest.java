@@ -50,7 +50,7 @@ public class HashTest extends TestCase {
 			assertTrue(MessageDigest.isEqual(abcResult, expectedABCResult));
 			
 			//test for null input
-			hash.addByte((Byte) null);
+//			hash.addByte(byte f);
 			System.out.println(hash.getHash());
 		}
 	}
