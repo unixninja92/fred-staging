@@ -53,8 +53,21 @@ public class HashTest extends TestCase {
 		}
 	}
 
+	public void testVerifyHashResultByteArray() {
+		HashType type = HashType.SHA256;
+		byte[] hashResult = Hex.decode(abcVectors[3][1]);
+		HashResult hash1 = new HashResult(type, hashResult);
+		
+		assertEquals(Hash.verify(hash1, hashResult), true);
+	}
+	
 	public void testVerifyHashResultHashResult() {
-		fail("Not yet implemented");
+		HashType type = HashType.SHA256;
+		byte[] hashResult = Hex.decode(abcVectors[3][1]);
+		HashResult hash1 = new HashResult(type, hashResult);
+		HashResult hash2 = new HashResult(type, hashResult);
+		
+		assertEquals(Hash.verify(hash1, hash2), true);
 	}
 
 }
