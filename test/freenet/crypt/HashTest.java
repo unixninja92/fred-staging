@@ -50,8 +50,26 @@ public class HashTest extends TestCase {
 			assertTrue(MessageDigest.isEqual(abcResult, expectedABCResult));
 			
 			//test for null input
-//			hash.addByte(byte f);
-			System.out.println(hash.getHash());
+			boolean throwNull = false;
+			byte[] nullArray = null;
+			try{
+				hash.getHash(nullArray);
+			}catch(NullPointerException e){
+				throwNull = true;
+			}
+			
+			assertTrue(throwNull);
+			
+			//test for null input from a matrix
+			boolean throwNulls = false;
+			byte[][] nullMatrix = {new byte[4], null};
+			try{
+				hash.getHash(nullMatrix);
+			}catch(NullPointerException e){
+				throwNulls = true;
+			}
+			
+			assertTrue(throwNulls);
 		}
 	}
 	
@@ -86,6 +104,7 @@ public class HashTest extends TestCase {
 		}	
 	}
 	
+	@SuppressWarnings("null")
 	public void testAddByteByte(){
 		for(HashType type: abcVectors.keySet()){
 			byte[] message = "hello world".getBytes();
@@ -99,6 +118,17 @@ public class HashTest extends TestCase {
 			byte[] result2 = hash.getHash();
 
 			assertTrue(MessageDigest.isEqual(result, result2));	
+			
+			//test for null input
+			boolean throwNull = false;
+			Byte nullByte = null;
+			try{
+				hash.addByte(nullByte);
+			}catch(NullPointerException e){
+				throwNull = true;
+			}
+			
+			assertTrue(throwNull);
 		}
 	}
 	
@@ -112,6 +142,37 @@ public class HashTest extends TestCase {
 			hash.addBytes(message, message.length/2, message.length-message.length/2);
 			byte[] result2 = hash.getHash();
 			assertTrue(MessageDigest.isEqual(result, result2));	
+			
+			//test for null input
+			boolean throwNull = false;
+			byte[] nullArray = null;
+			try{
+				hash.addBytes(nullArray, 0, message.length);
+			}catch(IllegalArgumentException e){
+				throwNull = true;
+			}
+			
+			assertTrue(throwNull);
+			
+			//test for offset out of bounds
+			boolean throwOutOfBounds = false;
+			try{
+				hash.addBytes(message, -3, message.length-3);
+			}catch(ArrayIndexOutOfBoundsException e){
+				throwOutOfBounds = true;
+			}
+			
+			assertTrue(throwOutOfBounds);
+			
+			//test for length out of bounds
+			throwOutOfBounds = false;
+			try{
+				hash.addBytes(message, 0, message.length+3);
+			}catch(IllegalArgumentException e){
+				throwOutOfBounds = true;
+			}
+			
+			assertTrue(throwOutOfBounds);
 		}
 	}
 
@@ -121,6 +182,25 @@ public class HashTest extends TestCase {
 			boolean verified = hash.verify(getABCByteArray(type), abc);
 			
 			assertTrue(verified);
+			
+			//test for null input1
+			boolean throwResult = false;
+			byte[] nullResult = null;
+			try{
+				hash.verify(nullResult, abc);
+			}catch(NullPointerException e){
+				throwResult = true;
+			}
+			assertTrue(throwResult);
+			
+			//test for null input2
+			throwResult = false;
+			try{
+				hash.verify(abc, nullResult);
+			}catch(NullPointerException e){
+				throwResult = true;
+			}
+			assertTrue(throwResult);
 		}
 	}
 
@@ -130,6 +210,26 @@ public class HashTest extends TestCase {
 			HashResult hash1 = new HashResult(type, hashResult);
 
 			assertTrue(Hash.verify(hash1, hashResult));
+			
+			//test for null input1
+			boolean throwResult = false;
+			HashResult nullResult = null;
+			try{
+				Hash.verify(nullResult, hashResult);
+			}catch(NullPointerException e){
+				throwResult = true;
+			}
+			assertTrue(throwResult);
+			
+			//test for null input2
+			throwResult = false;
+			byte[] nullArray= null;
+			try{
+				Hash.verify(hash1, nullArray);
+			}catch(NullPointerException e){
+				throwResult = true;
+			}
+			assertTrue(throwResult);
 		}
 	}
 	
@@ -140,6 +240,25 @@ public class HashTest extends TestCase {
 			HashResult hash2 = new HashResult(type, hashResult);
 
 			assertTrue(Hash.verify(hash1, hash2));
+			
+			//test for null input1
+			boolean throwResult = false;
+			HashResult nullResult = null;
+			try{
+				Hash.verify(nullResult, hash2);
+			}catch(NullPointerException e){
+				throwResult = true;
+			}
+			assertTrue(throwResult);
+			
+			//test for null input2
+			throwResult = false;
+			try{
+				Hash.verify(hash1, nullResult);
+			}catch(NullPointerException e){
+				throwResult = true;
+			}
+			assertTrue(throwResult);
 		}
 	}
 	
