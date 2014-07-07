@@ -33,6 +33,9 @@ public final class Hash{
 	 * @param type The hashing algorithm to use. 
 	 */
 	public Hash(HashType type){
+		if(type == null){
+			throw new IllegalArgumentException("Invalid HashType");
+		}
 		this.type = type;
 		try {
 			digest = type.get();
@@ -116,7 +119,13 @@ public final class Hash{
 	 * @param input The byte[]s to add
 	 */
 	public final void addBytes(byte[]... input){
+		if(input == null){
+			throw new IllegalArgumentException("Invalid argument for addBytes");
+		}
 		for(byte[] b: input){
+			if(b == null){
+				throw new IllegalArgumentException("Invalid argument for addBytes");
+			}
 			digest.update(b);
 		}
 	}
@@ -126,6 +135,9 @@ public final class Hash{
 	 * @param input The ByteBuffer to read bytes from to be hashed
 	 */
 	public final void addBytes(ByteBuffer input){
+		if(input == null){
+			throw new IllegalArgumentException("Invalid argument for addBytes");
+		}
 		digest.update(input);
 	}
 	
@@ -136,6 +148,9 @@ public final class Hash{
 	 * @param len How many bytes after the offset to add to hash.
 	 */
 	public final void addBytes(byte[] input, int offset, int len){
+		if(input == null){
+			throw new IllegalArgumentException("Invalid argument for addBytes");
+		}
 		digest.update(input, offset, len);
 	}
 	
