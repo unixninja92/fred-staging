@@ -4,8 +4,8 @@
 package freenet.crypt;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
 import net.i2p.util.NativeBigInteger;
@@ -15,46 +15,50 @@ import org.bouncycastle.util.encoders.Hex;
 import junit.framework.TestCase;
 
 public class HashTest extends TestCase {
-	static private byte[] abc = { (byte)0x61, (byte)0x62, (byte)0x63 };
-	static private HashMap<HashType, String> abcVectors = new HashMap<HashType, String>();
+	static private byte[] helloWorld = "hello world".getBytes(Charset.forName("UTF-8"));
+	static private byte[] nullArray = null;
+	static private HashMap<HashType, String> helloWorldTrueVectors = new HashMap<HashType, String>();
+	static private HashType[] types = new HashType[6];
 	
 	@Override
 	protected void setUp() throws Exception{
 		super.setUp();
-		abcVectors.put(HashType.MD5, "900150983cd24fb0d6963f7d28e17f72");
-		abcVectors.put(HashType.SHA1, "a9993e364706816aba3e25717850c26c9cd0d89d");
-		abcVectors.put(HashType.SHA256, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-		abcVectors.put(HashType.SHA384, "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7");
-		abcVectors.put(HashType.SHA512, "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f");
+		
+		helloWorldTrueVectors.put(HashType.MD5, "5eb63bbbe01eeed093cb22bb8f5acdc3");
+//		helloWorldTrueVectors.put(HashType.ED2K, "aa010fbc1d14c795d86ef98c95479d17");
+		helloWorldTrueVectors.put(HashType.SHA1, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
+//		helloWorldTrueVectors.put(HashType.TTH, "ca1158e471d147bb714a6b1b8a537ff756f7abe1b63dc11d");
+		helloWorldTrueVectors.put(HashType.SHA256, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
+		helloWorldTrueVectors.put(HashType.SHA384, "fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c088de1bd");
+		helloWorldTrueVectors.put(HashType.SHA512, "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f");
+		
+		helloWorldTrueVectors.keySet().toArray(types);
 	}
 	
-	//also tests addBytes(byte[]... input) and getHash()
+	//also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArray() {
-		for(HashType type: abcVectors.keySet()){
+		for(HashType type: types){
 			Hash hash = new Hash(type);
-			
 			//test that output is same as MessageDigest
-			byte[] toHash = "This string will test hashing.".getBytes();
-			try {
-				MessageDigest md = MessageDigest.getInstance(type.javaName);
-				byte[] mdResult = md.digest(toHash);
-				byte[] hashResult = hash.getHash(toHash);
-				boolean expectedResult = true;
-				boolean sameHash = MessageDigest.isEqual(mdResult, hashResult);
-				assertEquals(expectedResult, sameHash);
-			} catch (NoSuchAlgorithmException e) {
-				throw new Error("Can't load from any provider."+type.javaName);
-			}
-			
+			MessageDigest md = type.get();
+			byte[] mdResult = md.digest(helloWorld);
+			byte[] hashResult = hash.getHash(helloWorld);
+			assertTrue(MessageDigest.isEqual(mdResult, hashResult));
+
 			//test that output is same as expected
-			byte[] abcResult = hash.getHash(abc);
-			byte[] expectedABCResult = getABCByteArray(type);
+			byte[] abcResult = hash.getHash(helloWorld);
+			byte[] expectedABCResult = getHelloWorldByteArray(type);
 			
-			assertTrue(MessageDigest.isEqual(abcResult, expectedABCResult));
+			assertTrue("HashType: "+type.name(),MessageDigest.isEqual(abcResult, expectedABCResult));
+		}
+	}
+	
+	public void testGetHashByteArrayArrayNullInput() {
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			
 			//test for null input
 			boolean throwNull = false;
-			byte[] nullArray = null;
 			try{
 				hash.getHash(nullArray);
 			}catch(NullPointerException e){
@@ -65,7 +69,7 @@ public class HashTest extends TestCase {
 			
 			//test for null input from a matrix
 			boolean throwNulls = false;
-			byte[][] nullMatrix = {new byte[4], null};
+			byte[][] nullMatrix = {helloWorld, null};
 			try{
 				hash.getHash(nullMatrix);
 			}catch(NullPointerException e){
@@ -78,50 +82,52 @@ public class HashTest extends TestCase {
 	
 	//tests getHashResult() as well
 	public void testGetHashResultHashResultByteArray() {
-		for(HashType type: abcVectors.keySet()){
-			HashResult hash2 = new HashResult(type, getABCByteArray(type));
+		for(HashType type: types){
+			HashResult hash2 = new HashResult(type, getHelloWorldByteArray(type));
 
 			Hash hash = new Hash(type);
-			HashResult hash1 = hash.getHashResult(abc);
+			HashResult hash1 = hash.getHashResult(helloWorld);
 
 			assertTrue(Hash.verify(hash1, hash2));
 		}
 	}
 	
 	public void testGetHashHex(){
-		for(HashType type: abcVectors.keySet()){
+		for(HashType type: types){
 			Hash hash = new Hash(type);
-			hash.addBytes(abc);
+			hash.addBytes(helloWorld);
 			String hexHash = hash.getHexHash();
 
-			assertEquals(abcVectors.get(type), hexHash);
+			assertEquals(helloWorldTrueVectors.get(type), hexHash);
 		}
 	}
 	
 	public void testGetNativeBIgIntegerHashByteArrayArray(){
-		for(HashType type: abcVectors.keySet()){
+		for(HashType type: types){
 			Hash hash = new Hash(type);
-			NativeBigInteger abcVector = new NativeBigInteger(1, getABCByteArray(type));
-			NativeBigInteger result = hash.getNativeBigIntegerHash(abc);
+			NativeBigInteger abcVector = new NativeBigInteger(1, getHelloWorldByteArray(type));
+			NativeBigInteger result = hash.getNativeBigIntegerHash(helloWorld);
 			assertEquals(abcVector, result);
 		}	
 	}
 	
-	@SuppressWarnings("null")
 	public void testAddByteByte(){
-		for(HashType type: abcVectors.keySet()){
-			byte[] message = "hello world".getBytes();
+		for(HashType type: types){
 			Hash hash = new Hash(type);
-			byte[] result = hash.getHash(message);
 
-			for (int i = 0; i < message.length; i++)
+			for (int i = 0; i < helloWorld.length; i++)
 			{
-				hash.addByte(message[i]);
+				hash.addByte(helloWorld[i]);
 			}
-			byte[] result2 = hash.getHash();
 
-			assertTrue(MessageDigest.isEqual(result, result2));	
-			
+			assertTrue(MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
+		}
+	}
+	
+	@SuppressWarnings("null")
+	public void testAddByteByteNullInput(){
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for null input
 			boolean throwNull = false;
 			Byte nullByte = null;
@@ -136,17 +142,18 @@ public class HashTest extends TestCase {
 	}
 	
 	public void testAddBytesByteBuffer(){
-		for(HashType type: abcVectors.keySet()){
-			byte[] message = "hello world".getBytes();
-			ByteBuffer byteBuffer = ByteBuffer.wrap(message);
-			
+		for(HashType type: types){
+			ByteBuffer byteBuffer = ByteBuffer.wrap(helloWorld);
 			Hash hash = new Hash(type); 
-			byte[] result = hash.getHash(message);
 			
 			hash.addBytes(byteBuffer);
-			byte[] result2 = hash.getHash();
-			assertTrue(MessageDigest.isEqual(result, result2));
-			
+			assertTrue(MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));
+		}
+	}
+	
+	public void testAddBytesByteBufferNullInput(){
+		for(HashType type: types){
+			Hash hash = new Hash(type); 
 			//test for null input
 			boolean throwNull = false;
 			ByteBuffer nullBuffer = null;
@@ -161,21 +168,18 @@ public class HashTest extends TestCase {
 	}
 	
 	public void testAddByteByteArrayIntInt(){
-		for(HashType type: abcVectors.keySet()){
-			byte[] message = "hello world".getBytes();
+		for(HashType type: types){
 			Hash hash = new Hash(type);
-			byte[] result = hash.getHash(message);
 
-			hash.addBytes(message, 0, message.length/2);
-			hash.addBytes(message, message.length/2, message.length-message.length/2);
-			byte[] result2 = hash.getHash();
-			assertTrue(MessageDigest.isEqual(result, result2));	
+			hash.addBytes(helloWorld, 0, helloWorld.length/2);
+			hash.addBytes(helloWorld, helloWorld.length/2, helloWorld.length-helloWorld.length/2);
+			assertTrue(MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
 			
 			//test for null input
 			boolean throwNull = false;
 			byte[] nullArray = null;
 			try{
-				hash.addBytes(nullArray, 0, message.length);
+				hash.addBytes(nullArray, 0, helloWorld.length);
 			}catch(IllegalArgumentException e){
 				throwNull = true;
 			}
@@ -185,7 +189,7 @@ public class HashTest extends TestCase {
 			//test for offset out of bounds
 			boolean throwOutOfBounds = false;
 			try{
-				hash.addBytes(message, -3, message.length-3);
+				hash.addBytes(helloWorld, -3, helloWorld.length-3);
 			}catch(ArrayIndexOutOfBoundsException e){
 				throwOutOfBounds = true;
 			}
@@ -195,7 +199,7 @@ public class HashTest extends TestCase {
 			//test for length out of bounds
 			throwOutOfBounds = false;
 			try{
-				hash.addBytes(message, 0, message.length+3);
+				hash.addBytes(helloWorld, 0, helloWorld.length+3);
 			}catch(IllegalArgumentException e){
 				throwOutOfBounds = true;
 			}
@@ -205,9 +209,9 @@ public class HashTest extends TestCase {
 	}
 
 	public void testVerifyByteArrayByteArray() {
-		for(HashType type: abcVectors.keySet()){
+		for(HashType type: types){
 			Hash hash = new Hash(type);
-			boolean verified = hash.verify(getABCByteArray(type), abc);
+			boolean verified = hash.verify(getHelloWorldByteArray(type), helloWorld);
 			
 			assertTrue(verified);
 			
@@ -215,7 +219,7 @@ public class HashTest extends TestCase {
 			boolean throwResult = false;
 			byte[] nullResult = null;
 			try{
-				hash.verify(nullResult, abc);
+				hash.verify(nullResult, helloWorld);
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
@@ -224,7 +228,7 @@ public class HashTest extends TestCase {
 			//test for null input2
 			throwResult = false;
 			try{
-				hash.verify(abc, nullResult);
+				hash.verify(helloWorld, nullResult);
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
@@ -233,8 +237,8 @@ public class HashTest extends TestCase {
 	}
 
 	public void testVerifyHashResultByteArray() {
-		for(HashType type: abcVectors.keySet()){
-			byte[] hashResult = getABCByteArray(type);
+		for(HashType type: types){
+			byte[] hashResult = getHelloWorldByteArray(type);
 			HashResult hash1 = new HashResult(type, hashResult);
 
 			assertTrue(Hash.verify(hash1, hashResult));
@@ -262,8 +266,8 @@ public class HashTest extends TestCase {
 	}
 	
 	public void testVerifyHashResultHashResult() {
-		for(HashType type: abcVectors.keySet()){
-			byte[] hashResult = getABCByteArray(type);
+		for(HashType type: types){
+			byte[] hashResult = getHelloWorldByteArray(type);
 			HashResult hash1 = new HashResult(type, hashResult);
 			HashResult hash2 = new HashResult(type, hashResult);
 
@@ -290,8 +294,8 @@ public class HashTest extends TestCase {
 		}
 	}
 	
-	private byte[] getABCByteArray(HashType alg){
-		return Hex.decode(abcVectors.get(alg));
+	private byte[] getHelloWorldByteArray(HashType alg){
+		return Hex.decode(helloWorldTrueVectors.get(alg));
 	}
 
 }
