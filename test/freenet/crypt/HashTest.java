@@ -43,13 +43,13 @@ public class HashTest extends TestCase {
 			MessageDigest md = type.get();
 			byte[] mdResult = md.digest(helloWorld);
 			byte[] hashResult = hash.getHash(helloWorld);
-			assertTrue(MessageDigest.isEqual(mdResult, hashResult));
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(mdResult, hashResult));
 
 			//test that output is same as expected
 			byte[] abcResult = hash.getHash(helloWorld);
 			byte[] expectedABCResult = getHelloWorldByteArray(type);
 			
-			assertTrue("HashType: "+type.name(),MessageDigest.isEqual(abcResult, expectedABCResult));
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(abcResult, expectedABCResult));
 		}
 	}
 	
@@ -65,7 +65,7 @@ public class HashTest extends TestCase {
 				throwNull = true;
 			}
 			
-			assertTrue(throwNull);
+			assertTrue("HashType: "+type.name(), throwNull);
 			
 			//test for null input from a matrix
 			boolean throwNulls = false;
@@ -76,7 +76,7 @@ public class HashTest extends TestCase {
 				throwNulls = true;
 			}
 			
-			assertTrue(throwNulls);
+			assertTrue("HashType: "+type.name(), throwNulls);
 		}
 	}
 	
@@ -88,7 +88,7 @@ public class HashTest extends TestCase {
 			Hash hash = new Hash(type);
 			HashResult hash1 = hash.getHashResult(helloWorld);
 
-			assertTrue(Hash.verify(hash1, hash2));
+			assertTrue("HashType: "+type.name(), Hash.verify(hash1, hash2));
 		}
 	}
 	
@@ -98,7 +98,7 @@ public class HashTest extends TestCase {
 			hash.addBytes(helloWorld);
 			String hexHash = hash.getHexHash();
 
-			assertEquals(helloWorldTrueVectors.get(type), hexHash);
+			assertEquals("HashType: "+type.name(), helloWorldTrueVectors.get(type), hexHash);
 		}
 	}
 	
@@ -107,7 +107,7 @@ public class HashTest extends TestCase {
 			Hash hash = new Hash(type);
 			NativeBigInteger abcVector = new NativeBigInteger(1, getHelloWorldByteArray(type));
 			NativeBigInteger result = hash.getNativeBigIntegerHash(helloWorld);
-			assertEquals(abcVector, result);
+			assertEquals("HashType: "+type.name(), abcVector, result);
 		}	
 	}
 	
@@ -120,7 +120,7 @@ public class HashTest extends TestCase {
 				hash.addByte(helloWorld[i]);
 			}
 
-			assertTrue(MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
 		}
 	}
 	
@@ -137,7 +137,7 @@ public class HashTest extends TestCase {
 				throwNull = true;
 			}
 			
-			assertTrue(throwNull);
+			assertTrue("HashType: "+type.name(), throwNull);
 		}
 	}
 	
@@ -147,7 +147,7 @@ public class HashTest extends TestCase {
 			Hash hash = new Hash(type); 
 			
 			hash.addBytes(byteBuffer);
-			assertTrue(MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));
 		}
 	}
 	
@@ -163,7 +163,7 @@ public class HashTest extends TestCase {
 				throwNull = true;
 			}
 			
-			assertTrue(throwNull);
+			assertTrue("HashType: "+type.name(), throwNull);
 		}
 	}
 	
@@ -173,7 +173,7 @@ public class HashTest extends TestCase {
 
 			hash.addBytes(helloWorld, 0, helloWorld.length/2);
 			hash.addBytes(helloWorld, helloWorld.length/2, helloWorld.length-helloWorld.length/2);
-			assertTrue(MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
 			
 			//test for null input
 			boolean throwNull = false;
@@ -184,7 +184,7 @@ public class HashTest extends TestCase {
 				throwNull = true;
 			}
 			
-			assertTrue(throwNull);
+			assertTrue("HashType: "+type.name(), throwNull);
 			
 			//test for offset out of bounds
 			boolean throwOutOfBounds = false;
@@ -194,7 +194,7 @@ public class HashTest extends TestCase {
 				throwOutOfBounds = true;
 			}
 			
-			assertTrue(throwOutOfBounds);
+			assertTrue("HashType: "+type.name(), throwOutOfBounds);
 			
 			//test for length out of bounds
 			throwOutOfBounds = false;
@@ -204,7 +204,7 @@ public class HashTest extends TestCase {
 				throwOutOfBounds = true;
 			}
 			
-			assertTrue(throwOutOfBounds);
+			assertTrue("HashType: "+type.name(), throwOutOfBounds);
 		}
 	}
 
@@ -213,7 +213,7 @@ public class HashTest extends TestCase {
 			Hash hash = new Hash(type);
 			boolean verified = hash.verify(getHelloWorldByteArray(type), helloWorld);
 			
-			assertTrue(verified);
+			assertTrue("HashType: "+type.name(), verified);
 			
 			//test for null input1
 			boolean throwResult = false;
@@ -223,7 +223,7 @@ public class HashTest extends TestCase {
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
-			assertTrue(throwResult);
+			assertTrue("HashType: "+type.name(), throwResult);
 			
 			//test for null input2
 			throwResult = false;
@@ -232,7 +232,7 @@ public class HashTest extends TestCase {
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
-			assertTrue(throwResult);
+			assertTrue("HashType: "+type.name(), throwResult);
 		}
 	}
 
@@ -241,7 +241,7 @@ public class HashTest extends TestCase {
 			byte[] hashResult = getHelloWorldByteArray(type);
 			HashResult hash1 = new HashResult(type, hashResult);
 
-			assertTrue(Hash.verify(hash1, hashResult));
+			assertTrue("HashType: "+type.name(), Hash.verify(hash1, hashResult));
 			
 			//test for null input1
 			boolean throwResult = false;
@@ -251,7 +251,7 @@ public class HashTest extends TestCase {
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
-			assertTrue(throwResult);
+			assertTrue("HashType: "+type.name(), throwResult);
 			
 			//test for null input2
 			throwResult = false;
@@ -261,7 +261,7 @@ public class HashTest extends TestCase {
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
-			assertTrue(throwResult);
+			assertTrue("HashType: "+type.name(), throwResult);
 		}
 	}
 	
@@ -271,7 +271,7 @@ public class HashTest extends TestCase {
 			HashResult hash1 = new HashResult(type, hashResult);
 			HashResult hash2 = new HashResult(type, hashResult);
 
-			assertTrue(Hash.verify(hash1, hash2));
+			assertTrue("HashType: "+type.name(), Hash.verify(hash1, hash2));
 			
 			//test for null input1
 			boolean throwResult = false;
@@ -281,7 +281,7 @@ public class HashTest extends TestCase {
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
-			assertTrue(throwResult);
+			assertTrue("HashType: "+type.name(), throwResult);
 			
 			//test for null input2
 			throwResult = false;
@@ -290,7 +290,7 @@ public class HashTest extends TestCase {
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
-			assertTrue(throwResult);
+			assertTrue("HashType: "+type.name(), throwResult);
 		}
 	}
 	
