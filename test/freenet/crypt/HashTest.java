@@ -37,7 +37,7 @@ public class HashTest extends TestCase {
 	}
 	
 	
-	
+	//This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArray() {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
@@ -49,6 +49,7 @@ public class HashTest extends TestCase {
 		}
 	}
 	
+	//This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArrayReset() {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
@@ -61,7 +62,7 @@ public class HashTest extends TestCase {
 	}
 
 
-	//also tests addBytes(byte[]...) and getHash()
+	//This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArraySameAsMessageDigest() {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
@@ -73,6 +74,7 @@ public class HashTest extends TestCase {
 		}
 	}
 	
+	//This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArrayNullInput() {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
@@ -89,6 +91,7 @@ public class HashTest extends TestCase {
 		}
 	}
 	
+	//This also tests addBytes(byte[]...)
 	public void testGetHashByteArrayArrayNullMatrixElementInput() {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
