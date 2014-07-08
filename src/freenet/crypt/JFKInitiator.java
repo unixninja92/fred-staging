@@ -167,7 +167,7 @@ public class JFKInitiator extends JFKExchange {
 		} catch (InvalidKeyException e) {
 			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		}
-		byte[] hmac = mac.getMAC(ciphertext);
+		byte[] hmac = mac.getMac(ciphertext);
 
 		// copy stuffs back to the message
 		System.arraycopy(hmac, 0, message3, offset, hmac.length);
