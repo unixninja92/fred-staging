@@ -18,7 +18,9 @@ public class HashTest extends TestCase {
 	static private byte[] abc = { (byte)0x61, (byte)0x62, (byte)0x63 };
 	static private HashMap<HashType, String> abcVectors = new HashMap<HashType, String>();
 	
-	public void setUp(){
+	@Override
+	protected void setUp() throws Exception{
+		super.setUp();
 		abcVectors.put(HashType.MD5, "900150983cd24fb0d6963f7d28e17f72");
 		abcVectors.put(HashType.SHA1, "a9993e364706816aba3e25717850c26c9cd0d89d");
 		abcVectors.put(HashType.SHA256, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
