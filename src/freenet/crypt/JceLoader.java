@@ -6,11 +6,13 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
+import java.security.GeneralSecurityException;
 import java.security.Provider;
 import java.security.Security;
 import java.security.Signature;
 
 import javax.crypto.KeyAgreement;
+import javax.crypto.KeyGenerator;
 
 import freenet.support.Logger;
 import freenet.support.io.Closer;
@@ -35,6 +37,14 @@ public class JceLoader {
 		if (checkUse("use.NSS","false")) {
 			try {
 				p = (new NSSLoader()).load(checkUse("prefer.NSS"));
+				try{
+					KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunPKCS11-NSS");
+					kgen.init(256);
+				} catch (GeneralSecurityException e) {
+					final String msg = "Error with SunPKCS11-NSS. Unlimited policy file not installed.";
+					Logger.warning(NSSLoader.class, msg, e);
+					System.out.println(msg);
+				}
 			} catch(Throwable e) {
 				// FIXME what about Windows/MacOSX/etc?
 				final String msg = "Unable to load SunPKCS11-NSScrypto provider. This is NOT fatal error, Freenet will work, but some performance degradation possible. Consider installing libnss3 package.";
@@ -55,8 +65,20 @@ public class JceLoader {
 		}
 		BouncyCastle = p;
 		// optional
+		if (checkUse("use.SunJCE")) {
+			try{
+				KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunJCE");
+				kgen.init(256);
+			}
+			catch(Throwable e) {
+				final String msg = "Error with SunJCE. Unlimited policy file not installed.";
+				Logger.warning(NSSLoader.class, msg, e);
+			}
+			SunJCE = Security.getProvider("SunJCE");
+		}
+		else SunJCE = null;
+
 		SUN = checkUse("use.SUN") ? Security.getProvider("SUN") : null;
-		SunJCE = checkUse("use.SunJCE") ? Security.getProvider("SunJCE") : null;
 	}
 	static private class BouncyCastleLoader {
 		private BouncyCastleLoader() {}
