@@ -18,13 +18,12 @@ public class HashTest extends TestCase {
 	static private byte[] helloWorld = "hello world".getBytes(Charset.forName("UTF-8"));
 	static private byte[] nullArray = null;
 	static private HashMap<HashType, String> helloWorldTrueVectors = new HashMap<HashType, String>();
-	static private HashType[] types = new HashType[5];
+	static private HashType[] types;
 	
 	@Override
 	protected void setUp() throws Exception{
 		super.setUp();
 		
-		//make sure length of types matches 
 		helloWorldTrueVectors.put(HashType.MD5, "5eb63bbbe01eeed093cb22bb8f5acdc3");
 //		helloWorldTrueVectors.put(HashType.ED2K, "aa010fbc1d14c795d86ef98c95479d17");
 		helloWorldTrueVectors.put(HashType.SHA1, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
@@ -33,6 +32,7 @@ public class HashTest extends TestCase {
 		helloWorldTrueVectors.put(HashType.SHA384, "fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c088de1bd");
 		helloWorldTrueVectors.put(HashType.SHA512, "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f");
 		
+		types = new HashType[helloWorldTrueVectors.size()];
 		helloWorldTrueVectors.keySet().toArray(types);
 	}
 	
