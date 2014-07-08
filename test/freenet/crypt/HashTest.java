@@ -25,7 +25,7 @@ public class HashTest extends TestCase {
 		super.setUp();
 		
 		helloWorldTrueVectors.put(HashType.MD5, "5eb63bbbe01eeed093cb22bb8f5acdc3");
-//		helloWorldTrueVectors.put(HashType.ED2K, "aa010fbc1d14c795d86ef98c95479d17");
+		helloWorldTrueVectors.put(HashType.ED2K, "aa010fbc1d14c795d86ef98c95479d17");
 		helloWorldTrueVectors.put(HashType.SHA1, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
 //		helloWorldTrueVectors.put(HashType.TTH, "ca1158e471d147bb714a6b1b8a537ff756f7abe1b63dc11d");
 		helloWorldTrueVectors.put(HashType.SHA256, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
@@ -36,8 +36,33 @@ public class HashTest extends TestCase {
 		helloWorldTrueVectors.keySet().toArray(types);
 	}
 	
-	//also tests addBytes(byte[]...) and getHash()
+	
+	
 	public void testGetHashByteArrayArray() {
+		for(HashType type: types){
+			Hash hash = new Hash(type);
+			//test that output is same as expected
+			byte[] abcResult = hash.getHash(helloWorld);
+			byte[] expectedABCResult = getHelloWorldByteArray(type);
+
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(abcResult, expectedABCResult));
+		}
+	}
+	
+	public void testGetHashByteArrayArrayReset() {
+		for(HashType type: types){
+			Hash hash = new Hash(type);
+			//test that output is same as expected
+			byte[] abcResult = hash.getHash(helloWorld);
+			byte[] abcResult2 = hash.getHash(helloWorld);
+
+			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(abcResult, abcResult2));
+		}
+	}
+
+
+	//also tests addBytes(byte[]...) and getHash()
+	public void testGetHashByteArrayArraySameAsMessageDigest() {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
 			//test that output is same as MessageDigest
@@ -45,12 +70,6 @@ public class HashTest extends TestCase {
 			byte[] mdResult = md.digest(helloWorld);
 			byte[] hashResult = hash.getHash(helloWorld);
 			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(mdResult, hashResult));
-
-			//test that output is same as expected
-			byte[] abcResult = hash.getHash(helloWorld);
-			byte[] expectedABCResult = getHelloWorldByteArray(type);
-			
-			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(abcResult, expectedABCResult));
 		}
 	}
 	
