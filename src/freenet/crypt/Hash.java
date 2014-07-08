@@ -46,7 +46,9 @@ public final class Hash{
 	 * @return Hash of all the bytes added since last reset.
 	 */
 	public final byte[] getHash(){
-		return digest.digest();
+		byte[] result = digest.digest();
+		digest.reset();
+		return result;
 	}
 	
 	/**

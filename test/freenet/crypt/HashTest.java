@@ -27,7 +27,7 @@ public class HashTest extends TestCase {
 		helloWorldTrueVectors.put(HashType.MD5, "5eb63bbbe01eeed093cb22bb8f5acdc3");
 		helloWorldTrueVectors.put(HashType.ED2K, "aa010fbc1d14c795d86ef98c95479d17");
 		helloWorldTrueVectors.put(HashType.SHA1, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
-//		helloWorldTrueVectors.put(HashType.TTH, "ca1158e471d147bb714a6b1b8a537ff756f7abe1b63dc11d");
+		helloWorldTrueVectors.put(HashType.TTH, "ca1158e471d147bb714a6b1b8a537ff756f7abe1b63dc11d");
 		helloWorldTrueVectors.put(HashType.SHA256, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
 		helloWorldTrueVectors.put(HashType.SHA384, "fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c088de1bd");
 		helloWorldTrueVectors.put(HashType.SHA512, "309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f");
