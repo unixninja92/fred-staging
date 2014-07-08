@@ -57,19 +57,22 @@ public final class MessageAuthCode {
 		}
 	}
 	
-	public MessageAuthCode(byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public MessageAuthCode(byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
 		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
 	}
 	
-	public MessageAuthCode(byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public MessageAuthCode(byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
 		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
 	}
 	
-	public MessageAuthCode(SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public MessageAuthCode(SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
 		this(key, new IvParameterSpec(iv, 0, 16));
 	}
 	
-	public MessageAuthCode(SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public MessageAuthCode(SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
+		if(type != MACType.Poly1305){
+			throw new UnsupportedTypeException(type);
+		}
 		type = defaultType;
 		try{
 			mac = type.get();
