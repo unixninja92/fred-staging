@@ -1135,7 +1135,6 @@ public class Node implements TimeSkewDetectorCallback {
 			// Can block.
 			this.random = new Yarrow(seed);
 			DiffieHellman.init(random);
-			PreferredAlgorithms.setRandomSource(random);
 			// http://bugs.sun.com/view_bug.do;jsessionid=ff625daf459fdffffffffcd54f1c775299e0?bug_id=4705093
 			// This might block on /dev/random while doing new SecureRandom(). Once it's created, it won't block.
 			ECDH.blockingInit();

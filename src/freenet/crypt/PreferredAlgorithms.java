@@ -10,7 +10,6 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.Signature;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -38,28 +37,22 @@ public final class PreferredAlgorithms {
 	final static Provider BC;
 	final static Provider NSS;
 	
-	public static RandomSource random;
+//	public static RandomSource random;
 	public static final SecureRandom sRandom = NodeStarter.getGlobalSecureRandom();
 	
-//	public static final SigType preferredSignature = SigType.ECDSAP256;
 	public static final String preferredKeyPairGen = "EC";
 	public static final HashType preferredMesageDigest = HashType.SHA256;
-//	public static final MACType preferredMAC = MACType.Poly1305;
-//	public static final KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
-//	public static final CryptBucketType preferredCryptBucketAlg = CryptBucketType.AEADAESOCB;
-//	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
 	
 	public static final Map<String, Provider> mdProviders;
 	public static final Map<String, Provider> macProviders;
-//	public static final Map<String, Provider> sigProviders;
 	public static final Map<String, Provider> keyGenProviders;
 	
-	static public final void setRandomSource(RandomSource r){
-		random = r;
-	}
+//	static public final void setRandomSource(RandomSource r){
+//		random = r;
+//	}
 	
 	static private final long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{

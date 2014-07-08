@@ -11,7 +11,6 @@ import java.security.Provider;
 import java.security.Security;
 import java.security.Signature;
 
-import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.KeyGenerator;
 
@@ -69,7 +68,6 @@ public class JceLoader {
 		// optional
 		if (checkUse("use.SunJCE")) {
 			try{
-				int max = Cipher.getMaxAllowedKeyLength("AES");
 				KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunJCE");
 				kgen.init(256);
 			}
@@ -80,9 +78,9 @@ public class JceLoader {
 			SunJCE = Security.getProvider("SunJCE");
 		}
 		else SunJCE = null;
-		
+
 		SUN = checkUse("use.SUN") ? Security.getProvider("SUN") : null;
-		
+
 		algs = new PreferredAlgorithms();
 	}
 	static private class BouncyCastleLoader {
@@ -155,7 +153,7 @@ public class JceLoader {
 	static public void main(String[] args) {
 		dumpLoaded();
 	}
-	
+
 	static public void dumpLoaded() {
 		System.out.println("BouncyCastle: "+BouncyCastle);
 		System.out.println("SunPKCS11-NSS: "+NSS);
