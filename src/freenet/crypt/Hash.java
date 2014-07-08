@@ -48,6 +48,9 @@ public final class Hash{
 	public final byte[] getHash(){
 		byte[] result = digest.digest();
 		digest.reset();
+		if(type == HashType.TTH){
+			digest = type.get();
+		}
 		return result;
 	}
 	
