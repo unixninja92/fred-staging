@@ -1,12 +1,14 @@
-/**
- *
- */
+/* This code is part of Freenet. It is distributed under the GNU General
+ * Public License, version 2 (or at your option any later version). See
+ * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import org.bitpedia.util.TigerTree;
+
+import freenet.support.Logger;
 
 public enum HashType {
 	// warning: keep in sync with Util.mdProviders!
@@ -36,7 +38,7 @@ public enum HashType {
 		this.hashLength = hashLength;
 	}
 
-	public MessageDigest get() throws NoSuchAlgorithmException {
+	public MessageDigest get() {
 		if(javaName == null) {
 			if(this.name().equals("ED2K"))
 				return new Ed2MessageDigest();
@@ -44,13 +46,18 @@ public enum HashType {
 				return new TigerTree();
 		}
 		if(name().equals("SHA256")) {
-			// User the pool
+			// Use the pool
 			return freenet.crypt.SHA256.getMessageDigest();
 		} else {
-			return MessageDigest.getInstance(javaName, Util.mdProviders.get(javaName));
+			try {
+				return MessageDigest.getInstance(javaName, PreferredAlgorithms.mdProviders.get(javaName));
+			} catch (NoSuchAlgorithmException e) {
+				Logger.error(HashType.class, "Internal error; please report:", e);
+			}
+			return null;
 		}
 	}
-
+	
 	public void recycle(MessageDigest md) {
 		if(this.equals(SHA256)) {
 			freenet.crypt.SHA256.returnMessageDigest(md);
