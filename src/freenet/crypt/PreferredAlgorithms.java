@@ -36,19 +36,19 @@ public final class PreferredAlgorithms {
 	final static Provider SunJCE;
 	final static Provider BC;
 	final static Provider NSS;
-	
+
 	public static final SecureRandom sRandom = NodeStarter.getGlobalSecureRandom();
-	
+
 	public static final String preferredKeyPairGen = "EC";
 	public static final HashType preferredMessageDigest = HashType.SHA256;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
-	
+
 	public static final Map<String, Provider> mdProviders;
 	public static final Map<String, Provider> macProviders;
 	public static final Map<String, Provider> keyGenProviders;
-	
+
 	static private final long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
@@ -74,7 +74,7 @@ public final class PreferredAlgorithms {
 		}
 		return times;
 	}
-	
+
 	static private final long macBenchmark(Mac mac) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
@@ -106,7 +106,7 @@ public final class PreferredAlgorithms {
 		}
 		return times;
 	}
-	
+
 	static private final long cipherBenchmark(Cipher cipher, SecretKeySpec key, IvParameterSpec IV) throws GeneralSecurityException
 	{
 		long times = Long.MAX_VALUE;
@@ -134,7 +134,7 @@ public final class PreferredAlgorithms {
 		}
 		return times;
 	}
-	
+
 	static private final long keyGenBenchmark(KeyGenerator kg){
 		long times = Long.MAX_VALUE;
 		@SuppressWarnings("unused")
@@ -151,7 +151,7 @@ public final class PreferredAlgorithms {
 		}
 		return times;
 	}
-	
+
 	static private final long keyPairBenchmark(KeyPairGenerator kg, KeyFactory kf) 
 			throws NoSuchAlgorithmException, InvalidKeySpecException 
 			{
@@ -174,7 +174,7 @@ public final class PreferredAlgorithms {
 			pkey = pk.getEncoded();
 			if(pubkey.length > modulusSize || pubkey.length == 0)
 				throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
-			
+
 			pub2 = kf.generatePublic(
 					new X509EncodedKeySpec(pubkey)
 					);
@@ -186,7 +186,7 @@ public final class PreferredAlgorithms {
 		}
 		for (int i = 0; i < 128; i++) {
 			long startTime = System.nanoTime();
-			
+
 			key = kg.generateKeyPair();
 			pub = key.getPublic();
 			pk = key.getPrivate();
@@ -205,8 +205,8 @@ public final class PreferredAlgorithms {
 			times = Math.min(endTime - startTime, times);
 		}
 		return times;
-	}
-	
+			}
+
 	private static final Provider fastest(long time_def, Provider provider_def, long time_sun, long time_nss, long time_bc){
 		Provider fastest = provider_def;
 		if(time_def > time_bc){
@@ -228,7 +228,7 @@ public final class PreferredAlgorithms {
 		}
 		return fastest;
 	}
-	
+
 	static {
 		SUN = JceLoader.SUN;
 		SunJCE = JceLoader.SunJCE;
@@ -236,328 +236,328 @@ public final class PreferredAlgorithms {
 		NSS = JceLoader.NSS;
 
 		final Class<?> clazz = PreferredAlgorithms.class;
-		
+
 		//Message Digest Algorithm Benchmarking
-				HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
-				for (String algo: new String[] {
-						"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
-					}) {;
-					try {
-						MessageDigest md = MessageDigest.getInstance(algo);
-						MessageDigest sun_md = null;
-						MessageDigest nss_md = null;
-						MessageDigest bc_md = null;
-						
-						long time_def = Long.MAX_VALUE;
-						long time_sun = Long.MAX_VALUE;
-						long time_nss = Long.MAX_VALUE;
-						long time_bc = Long.MAX_VALUE;
-						
-						md.digest();
-						time_def = mdBenchmark(md);
-						System.out.println(algo + " (" + md.getProvider() + "): " + time_def + "ns");
-						Logger.minor(clazz, algo + " (" + md.getProvider() + "): " + time_def + "ns");
-						try{
-							if (SUN != null && md.getProvider() != SUN) {
-								sun_md = MessageDigest.getInstance(algo, SUN);
-								sun_md.digest();
-								time_sun = mdBenchmark(sun_md);
-								System.out.println(algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
-								Logger.minor(clazz, algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
-							}
-						}catch(Throwable e) {
-							// ignore
-							Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
-						}
-						try{
-							if (NSS != null) {
-								nss_md = MessageDigest.getInstance(algo, NSS);
-								nss_md.digest();
-								time_nss = mdBenchmark(nss_md);
-								System.out.println(algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
-								Logger.minor(clazz, algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
-							}
-						}catch(Throwable e) {
-							// ignore
-							Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
-						}
-						try{
-							if (BC != null) {//should never be null
-								bc_md = MessageDigest.getInstance(algo, BC);
-								bc_md.digest();
-								time_bc = mdBenchmark(bc_md);
-								System.out.println(algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
-								Logger.minor(clazz, algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
-							}
-						}catch(Throwable e) {
-							// ignore
-							Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
-						}
-						
-						Provider mdProvider = fastest(time_def, md.getProvider(), time_sun, time_nss, time_bc);
-						System.out.println(algo + ": using " + mdProvider);
-						Logger.normal(clazz, algo + ": using " + mdProvider);
-						mdProviders_internal.put(algo, mdProvider);
-					} catch (GeneralSecurityException e) {
-						// TODO Auto-generated catch block
-						throw new Error(e);
-					}
-					
+		HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
+		for (String algo: new String[] {
+				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
+		}) {;
+		try {
+			MessageDigest md = MessageDigest.getInstance(algo);
+			MessageDigest sun_md = null;
+			MessageDigest nss_md = null;
+			MessageDigest bc_md = null;
+
+			long time_def = Long.MAX_VALUE;
+			long time_sun = Long.MAX_VALUE;
+			long time_nss = Long.MAX_VALUE;
+			long time_bc = Long.MAX_VALUE;
+
+			md.digest();
+			time_def = mdBenchmark(md);
+			System.out.println(algo + " (" + md.getProvider() + "): " + time_def + "ns");
+			Logger.minor(clazz, algo + " (" + md.getProvider() + "): " + time_def + "ns");
+			try{
+				if (SUN != null && md.getProvider() != SUN) {
+					sun_md = MessageDigest.getInstance(algo, SUN);
+					sun_md.digest();
+					time_sun = mdBenchmark(sun_md);
+					System.out.println(algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
+					Logger.minor(clazz, algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
 				}
-				mdProviders = Collections.unmodifiableMap(mdProviders_internal);
-				
-
-				
-				//KeyGenBenchmarking
-				HashMap<String,Provider> keyGenProviders_internal = new HashMap<String, Provider>();
-				for (String algo: new String[] {
-						"HMACSHA1", "HMACSHA256", "POLY1305-AES", "AES", "RIJNDAEL"
-					}) {;
-					try{
-						KeyGenerator kg = KeyGenerator.getInstance(algo);
-						KeyGenerator nss_kg = null;
-						KeyGenerator bc_kg = null;
-
-						long time_def = Long.MAX_VALUE;
-						long time_sun = Long.MAX_VALUE;
-						long time_nss = Long.MAX_VALUE;
-						long time_bc = Long.MAX_VALUE;
-
-						time_def = keyGenBenchmark(kg);
-						System.out.println("KeyGeneration " + algo + " (" + kg.getProvider() + "): " + time_def + "ns");
-						Logger.minor(clazz, "KeyGeneration " + algo + "/" + kg.getProvider() + ": " + time_def + "ns");
-
-						if (NSS != null && kg.getProvider() != NSS){
-							try {
-								nss_kg = KeyGenerator.getInstance(algo, NSS);
-								time_nss = keyGenBenchmark(nss_kg);
-								System.out.println("KeyGeneration " + algo + " (" + nss_kg.getProvider() + "): " + time_nss + "ns");
-								Logger.minor(clazz, "KeyGeneration " + algo + "/" + nss_kg.getProvider() + ": " + time_nss + "ns");
-							} catch(GeneralSecurityException e) {
-								Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
-								// ignore
-
-							} catch(Throwable e) {
-								Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
-								// ignore
-							}
-						}
-						
-						if (BC != null && kg.getProvider() != BC){
-							try {
-								bc_kg = KeyGenerator.getInstance(algo, BC);
-								time_bc = keyGenBenchmark(bc_kg);
-								System.out.println("KeyGeneration " + algo + " (" + bc_kg.getProvider() + "): " + time_bc + "ns");
-								Logger.minor(clazz, "KeyGeneration " + algo + "/" + bc_kg.getProvider() + ": " + time_bc + "ns");
-							} catch(GeneralSecurityException e) {
-								Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-								// ignore
-
-							} catch(Throwable e) {
-								Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
-								// ignore
-							}
-						}
-						Provider provider = fastest(time_def, kg.getProvider(), time_sun, time_nss, time_bc);
-						System.out.println("KeyGeneration " + algo + ": using " + provider);
-						Logger.normal(clazz, "KeyGeneration " + algo + ": using " + provider);
-						
-						keyGenProviders_internal.put(algo, provider);
-					}catch(GeneralSecurityException e){
-						throw new Error(e);
-					}
+			}catch(Throwable e) {
+				// ignore
+				Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
+			}
+			try{
+				if (NSS != null) {
+					nss_md = MessageDigest.getInstance(algo, NSS);
+					nss_md.digest();
+					time_nss = mdBenchmark(nss_md);
+					System.out.println(algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
+					Logger.minor(clazz, algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
 				}
-				keyGenProviders = Collections.unmodifiableMap(keyGenProviders_internal);
-
-				String algo;
-				
-				//MAC Benchmarking
-				Provider hmacProvider;
-				HashMap<String,Provider> macProviders_internal = new HashMap<String, Provider>();
-				algo = "HmacSHA256";
-				try{
-					SecretKey dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
-					Mac hmac = Mac.getInstance(algo);
-					Mac sun_hmac = null;
-					Mac nss_hmac = null;
-					Mac bc_hmac = null;
-					
-					long time_def = Long.MAX_VALUE;
-					long time_sun = Long.MAX_VALUE;
-					long time_nss = Long.MAX_VALUE;
-					long time_bc = Long.MAX_VALUE;
-					
-					hmac.init(dummyKey); // resolve provider
-					time_def = macBenchmark(hmac);
-					System.out.println(algo + " (" + hmac.getProvider() + "): " + time_def + "ns");
-					Logger.minor(clazz, algo + "/" + hmac.getProvider() + ": " + time_def + "ns");
-					
-					if (SUN != null && hmac.getProvider() != SUN) {
-//						// SunJCE provider is faster (in some configurations)
-						try {
-							sun_hmac = Mac.getInstance(algo, SUN);
-							sun_hmac.init(dummyKey);
-							time_sun = macBenchmark(sun_hmac);
-							System.out.println(algo + " (" + sun_hmac.getProvider() + "): " + time_sun + "ns");
-							Logger.minor(clazz, algo + "/" + sun_hmac.getProvider() + ": " + time_sun + "ns");
-						} catch(GeneralSecurityException e) {
-							Logger.warning(clazz, algo + "@" + SUN + " benchmark failed", e);
-							// ignore
-
-						} catch(Throwable e) {
-							Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
-							// ignore
-						}
-					}
-					if (NSS != null){
-						try {
-							nss_hmac = Mac.getInstance("HMACSHA256", NSS);
-							nss_hmac.init(dummyKey);
-							time_nss = macBenchmark(nss_hmac);
-							System.out.println(algo + " (" + nss_hmac.getProvider() + "): " + time_nss + "ns");
-							Logger.minor(clazz, algo + "/" + nss_hmac.getProvider() + ": " + time_nss + "ns");
-						} catch(GeneralSecurityException e) {
-							Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
-							// ignore
-
-						} catch(Throwable e) {
-							Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
-							// ignore
-						}
-					}
-					if (BC != null){
-						try {
-							bc_hmac = Mac.getInstance("HMACSHA256", BC);
-							bc_hmac.init(dummyKey);
-							time_bc = macBenchmark(bc_hmac);
-							System.out.println(algo + " (" + bc_hmac.getProvider() + "): " + time_bc + "ns");
-							Logger.minor(clazz, algo + "/" + bc_hmac.getProvider() + ": " + time_bc + "ns");
-						} catch(GeneralSecurityException e) {
-							Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-							// ignore
-
-						} catch(Throwable e) {
-							Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
-							// ignore
-						}
-					}
-					hmacProvider = fastest(time_def, hmac.getProvider(), time_sun, time_nss, time_bc);
-					System.out.println(algo + ": using " + hmacProvider);
-					Logger.normal(clazz, algo + ": using " + hmacProvider);
-					
-					macProviders_internal.put(algo, hmacProvider);
-				}catch(GeneralSecurityException e){
-					throw new Error(e);
+			}catch(Throwable e) {
+				// ignore
+				Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
+			}
+			try{
+				if (BC != null) {//should never be null
+					bc_md = MessageDigest.getInstance(algo, BC);
+					bc_md.digest();
+					time_bc = mdBenchmark(bc_md);
+					System.out.println(algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
 				}
-				macProviders_internal.put("HMACSHA1", hmacProvider);
-				macProviders_internal.put("POLY1305-AES", BC);
-				macProviders = Collections.unmodifiableMap(macProviders_internal);
-				
+			}catch(Throwable e) {
+				// ignore
+				Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+			}
 
-				//Cipher Benchmarking
-				algo = "AES/CTR/NOPADDING";
-				try{
-					byte[] key = new byte[32]; // Test for whether 256-bit works.
-					byte[] iv = new byte[16];
-					byte[] plaintext = new byte[16];
-					SecretKeySpec k = new SecretKeySpec(key, "AES");
-					IvParameterSpec IV = new IvParameterSpec(iv);
-					Cipher c = Cipher.getInstance(algo);
-					c.init(Cipher.ENCRYPT_MODE, k, IV);
-					Provider provider = c.getProvider();
-					try{
-						if(BC != null && provider != BC){
-							Cipher bcastle_cipher = Cipher.getInstance(algo, BC);
-							bcastle_cipher.init(Cipher.ENCRYPT_MODE, k, IV);
-							long time_def = cipherBenchmark(c, k, IV);
-							long time_bcastle = cipherBenchmark(bcastle_cipher, k, IV);
-							System.out.println(algo + " (" + provider + "): " + time_def + "ns");
-							System.out.println(algo + " (" + BC + "): " + time_bcastle + "ns");
-							Logger.minor(clazz, algo + "/" + provider + ": " + time_def + "ns");
-							Logger.minor(clazz, algo + "/" + BC + ": " + time_bcastle + "ns");
-							if (time_bcastle < time_def) {
-								provider = BC;
-								c = bcastle_cipher;
-							}
-						}
-						c = Cipher.getInstance(algo, provider);
-						c.init(Cipher.ENCRYPT_MODE, k, IV);
-						c.doFinal(plaintext);
-//						Logger.normal(Rijndael.class, "Using JCA: provider "+provider);
-						System.out.println("Using JCA cipher provider: "+provider);
-					} catch(GeneralSecurityException e) {
-						// ignore
-						Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-					} catch(Throwable e) {
-						// ignore
-						Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
-					}
-					
+			Provider mdProvider = fastest(time_def, md.getProvider(), time_sun, time_nss, time_bc);
+			System.out.println(algo + ": using " + mdProvider);
+			Logger.normal(clazz, algo + ": using " + mdProvider);
+			mdProviders_internal.put(algo, mdProvider);
+		} catch (GeneralSecurityException e) {
+			// TODO Auto-generated catch block
+			throw new Error(e);
+		}
 
-					aesCTRProvider = provider;
-				}catch (GeneralSecurityException e) {
-////				Logger.warning(Rijndael.class, "Not using JCA as it is crippled (can't use 256-bit keys). Will use built-in encryption. ", e);
-				}
-				
-				//keyPair benchmarks
-				algo = preferredKeyPairGen;
+		}
+		mdProviders = Collections.unmodifiableMap(mdProviders_internal);
+
+
+
+		//KeyGenBenchmarking
+		HashMap<String,Provider> keyGenProviders_internal = new HashMap<String, Provider>();
+		for (String algo: new String[] {
+				"HMACSHA1", "HMACSHA256", "POLY1305-AES", "AES", "RIJNDAEL"
+		}) {;
+		try{
+			KeyGenerator kg = KeyGenerator.getInstance(algo);
+			KeyGenerator nss_kg = null;
+			KeyGenerator bc_kg = null;
+
+			long time_def = Long.MAX_VALUE;
+			long time_sun = Long.MAX_VALUE;
+			long time_nss = Long.MAX_VALUE;
+			long time_bc = Long.MAX_VALUE;
+
+			time_def = keyGenBenchmark(kg);
+			System.out.println("KeyGeneration " + algo + " (" + kg.getProvider() + "): " + time_def + "ns");
+			Logger.minor(clazz, "KeyGeneration " + algo + "/" + kg.getProvider() + ": " + time_def + "ns");
+
+			if (NSS != null && kg.getProvider() != NSS){
 				try {
-					KeyPairGenerator kpg = KeyPairGenerator.getInstance(algo);
-					KeyPairGenerator nss_kpg = null;
-					KeyPairGenerator bc_kpg = null;
-					
-					KeyFactory kf = KeyFactory.getInstance(algo);
-					KeyFactory nss_kf = null;
-					KeyFactory bc_kf = null;
+					nss_kg = KeyGenerator.getInstance(algo, NSS);
+					time_nss = keyGenBenchmark(nss_kg);
+					System.out.println("KeyGeneration " + algo + " (" + nss_kg.getProvider() + "): " + time_nss + "ns");
+					Logger.minor(clazz, "KeyGeneration " + algo + "/" + nss_kg.getProvider() + ": " + time_nss + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+					// ignore
 
-					ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
-					
-					long time_def = Long.MAX_VALUE;
-					long time_sun = Long.MAX_VALUE;
-					long time_nss = Long.MAX_VALUE;
-					long time_bc = Long.MAX_VALUE;
-
-					kpg.initialize(spec);
-					time_def = keyPairBenchmark(kpg, kf);
-					System.out.println(algo + " (" + kpg.getProvider() + "): " + time_def + "ns");
-					Logger.minor(clazz, algo + "/" + kpg.getProvider() + ": " + time_def + "ns");
-
-					if(NSS != null && kpg.getProvider() != NSS){
-						try{
-							nss_kpg = KeyPairGenerator.getInstance(algo, NSS);
-							nss_kpg.initialize(spec);
-							nss_kf = KeyFactory.getInstance(algo, NSS);
-							time_nss = keyPairBenchmark(nss_kpg, nss_kf);
-							System.out.println(algo + " (" + nss_kpg.getProvider() + "): " + time_nss + "ns");
-							Logger.minor(clazz, algo + "/" + nss_kpg.getProvider() + ": " + time_nss + "ns");
-						} catch(GeneralSecurityException e) {
-							e.printStackTrace();
-							Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
-							// ignore
-						}
-					}
-
-					if(BC != null && kpg.getProvider() != BC){
-						try{
-							bc_kpg = KeyPairGenerator.getInstance(algo, BC);
-							bc_kpg.initialize(spec);
-							bc_kf = KeyFactory.getInstance(algo, BC);
-							time_bc = keyPairBenchmark(bc_kpg, bc_kf);
-							System.out.println(algo + " (" + bc_kpg.getProvider() + "): " + time_bc + "ns");
-							Logger.minor(clazz, algo + "/" + bc_kpg.getProvider() + ": " + time_bc + "ns");
-						} catch(GeneralSecurityException e) {
-							Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-							// ignore
-						}
-					}
-
-					keyPairProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
-					System.out.println("KeyPairGen " + algo + ": using " + keyPairProvider);
-					Logger.normal(clazz, "KeyPairGen " + algo + ": using " + keyPairProvider);
-				} catch(GeneralSecurityException e){
-					throw new Error(e);
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
+					// ignore
 				}
+			}
 
-				System.out.println("End of PreferredAlgs");
+			if (BC != null && kg.getProvider() != BC){
+				try {
+					bc_kg = KeyGenerator.getInstance(algo, BC);
+					time_bc = keyGenBenchmark(bc_kg);
+					System.out.println("KeyGeneration " + algo + " (" + bc_kg.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, "KeyGeneration " + algo + "/" + bc_kg.getProvider() + ": " + time_bc + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+				}
+			}
+			Provider provider = fastest(time_def, kg.getProvider(), time_sun, time_nss, time_bc);
+			System.out.println("KeyGeneration " + algo + ": using " + provider);
+			Logger.normal(clazz, "KeyGeneration " + algo + ": using " + provider);
+
+			keyGenProviders_internal.put(algo, provider);
+		}catch(GeneralSecurityException e){
+			throw new Error(e);
+		}
+		}
+		keyGenProviders = Collections.unmodifiableMap(keyGenProviders_internal);
+
+		String algo;
+
+		//MAC Benchmarking
+		Provider hmacProvider;
+		HashMap<String,Provider> macProviders_internal = new HashMap<String, Provider>();
+		algo = "HmacSHA256";
+		try{
+			SecretKey dummyKey = new SecretKeySpec(new byte[Node.SYMMETRIC_KEY_LENGTH], algo);
+			Mac hmac = Mac.getInstance(algo);
+			Mac sun_hmac = null;
+			Mac nss_hmac = null;
+			Mac bc_hmac = null;
+
+			long time_def = Long.MAX_VALUE;
+			long time_sun = Long.MAX_VALUE;
+			long time_nss = Long.MAX_VALUE;
+			long time_bc = Long.MAX_VALUE;
+
+			hmac.init(dummyKey); // resolve provider
+			time_def = macBenchmark(hmac);
+			System.out.println(algo + " (" + hmac.getProvider() + "): " + time_def + "ns");
+			Logger.minor(clazz, algo + "/" + hmac.getProvider() + ": " + time_def + "ns");
+
+			if (SUN != null && hmac.getProvider() != SUN) {
+				//						// SunJCE provider is faster (in some configurations)
+				try {
+					sun_hmac = Mac.getInstance(algo, SUN);
+					sun_hmac.init(dummyKey);
+					time_sun = macBenchmark(sun_hmac);
+					System.out.println(algo + " (" + sun_hmac.getProvider() + "): " + time_sun + "ns");
+					Logger.minor(clazz, algo + "/" + sun_hmac.getProvider() + ": " + time_sun + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + SUN + " benchmark failed", e);
+					// ignore
+
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
+					// ignore
+				}
+			}
+			if (NSS != null){
+				try {
+					nss_hmac = Mac.getInstance("HMACSHA256", NSS);
+					nss_hmac.init(dummyKey);
+					time_nss = macBenchmark(nss_hmac);
+					System.out.println(algo + " (" + nss_hmac.getProvider() + "): " + time_nss + "ns");
+					Logger.minor(clazz, algo + "/" + nss_hmac.getProvider() + ": " + time_nss + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+					// ignore
+
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
+					// ignore
+				}
+			}
+			if (BC != null){
+				try {
+					bc_hmac = Mac.getInstance("HMACSHA256", BC);
+					bc_hmac.init(dummyKey);
+					time_bc = macBenchmark(bc_hmac);
+					System.out.println(algo + " (" + bc_hmac.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, algo + "/" + bc_hmac.getProvider() + ": " + time_bc + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+
+				} catch(Throwable e) {
+					Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+				}
+			}
+			hmacProvider = fastest(time_def, hmac.getProvider(), time_sun, time_nss, time_bc);
+			System.out.println(algo + ": using " + hmacProvider);
+			Logger.normal(clazz, algo + ": using " + hmacProvider);
+
+			macProviders_internal.put(algo, hmacProvider);
+		}catch(GeneralSecurityException e){
+			throw new Error(e);
+		}
+		macProviders_internal.put("HMACSHA1", hmacProvider);
+		macProviders_internal.put("POLY1305-AES", BC);
+		macProviders = Collections.unmodifiableMap(macProviders_internal);
+
+
+		//Cipher Benchmarking
+		algo = "AES/CTR/NOPADDING";
+		try{
+			byte[] key = new byte[32]; // Test for whether 256-bit works.
+			byte[] iv = new byte[16];
+			byte[] plaintext = new byte[16];
+			SecretKeySpec k = new SecretKeySpec(key, "AES");
+			IvParameterSpec IV = new IvParameterSpec(iv);
+			Cipher c = Cipher.getInstance(algo);
+			c.init(Cipher.ENCRYPT_MODE, k, IV);
+			Provider provider = c.getProvider();
+			try{
+				if(BC != null && provider != BC){
+					Cipher bcastle_cipher = Cipher.getInstance(algo, BC);
+					bcastle_cipher.init(Cipher.ENCRYPT_MODE, k, IV);
+					long time_def = cipherBenchmark(c, k, IV);
+					long time_bcastle = cipherBenchmark(bcastle_cipher, k, IV);
+					System.out.println(algo + " (" + provider + "): " + time_def + "ns");
+					System.out.println(algo + " (" + BC + "): " + time_bcastle + "ns");
+					Logger.minor(clazz, algo + "/" + provider + ": " + time_def + "ns");
+					Logger.minor(clazz, algo + "/" + BC + ": " + time_bcastle + "ns");
+					if (time_bcastle < time_def) {
+						provider = BC;
+						c = bcastle_cipher;
+					}
+				}
+				c = Cipher.getInstance(algo, provider);
+				c.init(Cipher.ENCRYPT_MODE, k, IV);
+				c.doFinal(plaintext);
+				//						Logger.normal(Rijndael.class, "Using JCA: provider "+provider);
+				System.out.println("Using JCA cipher provider: "+provider);
+			} catch(GeneralSecurityException e) {
+				// ignore
+				Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+			} catch(Throwable e) {
+				// ignore
+				Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+			}
+
+
+			aesCTRProvider = provider;
+		}catch (GeneralSecurityException e) {
+			////				Logger.warning(Rijndael.class, "Not using JCA as it is crippled (can't use 256-bit keys). Will use built-in encryption. ", e);
+		}
+
+		//keyPair benchmarks
+		algo = preferredKeyPairGen;
+		try {
+			KeyPairGenerator kpg = KeyPairGenerator.getInstance(algo);
+			KeyPairGenerator nss_kpg = null;
+			KeyPairGenerator bc_kpg = null;
+
+			KeyFactory kf = KeyFactory.getInstance(algo);
+			KeyFactory nss_kf = null;
+			KeyFactory bc_kf = null;
+
+			ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
+
+			long time_def = Long.MAX_VALUE;
+			long time_sun = Long.MAX_VALUE;
+			long time_nss = Long.MAX_VALUE;
+			long time_bc = Long.MAX_VALUE;
+
+			kpg.initialize(spec);
+			time_def = keyPairBenchmark(kpg, kf);
+			System.out.println(algo + " (" + kpg.getProvider() + "): " + time_def + "ns");
+			Logger.minor(clazz, algo + "/" + kpg.getProvider() + ": " + time_def + "ns");
+
+			if(NSS != null && kpg.getProvider() != NSS){
+				try{
+					nss_kpg = KeyPairGenerator.getInstance(algo, NSS);
+					nss_kpg.initialize(spec);
+					nss_kf = KeyFactory.getInstance(algo, NSS);
+					time_nss = keyPairBenchmark(nss_kpg, nss_kf);
+					System.out.println(algo + " (" + nss_kpg.getProvider() + "): " + time_nss + "ns");
+					Logger.minor(clazz, algo + "/" + nss_kpg.getProvider() + ": " + time_nss + "ns");
+				} catch(GeneralSecurityException e) {
+					e.printStackTrace();
+					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+					// ignore
+				}
+			}
+
+			if(BC != null && kpg.getProvider() != BC){
+				try{
+					bc_kpg = KeyPairGenerator.getInstance(algo, BC);
+					bc_kpg.initialize(spec);
+					bc_kf = KeyFactory.getInstance(algo, BC);
+					time_bc = keyPairBenchmark(bc_kpg, bc_kf);
+					System.out.println(algo + " (" + bc_kpg.getProvider() + "): " + time_bc + "ns");
+					Logger.minor(clazz, algo + "/" + bc_kpg.getProvider() + ": " + time_bc + "ns");
+				} catch(GeneralSecurityException e) {
+					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+					// ignore
+				}
+			}
+
+			keyPairProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
+			System.out.println("KeyPairGen " + algo + ": using " + keyPairProvider);
+			Logger.normal(clazz, "KeyPairGen " + algo + ": using " + keyPairProvider);
+		} catch(GeneralSecurityException e){
+			throw new Error(e);
+		}
+
+		System.out.println("End of PreferredAlgs");
 	}
 }
