@@ -37,11 +37,10 @@ public final class PreferredAlgorithms {
 	final static Provider BC;
 	final static Provider NSS;
 	
-//	public static RandomSource random;
 	public static final SecureRandom sRandom = NodeStarter.getGlobalSecureRandom();
 	
 	public static final String preferredKeyPairGen = "EC";
-	public static final HashType preferredMesageDigest = HashType.SHA256;
+	public static final HashType preferredMessageDigest = HashType.SHA256;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
@@ -49,10 +48,6 @@ public final class PreferredAlgorithms {
 	public static final Map<String, Provider> mdProviders;
 	public static final Map<String, Provider> macProviders;
 	public static final Map<String, Provider> keyGenProviders;
-	
-//	static public final void setRandomSource(RandomSource r){
-//		random = r;
-//	}
 	
 	static private final long mdBenchmark(MessageDigest md) throws GeneralSecurityException
 	{

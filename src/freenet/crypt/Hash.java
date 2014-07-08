@@ -17,16 +17,8 @@ import freenet.support.HexUtil;
  *
  */
 public final class Hash{
-	private static final HashType defaultType = PreferredAlgorithms.preferredMesageDigest;
 	private final HashType type;
 	private MessageDigest digest;
-	
-	/**
-	 * Creates an instance of Hash using the default hashing algorithm
-	 */
-	public Hash(){
-		this(defaultType);
-	}
 	
 	/**
 	 * Creates an instance of Hash using the specified hashing algorithm
@@ -159,16 +151,16 @@ public final class Hash{
 	/**
 	 * Verifies that a HashResult matches the passed in data.
 	 * @param hash The HashResult to verify
-	 * @param intput The data to check against the HashrResult
-	 * @return Returns true if HashReslut matches the generated HashResult of the data.
+	 * @param input The data to check against the HashResult
+	 * @return Returns true if HashResult matches the generated HashResult of the data.
 	 */
-	public final static boolean verify(HashResult hash, byte[] intput){
+	public final static boolean verify(HashResult hash, byte[] input){
 		HashType type = hash.type;
-		return verify(hash, new HashResult(type, type.get().digest(intput)));
+		return verify(hash, new HashResult(type, type.get().digest(input)));
 	}
 	
 	/**
-	 * Verifies that the first HashReslult matches the second.
+	 * Verifies that the first HashResult matches the second.
 	 * @param hash1 The first hash to be compared
 	 * @param hash2 The second hash to be compared
 	 * @return Returns true if the hashes are the same. If they don't, returns false. 
