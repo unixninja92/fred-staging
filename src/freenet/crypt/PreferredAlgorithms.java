@@ -49,8 +49,7 @@ public final class PreferredAlgorithms {
 	public static final Map<String, Provider> macProviders;
 	public static final Map<String, Provider> keyGenProviders;
 
-	static private final long mdBenchmark(MessageDigest md) throws GeneralSecurityException
-	{
+	static private final long mdBenchmark(MessageDigest md) throws GeneralSecurityException {
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
 		byte[] output = new byte[md.getDigestLength()];
@@ -75,8 +74,7 @@ public final class PreferredAlgorithms {
 		return times;
 	}
 
-	static private final long macBenchmark(Mac mac) throws GeneralSecurityException
-	{
+	static private final long macBenchmark(Mac mac) throws GeneralSecurityException {
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
 		byte[] output = new byte[mac.getMacLength()];
@@ -107,8 +105,7 @@ public final class PreferredAlgorithms {
 		return times;
 	}
 
-	static private final long cipherBenchmark(Cipher cipher, SecretKeySpec key, IvParameterSpec IV) throws GeneralSecurityException
-	{
+	static private final long cipherBenchmark(Cipher cipher, SecretKeySpec key, IvParameterSpec IV) throws GeneralSecurityException {
 		long times = Long.MAX_VALUE;
 		byte[] input = new byte[1024];
 		byte[] output = new byte[input.length*32];
@@ -153,8 +150,7 @@ public final class PreferredAlgorithms {
 	}
 
 	static private final long keyPairBenchmark(KeyPairGenerator kg, KeyFactory kf) 
-			throws NoSuchAlgorithmException, InvalidKeySpecException 
-			{
+			throws NoSuchAlgorithmException, InvalidKeySpecException {
 		long times = Long.MAX_VALUE;
 		int modulusSize = 91;
 		KeyPair key;
@@ -205,7 +201,7 @@ public final class PreferredAlgorithms {
 			times = Math.min(endTime - startTime, times);
 		}
 		return times;
-			}
+	}
 
 	private static final Provider fastest(long time_def, Provider provider_def, long time_sun, long time_nss, long time_bc){
 		Provider fastest = provider_def;
@@ -239,69 +235,67 @@ public final class PreferredAlgorithms {
 
 		//Message Digest Algorithm Benchmarking
 		HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
-		for (String algo: new String[] {
-				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
-		}) {;
-		try {
-			MessageDigest md = MessageDigest.getInstance(algo);
-			MessageDigest sun_md = null;
-			MessageDigest nss_md = null;
-			MessageDigest bc_md = null;
+		for (String algo: new String[] {"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"}) {
+			try {
+				MessageDigest md = MessageDigest.getInstance(algo);
+				MessageDigest sun_md = null;
+				MessageDigest nss_md = null;
+				MessageDigest bc_md = null;
 
-			long time_def = Long.MAX_VALUE;
-			long time_sun = Long.MAX_VALUE;
-			long time_nss = Long.MAX_VALUE;
-			long time_bc = Long.MAX_VALUE;
+				long time_def = Long.MAX_VALUE;
+				long time_sun = Long.MAX_VALUE;
+				long time_nss = Long.MAX_VALUE;
+				long time_bc = Long.MAX_VALUE;
 
-			md.digest();
-			time_def = mdBenchmark(md);
-			System.out.println(algo + " (" + md.getProvider() + "): " + time_def + "ns");
-			Logger.minor(clazz, algo + " (" + md.getProvider() + "): " + time_def + "ns");
-			try{
-				if (SUN != null && md.getProvider() != SUN) {
-					sun_md = MessageDigest.getInstance(algo, SUN);
-					sun_md.digest();
-					time_sun = mdBenchmark(sun_md);
-					System.out.println(algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
-					Logger.minor(clazz, algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
+				md.digest();
+				time_def = mdBenchmark(md);
+				System.out.println(algo + " (" + md.getProvider() + "): " + time_def + "ns");
+				Logger.minor(clazz, algo + " (" + md.getProvider() + "): " + time_def + "ns");
+				try{
+					if (SUN != null && md.getProvider() != SUN) {
+						sun_md = MessageDigest.getInstance(algo, SUN);
+						sun_md.digest();
+						time_sun = mdBenchmark(sun_md);
+						System.out.println(algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
+						Logger.minor(clazz, algo + " (" + sun_md.getProvider() + "): " + time_sun + "ns");
+					}
+				}catch(Throwable e) {
+					// ignore
+					Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
 				}
-			}catch(Throwable e) {
-				// ignore
-				Logger.error(clazz, algo + "@" + SUN + " benchmark failed", e);
-			}
-			try{
-				if (NSS != null) {
-					nss_md = MessageDigest.getInstance(algo, NSS);
-					nss_md.digest();
-					time_nss = mdBenchmark(nss_md);
-					System.out.println(algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
-					Logger.minor(clazz, algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
+				try{
+					if (NSS != null) {
+						nss_md = MessageDigest.getInstance(algo, NSS);
+						nss_md.digest();
+						time_nss = mdBenchmark(nss_md);
+						System.out.println(algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
+						Logger.minor(clazz, algo + " (" + nss_md.getProvider() + "): " + time_nss + "ns");
+					}
+				}catch(Throwable e) {
+					// ignore
+					Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
 				}
-			}catch(Throwable e) {
-				// ignore
-				Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
-			}
-			try{
-				if (BC != null) {//should never be null
-					bc_md = MessageDigest.getInstance(algo, BC);
-					bc_md.digest();
-					time_bc = mdBenchmark(bc_md);
-					System.out.println(algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
-					Logger.minor(clazz, algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
+				try{
+					if (BC != null) {//should never be null
+						bc_md = MessageDigest.getInstance(algo, BC);
+						bc_md.digest();
+						time_bc = mdBenchmark(bc_md);
+						System.out.println(algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
+						Logger.minor(clazz, algo + " (" + bc_md.getProvider() + "): " + time_bc + "ns");
+					}
+				}catch(Throwable e) {
+					// ignore
+					Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
 				}
-			}catch(Throwable e) {
-				// ignore
-				Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
-			}
 
-			Provider mdProvider = fastest(time_def, md.getProvider(), time_sun, time_nss, time_bc);
-			System.out.println(algo + ": using " + mdProvider);
-			Logger.normal(clazz, algo + ": using " + mdProvider);
-			mdProviders_internal.put(algo, mdProvider);
-		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
-			throw new Error(e);
-		}
+				Provider mdProvider = fastest(time_def, md.getProvider(), time_sun, time_nss, time_bc);
+				System.out.println(algo + ": using " + mdProvider);
+				Logger.normal(clazz, algo + ": using " + mdProvider);
+				mdProviders_internal.put(algo, mdProvider);
+			} catch (GeneralSecurityException e) {
+				// TODO Auto-generated catch block
+				throw new Error(e);
+			}
 
 		}
 		mdProviders = Collections.unmodifiableMap(mdProviders_internal);
@@ -310,62 +304,60 @@ public final class PreferredAlgorithms {
 
 		//KeyGenBenchmarking
 		HashMap<String,Provider> keyGenProviders_internal = new HashMap<String, Provider>();
-		for (String algo: new String[] {
-				"HMACSHA1", "HMACSHA256", "POLY1305-AES", "AES", "RIJNDAEL"
-		}) {;
-		try{
-			KeyGenerator kg = KeyGenerator.getInstance(algo);
-			KeyGenerator nss_kg = null;
-			KeyGenerator bc_kg = null;
+		for (String algo: new String[] {"HMACSHA1", "HMACSHA256", "POLY1305-AES", "AES", "RIJNDAEL"}) {
+			try{
+				KeyGenerator kg = KeyGenerator.getInstance(algo);
+				KeyGenerator nss_kg = null;
+				KeyGenerator bc_kg = null;
 
-			long time_def = Long.MAX_VALUE;
-			long time_sun = Long.MAX_VALUE;
-			long time_nss = Long.MAX_VALUE;
-			long time_bc = Long.MAX_VALUE;
+				long time_def = Long.MAX_VALUE;
+				long time_sun = Long.MAX_VALUE;
+				long time_nss = Long.MAX_VALUE;
+				long time_bc = Long.MAX_VALUE;
 
-			time_def = keyGenBenchmark(kg);
-			System.out.println("KeyGeneration " + algo + " (" + kg.getProvider() + "): " + time_def + "ns");
-			Logger.minor(clazz, "KeyGeneration " + algo + "/" + kg.getProvider() + ": " + time_def + "ns");
+				time_def = keyGenBenchmark(kg);
+				System.out.println("KeyGeneration " + algo + " (" + kg.getProvider() + "): " + time_def + "ns");
+				Logger.minor(clazz, "KeyGeneration " + algo + "/" + kg.getProvider() + ": " + time_def + "ns");
 
-			if (NSS != null && kg.getProvider() != NSS){
-				try {
-					nss_kg = KeyGenerator.getInstance(algo, NSS);
-					time_nss = keyGenBenchmark(nss_kg);
-					System.out.println("KeyGeneration " + algo + " (" + nss_kg.getProvider() + "): " + time_nss + "ns");
-					Logger.minor(clazz, "KeyGeneration " + algo + "/" + nss_kg.getProvider() + ": " + time_nss + "ns");
-				} catch(GeneralSecurityException e) {
-					Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
-					// ignore
+				if (NSS != null && kg.getProvider() != NSS){
+					try {
+						nss_kg = KeyGenerator.getInstance(algo, NSS);
+						time_nss = keyGenBenchmark(nss_kg);
+						System.out.println("KeyGeneration " + algo + " (" + nss_kg.getProvider() + "): " + time_nss + "ns");
+						Logger.minor(clazz, "KeyGeneration " + algo + "/" + nss_kg.getProvider() + ": " + time_nss + "ns");
+					} catch(GeneralSecurityException e) {
+						Logger.warning(clazz, algo + "@" + NSS + " benchmark failed", e);
+						// ignore
 
-				} catch(Throwable e) {
-					Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
-					// ignore
+					} catch(Throwable e) {
+						Logger.error(clazz, algo + "@" + NSS + " benchmark failed", e);
+						// ignore
+					}
 				}
-			}
 
-			if (BC != null && kg.getProvider() != BC){
-				try {
-					bc_kg = KeyGenerator.getInstance(algo, BC);
-					time_bc = keyGenBenchmark(bc_kg);
-					System.out.println("KeyGeneration " + algo + " (" + bc_kg.getProvider() + "): " + time_bc + "ns");
-					Logger.minor(clazz, "KeyGeneration " + algo + "/" + bc_kg.getProvider() + ": " + time_bc + "ns");
-				} catch(GeneralSecurityException e) {
-					Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
-					// ignore
+				if (BC != null && kg.getProvider() != BC){
+					try {
+						bc_kg = KeyGenerator.getInstance(algo, BC);
+						time_bc = keyGenBenchmark(bc_kg);
+						System.out.println("KeyGeneration " + algo + " (" + bc_kg.getProvider() + "): " + time_bc + "ns");
+						Logger.minor(clazz, "KeyGeneration " + algo + "/" + bc_kg.getProvider() + ": " + time_bc + "ns");
+					} catch(GeneralSecurityException e) {
+						Logger.warning(clazz, algo + "@" + BC + " benchmark failed", e);
+						// ignore
 
-				} catch(Throwable e) {
-					Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
-					// ignore
+					} catch(Throwable e) {
+						Logger.error(clazz, algo + "@" + BC + " benchmark failed", e);
+						// ignore
+					}
 				}
-			}
-			Provider provider = fastest(time_def, kg.getProvider(), time_sun, time_nss, time_bc);
-			System.out.println("KeyGeneration " + algo + ": using " + provider);
-			Logger.normal(clazz, "KeyGeneration " + algo + ": using " + provider);
+				Provider provider = fastest(time_def, kg.getProvider(), time_sun, time_nss, time_bc);
+				System.out.println("KeyGeneration " + algo + ": using " + provider);
+				Logger.normal(clazz, "KeyGeneration " + algo + ": using " + provider);
 
-			keyGenProviders_internal.put(algo, provider);
-		}catch(GeneralSecurityException e){
-			throw new Error(e);
-		}
+				keyGenProviders_internal.put(algo, provider);
+			}catch(GeneralSecurityException e){
+				throw new Error(e);
+			}
 		}
 		keyGenProviders = Collections.unmodifiableMap(keyGenProviders_internal);
 
