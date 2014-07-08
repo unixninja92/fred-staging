@@ -18,12 +18,13 @@ public class HashTest extends TestCase {
 	static private byte[] helloWorld = "hello world".getBytes(Charset.forName("UTF-8"));
 	static private byte[] nullArray = null;
 	static private HashMap<HashType, String> helloWorldTrueVectors = new HashMap<HashType, String>();
-	static private HashType[] types = new HashType[6];
+	static private HashType[] types = new HashType[5];
 	
 	@Override
 	protected void setUp() throws Exception{
 		super.setUp();
 		
+		//make sure length of types matches 
 		helloWorldTrueVectors.put(HashType.MD5, "5eb63bbbe01eeed093cb22bb8f5acdc3");
 //		helloWorldTrueVectors.put(HashType.ED2K, "aa010fbc1d14c795d86ef98c95479d17");
 		helloWorldTrueVectors.put(HashType.SHA1, "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed");
@@ -66,7 +67,12 @@ public class HashTest extends TestCase {
 			}
 			
 			assertTrue("HashType: "+type.name(), throwNull);
-			
+		}
+	}
+	
+	public void testGetHashByteArrayArrayNullMatrixElementInput() {
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for null input from a matrix
 			boolean throwNulls = false;
 			byte[][] nullMatrix = {helloWorld, null};
@@ -115,11 +121,10 @@ public class HashTest extends TestCase {
 		for(HashType type: types){
 			Hash hash = new Hash(type);
 
-			for (int i = 0; i < helloWorld.length; i++)
-			{
+			for (int i = 0; i < helloWorld.length; i++){
 				hash.addByte(helloWorld[i]);
 			}
-
+			
 			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
 		}
 	}
@@ -174,7 +179,12 @@ public class HashTest extends TestCase {
 			hash.addBytes(helloWorld, 0, helloWorld.length/2);
 			hash.addBytes(helloWorld, helloWorld.length/2, helloWorld.length-helloWorld.length/2);
 			assertTrue("HashType: "+type.name(), MessageDigest.isEqual(getHelloWorldByteArray(type), hash.getHash()));	
-			
+		}
+	}
+	
+	public void testAddByteByteArrayIntIntNullInput(){
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for null input
 			boolean throwNull = false;
 			byte[] nullArray = null;
@@ -185,7 +195,12 @@ public class HashTest extends TestCase {
 			}
 			
 			assertTrue("HashType: "+type.name(), throwNull);
-			
+		}
+	}
+	
+	public void testAddByteByteArrayIntIntOffsetOutOfBounds(){
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for offset out of bounds
 			boolean throwOutOfBounds = false;
 			try{
@@ -195,9 +210,14 @@ public class HashTest extends TestCase {
 			}
 			
 			assertTrue("HashType: "+type.name(), throwOutOfBounds);
-			
+		}
+	}
+	
+	public void testAddByteByteArrayIntIntLengthOutOfBounds(){
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for length out of bounds
-			throwOutOfBounds = false;
+			boolean throwOutOfBounds = false;
 			try{
 				hash.addBytes(helloWorld, 0, helloWorld.length+3);
 			}catch(IllegalArgumentException e){
@@ -214,21 +234,30 @@ public class HashTest extends TestCase {
 			boolean verified = hash.verify(getHelloWorldByteArray(type), helloWorld);
 			
 			assertTrue("HashType: "+type.name(), verified);
-			
+		}
+	}
+	
+	public void testVerifyByteArrayByteArrayNullInputPos1() {
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for null input1
 			boolean throwResult = false;
-			byte[] nullResult = null;
 			try{
-				hash.verify(nullResult, helloWorld);
+				hash.verify(nullArray, helloWorld);
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
 			assertTrue("HashType: "+type.name(), throwResult);
-			
+		}
+	}
+	
+	public void testVerifyByteArrayByteArrayNullInputPos2() {
+		for(HashType type: types){
+			Hash hash = new Hash(type);
 			//test for null input2
-			throwResult = false;
+			boolean throwResult = false;
 			try{
-				hash.verify(helloWorld, nullResult);
+				hash.verify(helloWorld, nullArray);
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
@@ -242,7 +271,12 @@ public class HashTest extends TestCase {
 			HashResult hash1 = new HashResult(type, hashResult);
 
 			assertTrue("HashType: "+type.name(), Hash.verify(hash1, hashResult));
-			
+		}
+	}
+	
+	public void testVerifyHashResultByteArrayNullInputPos1() {
+		for(HashType type: types){
+			byte[] hashResult = getHelloWorldByteArray(type);
 			//test for null input1
 			boolean throwResult = false;
 			HashResult nullResult = null;
@@ -252,10 +286,14 @@ public class HashTest extends TestCase {
 				throwResult = true;
 			}
 			assertTrue("HashType: "+type.name(), throwResult);
-			
+		}
+	}
+	
+	public void testVerifyHashResultByteArrayNullInputPos2() {
+		for(HashType type: types){
+			HashResult hash1 = new HashResult(type, getHelloWorldByteArray(type));
 			//test for null input2
-			throwResult = false;
-			byte[] nullArray= null;
+			boolean throwResult = false;
 			try{
 				Hash.verify(hash1, nullArray);
 			}catch(NullPointerException e){
@@ -267,26 +305,35 @@ public class HashTest extends TestCase {
 	
 	public void testVerifyHashResultHashResult() {
 		for(HashType type: types){
-			byte[] hashResult = getHelloWorldByteArray(type);
-			HashResult hash1 = new HashResult(type, hashResult);
-			HashResult hash2 = new HashResult(type, hashResult);
+			HashResult hash = new HashResult(type, getHelloWorldByteArray(type));
 
-			assertTrue("HashType: "+type.name(), Hash.verify(hash1, hash2));
-			
+			assertTrue("HashType: "+type.name(), Hash.verify(hash, hash));
+		}
+	}
+	
+	public void testVerifyHashResultHashResultNullInputPos1() {
+		for(HashType type: types){
+			HashResult hash = new HashResult(type, getHelloWorldByteArray(type));
 			//test for null input1
 			boolean throwResult = false;
 			HashResult nullResult = null;
 			try{
-				Hash.verify(nullResult, hash2);
+				Hash.verify(nullResult, hash);
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
 			assertTrue("HashType: "+type.name(), throwResult);
-			
+		}
+	}
+	
+	public void testVerifyHashResultHashResultNullInputPos2() {
+		for(HashType type: types){
+			HashResult hash = new HashResult(type, getHelloWorldByteArray(type));
 			//test for null input2
-			throwResult = false;
+			boolean throwResult = false;
+			HashResult nullResult = null;
 			try{
-				Hash.verify(hash1, nullResult);
+				Hash.verify(hash, nullResult);
 			}catch(NullPointerException e){
 				throwResult = true;
 			}
