@@ -3,6 +3,7 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -124,6 +125,31 @@ public class HashTest extends TestCase {
 			Byte nullByte = null;
 			try{
 				hash.addByte(nullByte);
+			}catch(NullPointerException e){
+				throwNull = true;
+			}
+			
+			assertTrue(throwNull);
+		}
+	}
+	
+	public void testAddBytesByteBuffer(){
+		for(HashType type: abcVectors.keySet()){
+			byte[] message = "hello world".getBytes();
+			ByteBuffer byteBuffer = ByteBuffer.wrap(message);
+			
+			Hash hash = new Hash(type); 
+			byte[] result = hash.getHash(message);
+			
+			hash.addBytes(byteBuffer);
+			byte[] result2 = hash.getHash();
+			assertTrue(MessageDigest.isEqual(result, result2));
+			
+			//test for null input
+			boolean throwNull = false;
+			ByteBuffer nullBuffer = null;
+			try{
+				hash.addBytes(nullBuffer);
 			}catch(NullPointerException e){
 				throwNull = true;
 			}
