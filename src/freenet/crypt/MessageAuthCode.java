@@ -198,7 +198,8 @@ public final class MessageAuthCode {
 	}
 	
 	/**
-	 * Generates a MAC of the data added to the buffer
+	 * Generates a MAC of the data added to the buffer. The buffer is
+	 * reset after the MAC is generated.
 	 * @return The Message Authentication Code
 	 */
 	public final byte[] getMac(){
@@ -206,7 +207,8 @@ public final class MessageAuthCode {
 	}
 	
 	/**
-	 * Generates a MAC of the given data
+	 * Generates a MAC of the given data. The buffer is
+	 * reset after the MAC is generated.
 	 * @return The Message Authentication Code
 	 */
 	public final byte[] getMac(byte[]... input){
@@ -231,6 +233,7 @@ public final class MessageAuthCode {
 	 * @return Returns true if it is a match, otherwise false.
 	 */
 	public final boolean verifyData(byte[] otherMac, byte[]... data){
+		mac.reset();
 		return verify(getMac(data), otherMac);
 	}
 	
