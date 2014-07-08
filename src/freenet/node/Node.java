@@ -12,7 +12,6 @@ import static freenet.node.stats.DataStoreType.CLIENT;
 import static freenet.node.stats.DataStoreType.SLASHDOT;
 import static freenet.node.stats.DataStoreType.STORE;
 import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -152,7 +151,6 @@ import freenet.support.HexUtil;
 import freenet.support.LogThresholdCallback;
 import freenet.support.Logger;
 import freenet.support.Logger.LogLevel;
-import freenet.support.OOMHandler;
 import freenet.support.PooledExecutor;
 import freenet.support.PrioritizedTicker;
 import freenet.support.ShortBuffer;
@@ -1660,11 +1658,6 @@ public class Node implements TimeSkewDetectorCallback {
 			public void set(Integer ibwLimit) throws InvalidConfigValueException {
 				synchronized(Node.this) {
 					checkInputBandwidthLimit(ibwLimit);
-					try {
-						nodeStats.setInputLimit(ibwLimit);
-					} catch (IllegalArgumentException e) {
-						throw new InvalidConfigValueException(e);
-					}
 
 					if(ibwLimit == -1) {
 						inputLimitDefault = true;
@@ -1672,6 +1665,13 @@ public class Node implements TimeSkewDetectorCallback {
 					} else {
 						inputLimitDefault = false;
 					}
+
+					try {
+						nodeStats.setInputLimit(ibwLimit);
+					} catch (IllegalArgumentException e) {
+						throw new InvalidConfigValueException(e);
+					}
+
 					inputBandwidthLimit = ibwLimit;
 				}
 			}
@@ -4273,8 +4273,6 @@ public class Node implements TimeSkewDetectorCallback {
 				failureTable.onFound(block);
 		} catch (IOException e) {
 			Logger.error(this, "Cannot store data: "+e, e);
-		} catch (OutOfMemoryError e) {
-			OOMHandler.handleOOM(e);
 		} catch (Throwable t) {
 			System.err.println(t);
 			t.printStackTrace();
@@ -4323,8 +4321,6 @@ public class Node implements TimeSkewDetectorCallback {
 				failureTable.onFound(block);
 		} catch (IOException e) {
 			Logger.error(this, "Cannot store data: "+e, e);
-		} catch (OutOfMemoryError e) {
-			OOMHandler.handleOOM(e);
 		} catch (KeyCollisionException e) {
 			throw e;
 		} catch (Throwable t) {
