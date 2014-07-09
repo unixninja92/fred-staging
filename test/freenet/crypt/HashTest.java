@@ -306,28 +306,28 @@ public class HashTest extends TestCase {
 
 	public void testVerifyHashResultByteArray() {
 		for(int i = 0; i < types.length; i++){
-			byte[] hashResult = Hex.decode(trueHashes[i]);
-			HashResult hash1 = new HashResult(types[i], hashResult);
+			byte[] hash1 = helloWorld;
+			HashResult hashResult = new HashResult(types[i], Hex.decode(trueHashes[i]));
 
-			assertTrue("HashType: "+types[i].name(), Hash.verify(hash1, hashResult));
+			assertTrue("HashType: "+types[i].name(), Hash.verify(hashResult, hash1));
 		}
 	}
 	
 	public void testVerifyHashResultByteArrayFalse() {
 		for(int i = 0; i < types.length; i++){
-			byte[] hashResult = Hex.decode(falseHashes[i]);
-			HashResult hash1 = new HashResult(types[i], hashResult);
+			byte[] hash1 = helloWorld;
+			HashResult hashResult = new HashResult(types[i], Hex.decode(falseHashes[i]));
 
-			assertFalse("HashType: "+types[i].name(), Hash.verify(hash1, hashResult));
+			assertFalse("HashType: "+types[i].name(), Hash.verify(hashResult, hash1));
 		}
 	}
 	
 	public void testVerifyHashResultByteArrayWrongSizeMac() {
 		for(int i = 0; i < types.length; i++){
-			byte[] hashResult = helloWorld;
-			HashResult hash1 = new HashResult(types[i], hashResult);
+			byte[] hash1 = helloWorld;
+			HashResult hashResult = new HashResult(types[i], hash1);
 
-			assertFalse("HashType: "+types[i].name(), Hash.verify(hash1, hashResult));
+			assertFalse("HashType: "+types[i].name(), Hash.verify(hashResult, hash1));
 		}
 	}
 	
@@ -370,17 +370,10 @@ public class HashTest extends TestCase {
 	
 	public void testVerifyHashResultHashResultFalse() {
 		for(int i = 0; i < types.length; i++){
-			HashResult hash = new HashResult(types[i], Hex.decode(falseHashes[i]));
+			HashResult hash1 = new HashResult(types[i], Hex.decode(trueHashes[i]));
+			HashResult hash2 = new HashResult(types[i], Hex.decode(falseHashes[i]));
 
-			assertFalse("HashType: "+types[i].name(), Hash.verify(hash, hash));
-		}
-	}
-	
-	public void testVerifyHashResultHashResultWrongSizeMac() {
-		for(int i = 0; i < types.length; i++){
-			HashResult hash = new HashResult(types[i], helloWorld);
-
-			assertFalse("HashType: "+types[i].name(), Hash.verify(hash, hash));
+			assertFalse("HashType: "+types[i].name(), Hash.verify(hash1, hash2));
 		}
 	}
 	

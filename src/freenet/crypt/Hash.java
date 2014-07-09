@@ -176,30 +176,30 @@ public final class Hash{
 	 */
 	public final boolean verify(byte[] hash, byte[]... data){
 		return MessageDigest.isEqual(hash, genHash(data));
+	}
+	
+	/**
+	 * Checks to see if the HashResults passed in are equivalent. Does a simple byte
+	 * compare and type compare.
+	 * @param hash1 The first hash to be compared
+	 * @param hash2 The second hash to be compared
+	 * @return Returns true if the hashes are the same. Otherwise returns false. 
+	 */
+	public final static boolean verify(HashResult hash1, HashResult hash2){
+		return hash1.equals(hash2);
 	}	
 	
 	/**
-	 * Verifies that a HashResult matches the passed in data.
+	 * Generates the hash of the byte arrays provided as a HashResult and checks to 
+	 * see if that hash is the same as the one passed in.
 	 * @param hash The HashResult to verify
 	 * @param input The data to check against the HashResult
 	 * @return Returns true if HashResult matches the generated HashResult of the data.
 	 */
-	public final static boolean verify(HashResult hash, byte[] input){
+	public final static boolean verify(HashResult hash, byte[]... input){
 		HashType type = hash.type;
-		return verify(hash, new HashResult(type, type.get().digest(input)));
-	}
-	
-	/**
-	 * Verifies that the first HashResult matches the second.
-	 * @param hash1 The first hash to be compared
-	 * @param hash2 The second hash to be compared
-	 * @return Returns true if the hashes are the same. If they don't, returns false. 
-	 */
-	public final static boolean verify(HashResult hash1, HashResult hash2){
-		if(hash1.compareTo(hash2) == 0){
-			return true;
-		}
-		return false;
+		Hash h = new Hash(type);
+		return verify(hash, new HashResult(type, h.genHash(input)));
 	}
 	
 }

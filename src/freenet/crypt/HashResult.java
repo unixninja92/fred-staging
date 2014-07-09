@@ -6,7 +6,6 @@ package freenet.crypt;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.util.Arrays;
 
 import com.db4o.ObjectContainer;
@@ -150,11 +149,37 @@ public class HashResult implements Comparable<HashResult>, Cloneable {
 		return HexUtil.bytesToHex(result);
 	}
 	
-	public boolean isEqual(HashResult otherResult){
-		if(type != otherResult.type){
+	@Override
+	public boolean equals(Object otherObject){
+		//check not null
+		if(otherObject == null){
+			throw new NullPointerException();
+		}
+		//check instance of HashResult
+		if(!(otherObject instanceof HashResult)){
 			return false;
 		}
-		return MessageDigest.isEqual(result, otherResult.result);
+		HashResult otherHash = (HashResult) otherObject;
+		//check type
+		if(type != otherHash.type){
+			return false;
+		}
+		//check hash
+		for(int i = 0; i < result.length; i++){
+			if(result[i] != otherHash.result[i])
+				return false;
+		}
+		return true;
+	}
+	
+	@Override
+	public int hashCode(){
+		int hash = 1;
+		
+		hash = hash * 31 + type.hashCode();
+		hash = hash * 31 + result.hashCode();
+		
+		return hash;
 	}
 
 }
