@@ -6,6 +6,7 @@ package freenet.crypt;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.Arrays;
 
 import com.db4o.ObjectContainer;
@@ -147,6 +148,13 @@ public class HashResult implements Comparable<HashResult>, Cloneable {
 
 	public String hashAsHex() {
 		return HexUtil.bytesToHex(result);
+	}
+	
+	public boolean isEqual(HashResult otherResult){
+		if(type != otherResult.type){
+			return false;
+		}
+		return MessageDigest.isEqual(result, otherResult.result);
 	}
 
 }
