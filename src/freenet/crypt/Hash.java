@@ -39,9 +39,11 @@ public final class Hash{
 	 */
 	public final byte[] genHash(){
 		byte[] result = digest.digest();
-		if(type == HashType.ED2K){//ED2K does not reset after generating a digest.
+		if(type == HashType.ED2K){
+			//ED2K does not reset after generating a digest. Work around this issue
 			digest.reset();
-		}else if(type == HashType.TTH){//TTH's .reset method appears to be broken.
+		}else if(type == HashType.TTH){
+			//TTH's .reset method is broken or isn't implemented. Work around this bug
 			digest = type.get();
 		}
 		return result;
@@ -122,7 +124,7 @@ public final class Hash{
 	}
 	
 	/**
-	 * Added byte to be hashed
+	 * Adds the specified byte to the buffer of bytes to be hashed. 
 	 * @param input Byte to be added to hash
 	 */
 	public final void addByte(byte input){
@@ -130,7 +132,7 @@ public final class Hash{
 	}
 
 	/**
-	 * Adds byte[]s to be added to hash
+	 * Adds the specified byte arrays to the buffer of bytes to be hashed. 
 	 * @param input The byte[]s to add
 	 */
 	public final void addBytes(byte[]... input){
@@ -140,15 +142,17 @@ public final class Hash{
 	}
 
 	/**
-	 * Adds bytes to be hashed
-	 * @param input The ByteBuffer to read bytes from to be hashed
+	 * Adds the specified BitBuffer to the buffer of bytes to be hashed. 
+	 * Everything in the BitBuffer will be added. 
+	 * @param input The ByteBuffer to be hashed
 	 */
 	public final void addBytes(ByteBuffer input){
 		digest.update(input);
 	}
 	
 	/**
-	 * Adds specified portion of byte[] to be hashed.
+	 * Adds the specified portion of the byte[] passed in to the buffer 
+	 * of bytes to be hashed.
 	 * @param input The array containing bytes to be hashed
 	 * @param offset Where the first byte to hash is
 	 * @param len How many bytes after the offset to add to hash.
@@ -158,15 +162,17 @@ public final class Hash{
 	}
 	
 	/**
-	 * Verify that a hash matches a set of bytes. 
+	 * Generates the hash of the byte arrays provided and checks to see if that hash
+	 * is the same as the one passed in. The buffer is cleared before processing the 
+	 * input to ensure that no extra data is included. Once the hash has been 
+	 * generated, the buffer is cleared again. 
 	 * @param hash The hash to be verified
-	 * @param data The data to be compared against the hash passed in
-	 * @return Returns true if the hash of data matches the passed in. Otherwise returns false.
+	 * @param data The data to be hashed
+	 * @return Returns true if the generated hash matches the passed in hash. 
+	 * Otherwise returns false.
 	 */
 	public final boolean verify(byte[] hash, byte[]... data){
-		digest.reset();
-		addBytes(data);
-		return MessageDigest.isEqual(hash, genHash());
+		return MessageDigest.isEqual(hash, genHash(data));
 	}	
 	
 	/**
