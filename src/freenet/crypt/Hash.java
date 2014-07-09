@@ -142,8 +142,11 @@ public final class Hash{
 	}
 
 	/**
-	 * Adds the specified BitBuffer to the buffer of bytes to be hashed. 
-	 * Everything in the BitBuffer will be added. 
+	 * Adds the remaining bytes from a  ByteBuffer to the buffer of bytes 
+	 * to be hashed. The bytes read from the ByteBuffer will be from 
+	 * input.position() to input.remaining(). Upon return, the ByteBuffer's
+	 * .position() will be equal to .remaining() and .remaining() will 
+	 * stay unchanged. 
 	 * @param input The ByteBuffer to be hashed
 	 */
 	public final void addBytes(ByteBuffer input){
