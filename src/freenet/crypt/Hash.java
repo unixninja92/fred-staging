@@ -23,7 +23,7 @@ public final class Hash{
 	private MessageDigest digest;
 	
 	/**
-	 * Creates an instance of Hash using the specified hashing algorithm
+	 * Creates an instance of Hash using the specified hashing algorithm.
 	 * @param type The hashing algorithm to use. 
 	 */
 	public Hash(HashType type){
@@ -35,13 +35,13 @@ public final class Hash{
 	 * Generates the hash of all the bytes in the buffer added with the
 	 * addBytes methods. The buffer is then cleared after the hash has been
 	 * generated.
-	 * @return Hash of all the bytes added since last reset.
+	 * @return The generated hash of all the bytes added since last reset.
 	 */
 	public final byte[] genHash(){
 		byte[] result = digest.digest();
-		if(type == HashType.ED2K){
+		if(type == HashType.ED2K){//ED2K does not reset after generating a digest.
 			digest.reset();
-		}else if(type == HashType.TTH){
+		}else if(type == HashType.TTH){//TTH's .reset method appears to be broken.
 			digest = type.get();
 		}
 		return result;
@@ -50,9 +50,9 @@ public final class Hash{
 	/**
 	 * Generates the hash of only the specified bytes. The buffer is cleared before 
 	 * processing the input to ensure that no extra data is included. Once the hash
-	 * has been generated, the buffered is cleared again. 
+	 * has been generated, the buffer is cleared again. 
 	 * @param input The bytes to hash
-	 * @return The hash of the data
+	 * @return The generated hash of the data
 	 */
 	public final byte[] genHash(byte[]... input) {
 		digest.reset();
@@ -64,7 +64,8 @@ public final class Hash{
 	 * Generates the HashResult of all the bytes in the buffer added with the
 	 * addBytes methods. The buffer is then cleared after the hash has been
 	 * generated.
-	 * @return Hash as HashResult of all the bytes added since last reset.
+	 * @return The generated hash as a HashResult of all the bytes added 
+	 * since last reset.
 	 */
 	public final HashResult genHashResult() {
 		return new HashResult(type, genHash());
@@ -73,10 +74,10 @@ public final class Hash{
 	/**
 	 * Generates the hash as a HashResult string of only the specified bytes. 
 	 * The buffer is cleared before processing the input to ensure that no 
-	 * extra data is included. Once the hash has been generated, the buffered 
+	 * extra data is included. Once the hash has been generated, the buffer 
 	 * is cleared again. 
 	 * @param input The bytes to hash
-	 * @return The hash as HashResult of the data
+	 * @return The generated hash as a HashResult of the data
 	 */
 	public final HashResult genHashResult(byte[]... input){
 		digest.reset();
@@ -88,7 +89,8 @@ public final class Hash{
 	 * Generates the hash as a hex string of all the bytes in the buffer added 
 	 * with the addBytes methods. The buffer is then cleared after the hash 
 	 * has been generated.
-	 * @return Hash as a hex string of all the bytes added since last reset.
+	 * @return The generated hash as a hex string of all the bytes added since 
+	 * last reset.
 	 */
 	public final String genHexHash() {
 		return HexUtil.bytesToHex(genHash());
@@ -98,7 +100,8 @@ public final class Hash{
 	 * Generates the hash as a NativeBigInteger of all the bytes in the buffer 
 	 * added with the addBytes methods. The buffer is then cleared after the hash 
 	 * has been generated.
-	 * @return Hash as a NativeBigInteger of all the bytes added since last reset.
+	 * @return The generated hash as a NativeBigInteger of all the bytes added 
+	 * since last reset.
 	 */
 	public final NativeBigInteger genNativeBigIntegerHash(){
 		return new NativeBigInteger(1, genHash());
@@ -107,10 +110,10 @@ public final class Hash{
 	/**
 	 * Generates the hash as a NativeBigInteger string of only the specified 
 	 * bytes. The buffer is cleared before processing the input to ensure that 
-	 * no extra data is included. Once the hash has been generated, the buffered 
+	 * no extra data is included. Once the hash has been generated, the buffer 
 	 * is cleared again. 
 	 * @param input The bytes to hash
-	 * @return The hash as NativeBigInteger of the data
+	 * @return The generated hash as a NativeBigInteger of the data
 	 */
 	public final NativeBigInteger genNativeBigIntegerHash(byte[]... data){
 		digest.reset();
