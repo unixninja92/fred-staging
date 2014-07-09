@@ -41,7 +41,7 @@ public class HashTest extends TestCase {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
 			//test that output is same as expected
-			byte[] abcResult = hash.getHash(helloWorld);
+			byte[] abcResult = hash.genHash(helloWorld);
 			byte[] expectedABCResult = Hex.decode(trueHashes[i]);
 
 			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(abcResult, expectedABCResult));
@@ -53,8 +53,8 @@ public class HashTest extends TestCase {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
 			//test that output is same as expected
-			byte[] abcResult = hash.getHash(helloWorld);
-			byte[] abcResult2 = hash.getHash(helloWorld);
+			byte[] abcResult = hash.genHash(helloWorld);
+			byte[] abcResult2 = hash.genHash(helloWorld);
 
 			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(abcResult, abcResult2));
 		}
@@ -68,7 +68,7 @@ public class HashTest extends TestCase {
 			//test that output is same as MessageDigest
 			MessageDigest md = types[i].get();
 			byte[] mdResult = md.digest(helloWorld);
-			byte[] hashResult = hash.getHash(helloWorld);
+			byte[] hashResult = hash.genHash(helloWorld);
 			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(mdResult, hashResult));
 		}
 	}
@@ -81,7 +81,7 @@ public class HashTest extends TestCase {
 			//test for null input
 			boolean throwNull = false;
 			try{
-				hash.getHash(nullArray);
+				hash.genHash(nullArray);
 			}catch(NullPointerException e){
 				throwNull = true;
 			}
@@ -98,7 +98,7 @@ public class HashTest extends TestCase {
 			boolean throwNulls = false;
 			byte[][] nullMatrix = {helloWorld, null};
 			try{
-				hash.getHash(nullMatrix);
+				hash.genHash(nullMatrix);
 			}catch(NullPointerException e){
 				throwNulls = true;
 			}
@@ -113,7 +113,7 @@ public class HashTest extends TestCase {
 			HashResult hash2 = new HashResult(types[i], Hex.decode(trueHashes[i]));
 
 			Hash hash = new Hash(types[i]);
-			HashResult hash1 = hash.getHashResult(helloWorld);
+			HashResult hash1 = hash.genHashResult(helloWorld);
 
 			assertTrue("HashType: "+types[i].name(), Hash.verify(hash1, hash2));
 		}
@@ -123,7 +123,7 @@ public class HashTest extends TestCase {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
 			hash.addBytes(helloWorld);
-			String hexHash = hash.getHexHash();
+			String hexHash = hash.genHexHash();
 
 			assertEquals("HashType: "+types[i].name(), trueHashes[i], hexHash);
 		}
@@ -133,7 +133,7 @@ public class HashTest extends TestCase {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
 			NativeBigInteger abcVector = new NativeBigInteger(1, Hex.decode(trueHashes[i]));
-			NativeBigInteger result = hash.getNativeBigIntegerHash(helloWorld);
+			NativeBigInteger result = hash.genNativeBigIntegerHash(helloWorld);
 			assertEquals("HashType: "+types[i].name(), abcVector, result);
 		}	
 	}
@@ -146,7 +146,7 @@ public class HashTest extends TestCase {
 				hash.addByte(helloWorld[j]);
 			}
 			
-			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(Hex.decode(trueHashes[i]), hash.getHash()));	
+			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(Hex.decode(trueHashes[i]), hash.genHash()));	
 		}
 	}
 	
@@ -173,7 +173,7 @@ public class HashTest extends TestCase {
 			Hash hash = new Hash(types[i]); 
 			
 			hash.addBytes(byteBuffer);
-			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(Hex.decode(trueHashes[i]), hash.getHash()));
+			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(Hex.decode(trueHashes[i]), hash.genHash()));
 		}
 	}
 	
@@ -199,7 +199,7 @@ public class HashTest extends TestCase {
 
 			hash.addBytes(helloWorld, 0, helloWorld.length/2);
 			hash.addBytes(helloWorld, helloWorld.length/2, helloWorld.length-helloWorld.length/2);
-			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(Hex.decode(trueHashes[i]), hash.getHash()));	
+			assertTrue("HashType: "+types[i].name(), MessageDigest.isEqual(Hex.decode(trueHashes[i]), hash.genHash()));	
 		}
 	}
 	

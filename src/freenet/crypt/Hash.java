@@ -12,7 +12,9 @@ import freenet.support.HexUtil;
 
 /**
  * The Hash class will generate the hash value of a given set of bytes and also verify that
- * a hash matches a given set of bytes.
+ * a hash matches a given set of bytes. The addBytes methods can be used to pass data into 
+ * a buffer that will be used to generate a hash. Once a hash is generated, the buffer is 
+ * cleared or reset. 
  * @author unixninja92
  *
  */
@@ -30,34 +32,42 @@ public final class Hash{
 	}
 	
 	/**
-	 * Generates the hash of all the bytes added using addBytes() methods
+	 * Generates the hash of all the bytes in the buffer added with the
+	 * addBytes methods. The buffer is then cleared after the hash has been
+	 * generated.
 	 * @return Hash of all the bytes added since last reset.
 	 */
-	public final byte[] getHash(){
+	public final byte[] genHash(){
 		byte[] result = digest.digest();
-		digest.reset();
-		if(type == HashType.TTH){
+		if(type == HashType.ED2K){
+			digest.reset();
+		}else if(type == HashType.TTH){
 			digest = type.get();
 		}
 		return result;
 	}
 	
 	/**
-	 * Generates the hash of the given bytes
+	 * Generates the hash of only the specified bytes. The buffer is cleared before 
+	 * processing the input to ensure that no extra data is included. Once the hash
+	 * has been generated, the buffered is cleared again. 
 	 * @param input The bytes to hash
 	 * @return The hash of the data
 	 */
-	public final byte[] getHash(byte[]... input) {
+	public final byte[] genHash(byte[]... input) {
+		digest.reset();
 		addBytes(input);
-		return getHash();
+		return genHash();
 	}
 	
 	/**
-	 * Generates the hash of all the bytes added using addBytes() methods
+	 * Generates the HashResult of all the bytes in the buffer added with the
+	 * addBytes methods. The buffer is then cleared after the hash has been
+	 * generated.
 	 * @return Hash as HashResult of all the bytes added since last reset.
 	 */
-	public final HashResult getHashResult() {
-		return new HashResult(type, getHash());
+	public final HashResult genHashResult() {
+		return new HashResult(type, genHash());
 	}
 	
 	/**
@@ -65,25 +75,28 @@ public final class Hash{
 	 * @param input The bytes to hash
 	 * @return The hash as HashResult of the data
 	 */
-	public final HashResult getHashResult(byte[]... input){
+	public final HashResult genHashResult(byte[]... input){
 		addBytes(input);
-		return getHashResult();
+		return genHashResult();
 	}
 	
 	/**
-	 * Generates the hash of all the bytes added using addBytes() methods
+	 * Generates the hash as a hex string of only the specified bytes. The 
+	 * buffer is cleared before processing the input to ensure that no extra 
+	 * data is included. Once the hash has been generated, 
+	 * the buffered is cleared again. 
 	 * @return Hash as a hex string of all the bytes added since last reset.
 	 */
-	public final String getHexHash() {
-		return HexUtil.bytesToHex(getHash());
+	public final String genHexHash() {
+		return HexUtil.bytesToHex(genHash());
 	}
 	
 	/**
 	 * Generates the hash of all the bytes added using addBytes() methods
 	 * @return Hash as a NativeBigInteger of all the bytes added since last reset.
 	 */
-	public final NativeBigInteger getNativeBigIntegerHash(){
-		return new NativeBigInteger(1, getHash());
+	public final NativeBigInteger genNativeBigIntegerHash(){
+		return new NativeBigInteger(1, genHash());
 	}
 	
 	/**
@@ -91,9 +104,9 @@ public final class Hash{
 	 * @param input The bytes to hash
 	 * @return The hash as NativeBigInteger of the data
 	 */
-	public final NativeBigInteger getNativeBigIntegerHash(byte[]... data){
+	public final NativeBigInteger genNativeBigIntegerHash(byte[]... data){
 		addBytes(data);
-		return getNativeBigIntegerHash();
+		return genNativeBigIntegerHash();
 	}
 	
 	/**
@@ -141,7 +154,7 @@ public final class Hash{
 	public final boolean verify(byte[] hash, byte[]... data){
 		digest.reset();
 		addBytes(data);
-		return MessageDigest.isEqual(hash, getHash());
+		return MessageDigest.isEqual(hash, genHash());
 	}	
 	
 	/**
