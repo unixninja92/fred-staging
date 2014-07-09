@@ -26,11 +26,7 @@ public final class Hash{
 	 */
 	public Hash(HashType type){
 		this.type = type;
-		try {
-			digest = type.get();
-		} finally {
-			type.recycle(digest);
-		}
+		digest = type.get();
 	}
 	
 	/**
