@@ -71,20 +71,23 @@ public final class Hash{
 	}
 	
 	/**
-	 * Generates the hash of the given bytes
+	 * Generates the hash as a HashResult string of only the specified bytes. 
+	 * The buffer is cleared before processing the input to ensure that no 
+	 * extra data is included. Once the hash has been generated, the buffered 
+	 * is cleared again. 
 	 * @param input The bytes to hash
 	 * @return The hash as HashResult of the data
 	 */
 	public final HashResult genHashResult(byte[]... input){
+		digest.reset();
 		addBytes(input);
 		return genHashResult();
 	}
 	
 	/**
-	 * Generates the hash as a hex string of only the specified bytes. The 
-	 * buffer is cleared before processing the input to ensure that no extra 
-	 * data is included. Once the hash has been generated, 
-	 * the buffered is cleared again. 
+	 * Generates the hash as a hex string of all the bytes in the buffer added 
+	 * with the addBytes methods. The buffer is then cleared after the hash 
+	 * has been generated.
 	 * @return Hash as a hex string of all the bytes added since last reset.
 	 */
 	public final String genHexHash() {
@@ -92,7 +95,9 @@ public final class Hash{
 	}
 	
 	/**
-	 * Generates the hash of all the bytes added using addBytes() methods
+	 * Generates the hash as a NativeBigInteger of all the bytes in the buffer 
+	 * added with the addBytes methods. The buffer is then cleared after the hash 
+	 * has been generated.
 	 * @return Hash as a NativeBigInteger of all the bytes added since last reset.
 	 */
 	public final NativeBigInteger genNativeBigIntegerHash(){
@@ -100,11 +105,15 @@ public final class Hash{
 	}
 	
 	/**
-	 * Generates the hash of the given bytes
+	 * Generates the hash as a NativeBigInteger string of only the specified 
+	 * bytes. The buffer is cleared before processing the input to ensure that 
+	 * no extra data is included. Once the hash has been generated, the buffered 
+	 * is cleared again. 
 	 * @param input The bytes to hash
 	 * @return The hash as NativeBigInteger of the data
 	 */
 	public final NativeBigInteger genNativeBigIntegerHash(byte[]... data){
+		digest.reset();
 		addBytes(data);
 		return genNativeBigIntegerHash();
 	}
