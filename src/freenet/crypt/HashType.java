@@ -57,7 +57,7 @@ public enum HashType {
 			return null;
 		}
 	}
-	
+
 	public void recycle(MessageDigest md) {
 		if(this.equals(SHA256)) {
 			freenet.crypt.SHA256.returnMessageDigest(md);
