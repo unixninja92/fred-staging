@@ -46,10 +46,10 @@ public class KeyGen {
 	 * @param pub Public key as byte[]
 	 * @return Public key as PublicKey
 	 */
-	public static PublicKey getPublicKey(byte[] pub){
+	public static PublicKey getPublicKey(KeyPairType type, byte[] pub){
 		try {
 			KeyFactory kf = KeyFactory.getInstance(
-					PreferredAlgorithms.preferredKeyPairGen, 
+					type.alg, 
 					PreferredAlgorithms.keyPairProvider);
 
 	        X509EncodedKeySpec xks = new X509EncodedKeySpec(pub);
@@ -66,8 +66,8 @@ public class KeyGen {
 	 * @param pub Public key as byte[]
 	 * @return Public key as KeyPair with a null private key
 	 */
-	public static KeyPair getPublicKeyPair(byte[] pub){
-		return getKeyPair(getPublicKey(pub), null);
+	public static KeyPair getPublicKeyPair(KeyPairType type, byte[] pub){
+		return getKeyPair(getPublicKey(type, pub), null);
 	}
 	
 	/**
@@ -77,14 +77,13 @@ public class KeyGen {
 	 * @param pri Private key as byte[]
 	 * @return The public key and private key in a KeyPair
 	 */
-	public static KeyPair getKeyPair(byte[] pub, byte[] pri){
+	public static KeyPair getKeyPair(KeyPairType type, byte[] pub, byte[] pri){
 		try {
 			KeyFactory kf = KeyFactory.getInstance(
-	        		PreferredAlgorithms.preferredKeyPairGen, 
+	        		type.alg, 
 	        		PreferredAlgorithms.keyPairProvider);
 			
-	        X509EncodedKeySpec xks = new X509EncodedKeySpec(pub);
-			PublicKey pubK = kf.generatePublic(xks);
+			PublicKey pubK = getPublicKey(type, pub);
 			
 	        PKCS8EncodedKeySpec pks = new PKCS8EncodedKeySpec(pri);
 	        PrivateKey privK = kf.generatePrivate(pks);

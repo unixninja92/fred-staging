@@ -20,8 +20,6 @@ import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
 
 public final class CryptSignature{
-	private static final SigType defaultType = 
-			PreferredAlgorithms.preferredSignature;
 	
 	private boolean verifyOnly;
 	
@@ -38,14 +36,6 @@ public final class CryptSignature{
 	private RandomSource random;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
-	
-	/**
-	 * Creates an instance of CryptSignature and generates a key pair for the 
-	 * default algorithm
-	 */
-	public CryptSignature(){
-		this(defaultType);
-	}
 	
 	/**
 	 * Creates an instance of CryptSignature and generates a key pair for the 
