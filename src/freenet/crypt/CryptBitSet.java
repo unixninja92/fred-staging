@@ -60,11 +60,11 @@ public class CryptBitSet {
 	}
 	
 	public CryptBitSet(CryptBitSetType type, byte[] key){
-		this(type, KeyUtils.getSecretKey(key, type.keyType));
+		this(type, KeyGen.getSecretKey(key, type.keyType));
 	}
 	
 	public CryptBitSet(CryptBitSetType type){
-		this(type, KeyUtils.genSecretKey(type.keyType));
+		this(type, KeyGen.genSecretKey(type.keyType));
 	}
 	
 	public CryptBitSet(){
@@ -113,7 +113,7 @@ public class CryptBitSet {
 	}
 	
 	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws UnsupportedTypeException {
-		this(type, KeyUtils.getSecretKey(key, type.keyType), iv, offset);
+		this(type, KeyGen.getSecretKey(key, type.keyType), iv, offset);
 	}
 	
 	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) throws UnsupportedTypeException {

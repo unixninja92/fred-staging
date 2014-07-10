@@ -53,7 +53,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 		}
 		else{
 			try {
-				keys = KeyUtils.genKeyPair(type.sigType.keyType);
+				keys = KeyGen.genKeyPair(type.sigType.keyType);
 				
 				ka = type.get();
 				ka.init(keys.getPrivate());	

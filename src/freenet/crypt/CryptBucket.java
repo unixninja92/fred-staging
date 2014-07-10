@@ -47,7 +47,7 @@ public final class CryptBucket implements Bucket {
      * @param underlying The bucket that will be storing the encrypted data
      */
     public CryptBucket(Bucket underlying){
-    	this(defaultType, underlying, KeyUtils.genSecretKey(defaultType.keyType));
+    	this(defaultType, underlying, KeyGen.genSecretKey(defaultType.keyType));
     }
     
     /**
@@ -57,7 +57,7 @@ public final class CryptBucket implements Bucket {
      * @param underlying The bucket that will be storing the encrypted data
      */
     public CryptBucket(CryptBucketType type, Bucket underlying){
-    	this(type, underlying, KeyUtils.genSecretKey(type.keyType));
+    	this(type, underlying, KeyGen.genSecretKey(type.keyType));
     }  
     
     /**
@@ -68,7 +68,7 @@ public final class CryptBucket implements Bucket {
      * @param key The key that will be used for encryption
      */
     public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key){
-    	this(type, underlying, KeyUtils.getSecretKey(key, type.keyType));
+    	this(type, underlying, KeyGen.getSecretKey(key, type.keyType));
     }
     
     /**

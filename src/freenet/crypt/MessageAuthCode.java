@@ -42,7 +42,7 @@ public final class MessageAuthCode {
 			key = cryptoKey;
 			if(type.ivlen != -1){;
 				checkPoly1305Key(key.getEncoded());
-				iv = KeyUtils.genIV(type.ivlen);
+				iv = KeyGen.genIV(type.ivlen);
 				mac.init(key, iv);
 			}
 			else{
@@ -64,7 +64,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidKeyException
 	 */
 	public MessageAuthCode(MACType type, byte[] cryptoKey) throws InvalidKeyException {
-		this(type, KeyUtils.getSecretKey(cryptoKey, type.keyType));	
+		this(type, KeyGen.getSecretKey(cryptoKey, type.keyType));	
 	}
 	
 	/**
@@ -74,7 +74,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidKeyException
 	 */
 	public MessageAuthCode(MACType type) throws InvalidKeyException{
-		this(type, KeyUtils.genSecretKey(type.keyType));
+		this(type, KeyGen.genSecretKey(type.keyType));
 	}
 	
 	/**
@@ -100,7 +100,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
-		this(KeyUtils.getSecretKey(key, KeyType.POLY1305), iv);
+		this(KeyGen.getSecretKey(key, KeyType.POLY1305), iv);
 	}
 
 	/**
@@ -112,7 +112,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
-		this(key, KeyUtils.getIvParameterSpec(iv, 0, 16));
+		this(key, KeyGen.getIvParameterSpec(iv, 0, 16));
 	}
 
 	/**
@@ -124,7 +124,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
-		this(KeyUtils.getSecretKey(key, KeyType.POLY1305), iv);
+		this(KeyGen.getSecretKey(key, KeyType.POLY1305), iv);
 	}
 	
 	/**
@@ -283,7 +283,7 @@ public final class MessageAuthCode {
 	 * @throws UnsupportedTypeException
 	 */
 	public final void changeIv(byte[] iv) throws InvalidAlgorithmParameterException, UnsupportedTypeException {
-		changeIv(KeyUtils.getIvParameterSpec(iv, 0, MACType.Poly1305.ivlen));
+		changeIv(KeyGen.getIvParameterSpec(iv, 0, MACType.Poly1305.ivlen));
 	}
 	
 	/**
@@ -293,7 +293,7 @@ public final class MessageAuthCode {
 	 */
 	public final IvParameterSpec genIv() throws UnsupportedTypeException{
 		try {
-			changeIv(KeyUtils.genIV(type.ivlen));
+			changeIv(KeyGen.genIV(type.ivlen));
 		} catch (InvalidAlgorithmParameterException e) {
 			Logger.error(MessageAuthCode.class, "Internal error; please report:", e);
 		}
