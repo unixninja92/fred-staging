@@ -80,7 +80,7 @@ public final class CryptSignature{
 			dsaPubK = DSAPublicKey.create(publicKey);
 		}
 		else{
-			keys = KeyGen.getPublicKeyPair(publicKey);
+			keys = KeyGen.getPublicKeyPair(type.keyType, publicKey);
 			sig.initVerify(keys.getPublic());
 		}
 	}
@@ -101,7 +101,7 @@ public final class CryptSignature{
             pub = Base64.decode(sfs.get("pub"));
             pri = Base64.decode(sfs.get("pri"));
             
-            keys = KeyGen.getKeyPair(pub, pri);
+            keys = KeyGen.getKeyPair(type.keyType, pub, pri);
             
             sig = type.get();
 			sig.initSign(keys.getPrivate());

@@ -19,7 +19,6 @@ import freenet.support.Logger;
  * @author unixninja92
 */
 public class CryptBitSet {
-	public final static CryptBitSetType defaultType = CryptBitSetType.ChaCha;
 	private CryptBitSetType type;
 	private SecretKey key;
 	private IvParameterSpec iv;
@@ -65,10 +64,6 @@ public class CryptBitSet {
 	
 	public CryptBitSet(CryptBitSetType type){
 		this(type, KeyGen.genSecretKey(type.keyType));
-	}
-	
-	public CryptBitSet(){
-		this(defaultType);
 	}
 	
 	

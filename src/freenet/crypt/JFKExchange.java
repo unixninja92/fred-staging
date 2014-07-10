@@ -106,7 +106,7 @@ public abstract class JFKExchange {
 			return underlyingExch.getSharedSecrect(new NativeBigInteger(1, peerExponential));
 		}
 		else{
-			return underlyingExch.getSharedSecrect(KeyGen.getPublicKey(peerExponential));
+			return underlyingExch.getSharedSecrect(KeyGen.getPublicKey(KeyPairType.ECP256, peerExponential));
 		}
 		} catch(UnsupportedTypeException e){
 			Logger.error(JFKExchange.class, "Internal error; please report:", e);
