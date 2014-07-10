@@ -72,7 +72,6 @@ import freenet.crypt.DSAPublicKey;
 import freenet.crypt.DiffieHellman;
 import freenet.crypt.ECDH;
 import freenet.crypt.EncryptingIoAdapter;
-import freenet.crypt.PreferredAlgorithms;
 import freenet.crypt.RandomSource;
 import freenet.crypt.Yarrow;
 import freenet.io.comm.DMT;
