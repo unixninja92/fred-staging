@@ -9,7 +9,6 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.SecureRandom;
 
 import javax.crypto.SecretKey;
 
@@ -27,8 +26,6 @@ import freenet.support.api.Bucket;
  * be in close().
  */
 public final class CryptBucket implements Bucket {
-	private static final CryptBucketType defaultType = PreferredAlgorithms.preferredCryptBucketAlg;
-	private static final SecureRandom rand = PreferredAlgorithms.sRandom;
 	private final CryptBucketType type;
 	private final Bucket underlying;
     private SecretKey key;
@@ -40,15 +37,6 @@ public final class CryptBucket implements Bucket {
     private FilterOutputStream outStream;
     
     private final int OVERHEAD = AEADOutputStream.AES_OVERHEAD;
-
-    /**
-     * Creates instance of CryptBucket using the default algorithm and generates a key
-     * to encrypt and decrypt the underlying bucket
-     * @param underlying The bucket that will be storing the encrypted data
-     */
-    public CryptBucket(Bucket underlying){
-    	this(defaultType, underlying, KeyGen.genSecretKey(defaultType.keyType));
-    }
     
     /**
      * Creates instance of CryptBucket using the algorithm type and generates a key
@@ -194,8 +182,7 @@ public final class CryptBucket implements Bucket {
 	 * @throws IOException
 	 */
 	private final FilterOutputStream genOutputStream() throws IOException {
-		byte[] nonce = new byte[type.nonceSize];
-		rand.nextBytes(nonce);
+		byte[] nonce = KeyGen.genNonce(type.nonceSize);
 		nonce[0] &= 0x7F;
 
 		return new AEADOutputStream(underlying.getOutputStream(), 
