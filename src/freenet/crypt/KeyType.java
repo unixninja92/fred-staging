@@ -8,18 +8,13 @@ public enum KeyType {
 	Rijndael256("RIJNDAEL", 256),
 	AES128("AES", 128),
 	AES256("AES", 256),
-	HMACSHA1("HMACSHA1"), 
-	HMACSHA256("HMACSHA256"),
-	POLY1305("POLY1305-AES"),
+	HMACSHA1("HMACSHA1", 160), 
+	HMACSHA256("HMACSHA256", 256),
+	POLY1305("POLY1305-AES", 256),
 	ChaCha("CHACHA", 256);
 	
 	public final String alg;
 	public final int keySize;
-	
-	KeyType(String alg){
-		this.alg = alg;
-		this.keySize = -1;
-	}
 	
 	KeyType(String alg, int keySize){
 		this.alg = alg;

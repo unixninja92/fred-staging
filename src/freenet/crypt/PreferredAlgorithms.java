@@ -437,6 +437,7 @@ public final class PreferredAlgorithms{
 				throw new Error(e);
 			}
 		}
+		keyGenProviders_internal.put("CHACHA", BC);
 		keyGenProviders = Collections.unmodifiableMap(keyGenProviders_internal);
 
 		String algo;

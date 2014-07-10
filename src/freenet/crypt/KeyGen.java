@@ -27,8 +27,12 @@ public class KeyGen {
 	 * in type and stores them in a KeyPair.
 	 * @param type The algorithm format that the key pair should be generated for.
 	 * @return Returns the generated key pair
+	 * @throws UnsupportedTypeException 
 	 */
-	public static KeyPair genKeyPair(KeyPairType type){
+	public static KeyPair genKeyPair(KeyPairType type) throws UnsupportedTypeException{
+		if(type.equals(KeyPairType.DSA)){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			KeyPairGenerator kg = KeyPairGenerator.getInstance(
 					type.alg, 
@@ -45,8 +49,12 @@ public class KeyGen {
 	 * Converts a specified byte[] to a PublicKey.
 	 * @param pub Public key as byte[]
 	 * @return Public key as PublicKey
+	 * @throws UnsupportedTypeException 
 	 */
-	public static PublicKey getPublicKey(KeyPairType type, byte[] pub){
+	public static PublicKey getPublicKey(KeyPairType type, byte[] pub) throws UnsupportedTypeException{
+		if(type.equals(KeyPairType.DSA)){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			KeyFactory kf = KeyFactory.getInstance(
 					type.alg, 
@@ -65,8 +73,9 @@ public class KeyGen {
 	 * a KeyPair. The private key of the KeyPair is null.
 	 * @param pub Public key as byte[]
 	 * @return Public key as KeyPair with a null private key
+	 * @throws UnsupportedTypeException 
 	 */
-	public static KeyPair getPublicKeyPair(KeyPairType type, byte[] pub){
+	public static KeyPair getPublicKeyPair(KeyPairType type, byte[] pub) throws UnsupportedTypeException{
 		return getKeyPair(getPublicKey(type, pub), null);
 	}
 	
@@ -91,6 +100,9 @@ public class KeyGen {
 	        return getKeyPair(pubK, privK);
 		} catch (GeneralSecurityException e) {
 			Logger.error(KeyGen.class, "Internal error; please report:", e);
+		} catch (UnsupportedTypeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
         return null;
 	}

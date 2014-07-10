@@ -166,7 +166,7 @@ public final class CryptBucket implements Bucket {
      * @param input They byte[]s to be encrypted
      * @throws IOException
      */
-    public final void encrypt(byte[]... input) throws IOException{
+    public final void encryptBytes(byte[]... input) throws IOException{
     	addBytes(input);
     	encrypt();
     }

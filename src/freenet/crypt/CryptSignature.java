@@ -58,6 +58,8 @@ public final class CryptSignature{
 				sig.initVerify(keys.getPublic());
 			} catch (GeneralSecurityException e) {
 				Logger.error(CryptSignature.class, "Internal error; please report:", e);
+			} catch (UnsupportedTypeException e) {
+				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
 		}
 		verifyOnly = false;
@@ -80,8 +82,12 @@ public final class CryptSignature{
 			dsaPubK = DSAPublicKey.create(publicKey);
 		}
 		else{
-			keys = KeyGen.getPublicKeyPair(type.keyType, publicKey);
-			sig.initVerify(keys.getPublic());
+			try {
+				keys = KeyGen.getPublicKeyPair(type.keyType, publicKey);
+				sig.initVerify(keys.getPublic());
+			} catch (UnsupportedTypeException e) {
+				Logger.error(CryptSignature.class, "Internal error; please report:", e);
+			}
 		}
 	}
 	
