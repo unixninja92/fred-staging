@@ -165,11 +165,11 @@ public class HashResult implements Comparable<HashResult>, Cloneable {
 			return false;
 		}
 		//check hash
+		int same = 0;
 		for(int i = 0; i < result.length; i++){
-			if(result[i] != otherHash.result[i])
-				return false;
+			same |= result[i] ^ otherHash.result[i];
 		}
-		return true;
+		return same == 0;
 	}
 	
 	@Override
