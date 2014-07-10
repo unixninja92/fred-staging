@@ -398,12 +398,8 @@ public class HashTest extends TestCase {
 			//test for null input2
 			boolean throwResult = false;
 			HashResult nullResult = null;
-			try{
-				Hash.verify(hash, nullResult);
-			}catch(NullPointerException e){
-				throwResult = true;
-			}
-			assertTrue("HashType: "+types[i].name(), throwResult);
+
+			assertFalse("HashType: "+types[i].name(), Hash.verify(hash, nullResult));
 		}
 	}
 }

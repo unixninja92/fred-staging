@@ -151,10 +151,6 @@ public class HashResult implements Comparable<HashResult>, Cloneable {
 	
 	@Override
 	public boolean equals(Object otherObject){
-		//check not null
-		if(otherObject == null){
-			throw new NullPointerException();
-		}
 		//check instance of HashResult
 		if(!(otherObject instanceof HashResult)){
 			return false;
