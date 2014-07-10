@@ -15,6 +15,7 @@ import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import freenet.support.Logger;
@@ -129,5 +130,19 @@ public class KeyUtils {
 	 */
 	public static SecretKey getSecretKey(byte[] key, KeyType type){
 		return new SecretKeySpec(key, type.alg);
+	}
+	
+	public static byte[] genNonce(int length){
+		byte[] nonce = new byte[length];
+		PreferredAlgorithms.sRandom.nextBytes(nonce);
+		return nonce;
+	}
+	
+	public static IvParameterSpec genIV(int length){
+		return new IvParameterSpec(genNonce(length));
+	}
+	
+	public static IvParameterSpec getIvParameterSpec(byte[] iv, int offset, int length){
+		return new IvParameterSpec(iv, offset, length);
 	}
 }
