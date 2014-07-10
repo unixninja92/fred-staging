@@ -17,7 +17,6 @@ import freenet.support.HexUtil;
 import freenet.support.Logger;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
-	private static final KeyExchType defaultType = PreferredAlgorithms.preferredKeyExchange;
     private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
 
@@ -33,10 +32,6 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	/** My exponential. This is group.g ^ myExponent mod group.p */
 	private NativeBigInteger myExponential;
 	private DHGroup dhGroup;
-	
-	public KeyExchange(){
-		this(defaultType);
-	}
 	
 	public KeyExchange(KeyExchType type){
 		this.type = type;
