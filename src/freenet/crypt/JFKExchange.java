@@ -97,7 +97,7 @@ public abstract class JFKExchange {
 		} catch (InvalidKeyException e) {
 			Logger.error(JFKExchange.class, "Internal error; please report:", e);
 		}
-		return mac.getMac(toHash);
+		return mac.genMac(toHash);
 	}
 
 	public byte[] getSharedSecrect(byte[] peerExponential) throws InvalidKeyException{

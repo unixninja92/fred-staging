@@ -82,7 +82,7 @@ public class MessageAuthCodeTest extends TestCase {
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
-				byte[] result = mac.getMac(messages[i]);
+				byte[] result = mac.genMac(messages[i]);
 				assertTrue(mac.verify(result, Hex.decode(macs[i])));
 			} catch (InvalidKeyException e) {
 				// TODO Auto-generated catch block

@@ -18,12 +18,12 @@ import org.bouncycastle.crypto.generators.Poly1305KeyGenerator;
 import freenet.support.Logger;
 
 /**
- * Generates Message Authentication Codes for blobs of bytes using a specified algorithm.
+ * The MessageAuthCode class will generate the Message Authentication Code of a given set
+ * of bytes and a secret key. It can also verify 
  * @author unixninja92
  *
  */
 public final class MessageAuthCode {
-	private static final MACType defaultType = PreferredAlgorithms.preferredMAC;
 	private MACType type;
 	private Mac mac;
 	private SecretKey key;
@@ -79,16 +79,6 @@ public final class MessageAuthCode {
 	public MessageAuthCode(MACType type) throws InvalidKeyException{
 		this(type, KeyUtils.genSecretKey(type.keyType));
 	}
-
-	/**
-	 * Creates an instance of MessageAuthCode that will use the default algorithm and 
-	 * will generate a key. If that algorithms requires an IV it will generate one. 
-	 * @param type The MAC algorithm to 
-	 * @throws InvalidKeyException
-	 */
-	public MessageAuthCode() throws InvalidKeyException{
-		this(defaultType);
-	}
 	
 	/**
 	 * Creates an instance of MessageAuthCode that will use Poly1305 with the specified 
@@ -99,7 +89,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
-		type = defaultType;
+		type = MACType.Poly1305;
 		try{
 			mac = type.get();
 			checkPoly1305Key(key.getEncoded());
@@ -120,7 +110,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
-		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
+		this(KeyUtils.getSecretKey(key, KeyType.POLY1305), iv);
 	}
 
 	/**
@@ -144,7 +134,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException, UnsupportedTypeException{
-		this(KeyUtils.getSecretKey(key, defaultType.keyType), iv);
+		this(KeyUtils.getSecretKey(key, KeyType.POLY1305), iv);
 	}
 	
 	/**
@@ -202,7 +192,7 @@ public final class MessageAuthCode {
 	 * reset after the MAC is generated.
 	 * @return The Message Authentication Code
 	 */
-	public final byte[] getMac(){
+	public final byte[] genMac(){
 		return mac.doFinal();
 	}
 	
@@ -211,9 +201,9 @@ public final class MessageAuthCode {
 	 * reset after the MAC is generated.
 	 * @return The Message Authentication Code
 	 */
-	public final byte[] getMac(byte[]... input){
+	public final byte[] genMac(byte[]... input){
 		addBytes(input);
-		return getMac();
+		return genMac();
 	}
 	
 	/**
@@ -234,7 +224,7 @@ public final class MessageAuthCode {
 	 */
 	public final boolean verifyData(byte[] otherMac, byte[]... data){
 		mac.reset();
-		return verify(getMac(data), otherMac);
+		return verify(genMac(data), otherMac);
 	}
 	
 	/**

@@ -54,7 +54,7 @@ public class JFKReceiver extends JFKExchange {
 
 		mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
 
-		byte[] authenticator = mac.getMac(assembleJFKAuthenticator(replyToAddress));
+		byte[] authenticator = mac.genMac(assembleJFKAuthenticator(replyToAddress));
 
 		System.arraycopy(authenticator, 0, message2, offset, hashnR.length);
 
@@ -185,7 +185,7 @@ public class JFKReceiver extends JFKExchange {
 		cyphertext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, cyphertext.length - cleartextToEncypherOffset);
 	    	
 		// We compute the HMAC of (prefix + iv + signature)
-		byte[] hmac = mac.getMac(cyphertext);
+		byte[] hmac = mac.genMac(cyphertext);
 		
 		byte[] message4 = new byte[hashnI.length + ivLength + (cyphertext.length - cleartextToEncypherOffset)];
 		int offset = 0;
