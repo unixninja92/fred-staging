@@ -33,11 +33,11 @@ public final class CryptSignature{
 	/* Variables for DSA signatures */
 	/** Length of signature parameters R and S */
 	private static final int SIGNATURE_PARAMETER_LENGTH = 32;
+	private static final DSAGroup dsaGroup = Global.DSAgroupBigA;
 	private final Hash sha256 = new Hash(HashType.SHA256);
 	private RandomSource random;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
-	private DSAGroup dsaGroup;
 	
 	/**
 	 * Creates an instance of CryptSignature and generates a key pair for the 
@@ -56,7 +56,6 @@ public final class CryptSignature{
 		this.type = type;
 		if(type.name()=="DSA"){
 			random = PreferredAlgorithms.random;
-			dsaGroup = Global.DSAgroupBigA;
 			dsaPrivK = new DSAPrivateKey(dsaGroup, random);
 			dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		}
@@ -87,7 +86,6 @@ public final class CryptSignature{
 		verifyOnly = true;
 		if(type.name()=="DSA"){
 			random = PreferredAlgorithms.random;
-			dsaGroup = Global.DSAgroupBigA;
 			dsaPrivK = null;
 			dsaPubK = DSAPublicKey.create(publicKey);
 		}
@@ -124,29 +122,19 @@ public final class CryptSignature{
 	}
 	
 	/**
-	 * Creates an instance of CryptSignature using the passed in key pair and DSAGroup
-	 * @param group The DSAGroup that will be used
-	 * @param priv DSA private key
-	 * @param pub DSA public key
-	 */
-	public CryptSignature(DSAGroup group, DSAPrivateKey priv, DSAPublicKey pub){
-		type = SigType.DSA;
-		random = PreferredAlgorithms.random;
-		dsaGroup = group;
-		dsaPrivK = priv;
-		dsaPubK = pub;
-		verifyOnly = false;
-	}
-	
-	/**
 	 * Creates an instance of CryptSignature using the global DSAGroup and
 	 * the passed in key pair
 	 * @param priv DSA private key
 	 * @param pub DSA public key
 	 */
 	public CryptSignature(DSAPrivateKey priv, DSAPublicKey pub){
-		this(Global.DSAgroupBigA, priv, pub);
+		type = SigType.DSA;
+		random = PreferredAlgorithms.random;
+		dsaPrivK = priv;
+		dsaPubK = pub;
+		verifyOnly = false;
 	}
+
 	
 	/**
 	 * Creates an instance of CryptSignature using DSA and the global DSAGroup
@@ -156,7 +144,6 @@ public final class CryptSignature{
 	public CryptSignature(RandomSource r){
 		type = SigType.DSA;
 		random = r;
-		dsaGroup = Global.DSAgroupBigA;
 		dsaPrivK = new DSAPrivateKey(dsaGroup, random);
 		dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		verifyOnly = false;
