@@ -34,9 +34,7 @@ public class KeyGen {
 			throw new UnsupportedTypeException(type);
 		}
 		try {
-			KeyPairGenerator kg = KeyPairGenerator.getInstance(
-					type.alg, 
-					PreferredAlgorithms.keyPairProvider);
+			KeyPairGenerator kg = KeyPairGenerator.getInstance(type.alg);
 			kg.initialize(type.spec);
 			return kg.generateKeyPair();
 		} catch (GeneralSecurityException e) {
@@ -56,10 +54,7 @@ public class KeyGen {
 			throw new UnsupportedTypeException(type);
 		}
 		try {
-			KeyFactory kf = KeyFactory.getInstance(
-					type.alg, 
-					PreferredAlgorithms.keyPairProvider);
-
+			KeyFactory kf = KeyFactory.getInstance(type.alg);
 	        X509EncodedKeySpec xks = new X509EncodedKeySpec(pub);
 	        return kf.generatePublic(xks);
 		} catch (GeneralSecurityException e) {
@@ -88,9 +83,7 @@ public class KeyGen {
 	 */
 	public static KeyPair getKeyPair(KeyPairType type, byte[] pub, byte[] pri){
 		try {
-			KeyFactory kf = KeyFactory.getInstance(
-	        		type.alg, 
-	        		PreferredAlgorithms.keyPairProvider);
+			KeyFactory kf = KeyFactory.getInstance(type.alg);
 			
 			PublicKey pubK = getPublicKey(type, pub);
 			
@@ -124,8 +117,7 @@ public class KeyGen {
 	 */
 	public static SecretKey genSecretKey(KeyType type){
 		try{
-			KeyGenerator kg = KeyGenerator.getInstance(type.alg, 
-					PreferredAlgorithms.keyGenProviders.get(type.alg));
+			KeyGenerator kg = KeyGenerator.getInstance(type.alg);
 			kg.init(type.keySize);
 	    	return kg.generateKey();
 		} catch (NoSuchAlgorithmException e) {
@@ -152,7 +144,7 @@ public class KeyGen {
 	 */
 	public static byte[] genNonce(int length){
 		byte[] nonce = new byte[length];
-		PreferredAlgorithms.sRandom.nextBytes(nonce);
+		Util.sRandom.nextBytes(nonce);
 		return nonce;
 	}
 	

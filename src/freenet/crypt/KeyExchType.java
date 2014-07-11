@@ -59,7 +59,7 @@ public enum KeyExchType {
 		}
 		//FIXME switch to preferred provider
 		try {
-			return KeyAgreement.getInstance(algName, PreferredAlgorithms.BC);
+			return KeyAgreement.getInstance(algName);
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(KeyExchType.class, "Internal error; please report:", e);
 		}

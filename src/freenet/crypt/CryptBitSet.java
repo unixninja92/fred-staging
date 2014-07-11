@@ -47,7 +47,7 @@ public class CryptBitSet {
 				}
 			 } 
 			 else {
-				 cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
+				 cipher = Cipher.getInstance(type.algName);
 				 this.key = key;
 				 genIV();
 			 }
@@ -89,7 +89,7 @@ public class CryptBitSet {
 				blockCipher.initialize(key.getEncoded());
 				pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
 			} else{
-				cipher = Cipher.getInstance(type.algName, PreferredAlgorithms.aesCTRProvider);
+				cipher = Cipher.getInstance(type.algName);
 				this.key = key;
 			}
 		} catch (GeneralSecurityException e) {
@@ -227,10 +227,8 @@ public class CryptBitSet {
 	}
 	
 	public byte[] genIV(){
-		byte[] newIV = new byte[type.getIVSize()];
-		PreferredAlgorithms.random.nextBytes(newIV);
-		this.iv = new IvParameterSpec(newIV);
-		return newIV;
+		this.iv = KeyGen.genIV(type.getIVSize());
+		return iv.getIV();
 	}
 	
 	public IvParameterSpec getIV(){

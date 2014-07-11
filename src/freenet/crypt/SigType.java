@@ -45,8 +45,7 @@ public enum SigType{
 	
 	public Signature get(){
 		try {
-			return Signature.getInstance(algName, 
-					PreferredAlgorithms.sigProviders.get(algName));
+			return Signature.getInstance(algName);
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(SigType.class, "Internal error; please report:", e);
 		}
