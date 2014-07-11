@@ -45,7 +45,7 @@ public final class CryptBucket implements Bucket {
      * @param underlying The bucket that will be storing the encrypted data
      */
     public CryptBucket(CryptBucketType type, Bucket underlying){
-    	this(type, underlying, KeyGen.genSecretKey(type.keyType));
+    	this(type, underlying, KeyGenUtils.genSecretKey(type.keyType));
     }  
     
     /**
@@ -56,7 +56,7 @@ public final class CryptBucket implements Bucket {
      * @param key The key that will be used for encryption
      */
     public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key){
-    	this(type, underlying, KeyGen.getSecretKey(key, type.keyType));
+    	this(type, underlying, KeyGenUtils.getSecretKey(key, type.keyType));
     }
     
     /**
@@ -182,7 +182,7 @@ public final class CryptBucket implements Bucket {
 	 * @throws IOException
 	 */
 	private final FilterOutputStream genOutputStream() throws IOException {
-		byte[] nonce = KeyGen.genNonce(type.nonceSize);
+		byte[] nonce = KeyGenUtils.genNonce(type.nonceSize);
 		nonce[0] &= 0x7F;
 
 		return new AEADOutputStream(underlying.getOutputStream(), 

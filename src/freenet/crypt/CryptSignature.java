@@ -51,7 +51,7 @@ public final class CryptSignature{
 		}
 		else {
 			try {
-				keys = KeyGen.genKeyPair(type.keyType);
+				keys = KeyGenUtils.genKeyPair(type.keyType);
 				
 				sig = type.get();
 				sig.initSign(keys.getPrivate());
@@ -83,7 +83,7 @@ public final class CryptSignature{
 		}
 		else{
 			try {
-				keys = KeyGen.getPublicKeyPair(type.keyType, publicKey);
+				keys = KeyGenUtils.getPublicKeyPair(type.keyType, publicKey);
 				sig.initVerify(keys.getPublic());
 			} catch (UnsupportedTypeException e) {
 				Logger.error(CryptSignature.class, "Internal error; please report:", e);
@@ -107,7 +107,7 @@ public final class CryptSignature{
             pub = Base64.decode(sfs.get("pub"));
             pri = Base64.decode(sfs.get("pri"));
             
-            keys = KeyGen.getKeyPair(type.keyType, pub, pri);
+            keys = KeyGenUtils.getKeyPair(type.keyType, pub, pri);
             
             sig = type.get();
 			sig.initSign(keys.getPrivate());
