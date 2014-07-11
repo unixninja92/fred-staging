@@ -12,6 +12,7 @@ import java.security.Signature;
 import freenet.support.Logger;
 
 public enum SigType{
+	@Deprecated
 	DSA(1),
 	ECDSAP256(2, KeyPairType.ECP256, "SHA256withECDSA", 91, 72),
 	ECDSAP384(4, KeyPairType.ECP384, "SHA384withECDSA", 120, 104),
