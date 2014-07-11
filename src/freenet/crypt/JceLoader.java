@@ -6,8 +6,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.GeneralSecurityException;
 import java.security.Provider;
 import java.security.Security;
 import java.security.Signature;
@@ -24,7 +23,6 @@ public class JceLoader {
 	static public final Provider NSS; // optional, may be null
 	static public final Provider SUN; // optional, may be null
 	static public final Provider SunJCE; // optional, may be null
-	static public final PreferredAlgorithms algs;
 	static private boolean checkUse(String prop)
 	{
 		return checkUse(prop, "true");
@@ -43,7 +41,7 @@ public class JceLoader {
 				try{
 					KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunPKCS11-NSS");
 					kgen.init(256);
-				} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+				} catch (GeneralSecurityException e) {
 					final String msg = "Error with SunPKCS11-NSS. Unlimited policy file not installed.";
 					Logger.warning(NSSLoader.class, msg, e);
 					System.out.println(msg);
@@ -70,7 +68,6 @@ public class JceLoader {
 		// optional
 		if (checkUse("use.SunJCE")) {
 			try{
-				int max = Cipher.getMaxAllowedKeyLength("AES");
 				KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunJCE");
 				kgen.init(256);
 			}
@@ -81,11 +78,8 @@ public class JceLoader {
 			SunJCE = Security.getProvider("SunJCE");
 		}
 		else SunJCE = null;
-		
-		SUN = checkUse("use.SUN") ? Security.getProvider("SUN") : null;
-		
 
-		algs = new PreferredAlgorithms();
+		SUN = checkUse("use.SUN") ? Security.getProvider("SUN") : null;
 	}
 	static private class BouncyCastleLoader {
 		private BouncyCastleLoader() {}

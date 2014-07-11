@@ -266,7 +266,7 @@ public final class CryptSignature{
 		if(type != SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
-		return signToDSASignature(new NativeBigInteger(1, sha256.getHash(data)));
+		return signToDSASignature(new NativeBigInteger(1, sha256.genHash(data)));
 	}
 	
 	/**
@@ -385,11 +385,11 @@ public final class CryptSignature{
     }
     
     public boolean verify(DSASignature sig, byte[]... data) throws UnsupportedTypeException{
-    	return verify(sig, new NativeBigInteger(1, sha256.getHash(data)));
+    	return verify(sig, new NativeBigInteger(1, sha256.genHash(data)));
     }
     
     public boolean verify(BigInteger r, BigInteger s, byte[]... data) throws UnsupportedTypeException{
-    	return verify(r, s, new NativeBigInteger(1, sha256.getHash(data)));
+    	return verify(r, s, new NativeBigInteger(1, sha256.genHash(data)));
     }
     
     public ECPublicKey getPublicKey() throws UnsupportedTypeException{

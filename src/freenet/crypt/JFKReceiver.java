@@ -30,8 +30,8 @@ public class JFKReceiver extends JFKExchange {
 		this.nonceR = new byte[nonceSize];
 		rand.nextBytes(nonceR);
 		
-		Hash hash = new Hash();
-		hashnR = hash.getHash(nonceR);
+		Hash hash = new Hash(HashType.SHA256);
+		hashnR = hash.genHash(nonceR);
 		
 		exponentialR = underlyingExch.getPublicKeyNetworkFormat();
 	}

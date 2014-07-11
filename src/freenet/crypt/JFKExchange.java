@@ -61,8 +61,8 @@ public abstract class JFKExchange {
 		nonceI = new byte[nonceSize];
 		rand.nextBytes(nonceI);
 
-		Hash hash = new Hash();
-		hashnI = hash.getHash(nonceI);
+		Hash hash = new Hash(HashType.SHA256);
+		hashnI = hash.genHash(nonceI);
 
 		exponentialI = underlyingExch.getPublicKeyNetworkFormat();
 	}
