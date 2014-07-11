@@ -6,6 +6,7 @@ package freenet.crypt;
 import java.security.spec.ECGenParameterSpec;
 
 public enum KeyPairType {
+	@Deprecated
 	DSA(),
 	ECP256("EC", "secp256r1"),
 	ECP384("EC", "secp384r1"),

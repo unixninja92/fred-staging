@@ -130,13 +130,7 @@ public class JFKReceiver extends JFKExchange {
 		byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);
 	    
 	    
-	    int sigLength;
-	    if(underlyingExch.type == KeyExchType.DH){
-	    	sigLength = underlyingExch.dsaSig.length;
-	    }
-	    else{
-	    	sigLength = underlyingExch.ecdsaSig.length;
-	    }
+	    int sigLength = underlyingExch.ecdsaSig.length;
 		byte[] sigI = new byte[sigLength];
 		System.arraycopy(cleartext, decypheredPayloadOffset, sigI, 0, sigLength);
 		decypheredPayloadOffset += sigLength;

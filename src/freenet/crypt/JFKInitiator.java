@@ -6,8 +6,6 @@ package freenet.crypt;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 
-import net.i2p.util.NativeBigInteger;
-
 import org.bouncycastle.util.Arrays;
 
 import freenet.node.NodeCrypto;
@@ -38,14 +36,7 @@ public class JFKInitiator extends JFKExchange {
 		this.exponentialR = exponentialR;
 
 		try {
-			CryptSignature sig;
-			if(underlyingExch.type == KeyExchType.DH){
-				if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
-						new NativeBigInteger(1,exponentialR))){
-					Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
-				}
-			}
-			sig = new CryptSignature(underlyingExch.type.sigType, publicKeyR);
+			CryptSignature sig = new CryptSignature(underlyingExch.type.sigType, publicKeyR);
 			if(!sig.verify(sigR, locallyExpectedExponentials)){
 				Logger.error(this, "The signature verification has failed in JFK(2)!! "+peer.getPeer());
 				if(logDEBUG) Logger.debug(this, "Expected signature on "+HexUtil.bytesToHex(exponentialR)+

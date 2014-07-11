@@ -11,8 +11,6 @@ import javax.crypto.KeyAgreement;
 import freenet.support.Logger;
 
 public enum KeyExchType {
-	@Deprecated
-	DH(1, SigType.DSA),//128
 	ECDHP256(2, "ECDH", "secp256r1", 91, 32, SigType.ECDSAP256);
 	
 	/** Bitmask for aggregation. */
@@ -26,23 +24,6 @@ public enum KeyExchType {
 	public final int maxSigSize;
 	public final SigType sigType;
 	
-	KeyExchType(int bitmask){
-		this.bitmask = bitmask;
-		specName = name();
-		algName = specName;
-		this.modulusSize = -1;
-		maxSigSize = -1;
-		sigType = null;
-	}
-	
-	KeyExchType(int bitmask, SigType sigType){
-		this.bitmask = bitmask;
-		specName = name();
-		algName = specName;
-		this.modulusSize = -1;
-		maxSigSize = -1;
-		this.sigType = sigType;
-	}
 	
 	KeyExchType(int bitmask, String algName, String specName, int modulusSize, int maxSigSize, SigType sigType){
 		this.bitmask = bitmask;
@@ -54,10 +35,6 @@ public enum KeyExchType {
 	}
 	
 	public final KeyAgreement get()throws UnsupportedTypeException{
-		if(this == DH){
-			throw new UnsupportedTypeException(this);
-		}
-		//FIXME switch to preferred provider
 		try {
 			return KeyAgreement.getInstance(algName);
 		} catch (NoSuchAlgorithmException e) {
@@ -67,9 +44,6 @@ public enum KeyExchType {
 	}
 	
 	public final ECGenParameterSpec getSpec()throws UnsupportedTypeException{
-		if(this == DH){
-			throw new UnsupportedTypeException(this);
-		}
 		return new ECGenParameterSpec(specName);
 	}
 }
