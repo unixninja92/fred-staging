@@ -24,7 +24,7 @@ public class KeyGenUtils {
 	
 	/**
 	 * Generates a public/private key pair formated for the algorithm specified
-	 * in type and stores them in a KeyPair.
+	 * and stores the keys in a KeyPair. Can not handle DSA keys.
 	 * @param type The algorithm format that the key pair should be generated for.
 	 * @return Returns the generated key pair
 	 * @throws UnsupportedTypeException 
@@ -44,7 +44,8 @@ public class KeyGenUtils {
 	}
 	
 	/**
-	 * Converts a specified byte[] to a PublicKey.
+	 * Converts a specified key for a specified algorithm to a PublicKey. Can not handle DSA keys.
+	 * @param type The type of key being passed in
 	 * @param pub Public key as byte[]
 	 * @return Public key as PublicKey
 	 * @throws UnsupportedTypeException 
@@ -64,8 +65,9 @@ public class KeyGenUtils {
 	}
 	
 	/**
-	 * Converts a specified byte[] to a PublicKey which is then stored in
-	 * a KeyPair. The private key of the KeyPair is null.
+	 * Converts a specified key for a specified algorithm to a PublicKey which is then stored in
+	 * a KeyPair. The private key of the KeyPair is null. Can not handle DSA keys.
+	 * @param type The type of key being passed in
 	 * @param pub Public key as byte[]
 	 * @return Public key as KeyPair with a null private key
 	 * @throws UnsupportedTypeException 
@@ -75,13 +77,18 @@ public class KeyGenUtils {
 	}
 	
 	/**
-	 * Converts the specified byte arrays to PrivateKey and PublicKey
-	 * respectively. These are then placed in a KeyPair. 
+	 * Converts the specified keys for a specified algorithm to PrivateKey and PublicKey
+	 * respectively. These are then placed in a KeyPair. Can not handle DSA keys.
+	 * @param type The type of key being passed in
 	 * @param pub Public key as byte[]
 	 * @param pri Private key as byte[]
 	 * @return The public key and private key in a KeyPair
+	 * @throws UnsupportedTypeException 
 	 */
-	public static KeyPair getKeyPair(KeyPairType type, byte[] pub, byte[] pri){
+	public static KeyPair getKeyPair(KeyPairType type, byte[] pub, byte[] pri) throws UnsupportedTypeException{
+		if(type.equals(KeyPairType.DSA)){
+			throw new UnsupportedTypeException(type);
+		}
 		try {
 			KeyFactory kf = KeyFactory.getInstance(type.alg);
 			
@@ -94,8 +101,7 @@ public class KeyGenUtils {
 		} catch (GeneralSecurityException e) {
 			Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
 		} catch (UnsupportedTypeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
 		}
         return null;
 	}
@@ -127,8 +133,7 @@ public class KeyGenUtils {
 	}
 	
 	/**
-	 * Converts the specified key byte[] into a SecretKey for the 
-	 * specified algorithm
+	 * Converts the specified key into a SecretKey for the specified algorithm
 	 * @param key The byte[] of the key
 	 * @param type Type of key
 	 * @return The key as a SecretKey
