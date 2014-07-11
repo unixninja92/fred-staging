@@ -9,7 +9,8 @@ public enum CryptBitSetType {
 	RijndaelECB128(2, KeyType.Rijndael256, 128),
 	RijndaelPCFB(8, KeyType.Rijndael256),
 	AESCTR(16, "AES/CTR/NOPADDING", KeyType.AES256),
-	ChaCha(32, KeyType.ChaCha);
+	ChaCha128(32, KeyType.ChaCha128),
+	ChaCha256(32, KeyType.ChaCha256);
 	
 	public final int bitmask;
 	public final int blockSize;
@@ -42,7 +43,7 @@ public enum CryptBitSetType {
 	}
 	
 	public int getIVSize(){//number bytes
-		if(this == ChaCha){
+		if(this.keyType.alg == "ChaCha"){
 			return 8;
 		}
 		else{

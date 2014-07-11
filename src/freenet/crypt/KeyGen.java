@@ -126,9 +126,7 @@ public class KeyGen {
 		try{
 			KeyGenerator kg = KeyGenerator.getInstance(type.alg, 
 					PreferredAlgorithms.keyGenProviders.get(type.alg));
-			if(type.keySize != -1){
-				kg.init(type.keySize);
-			}
+			kg.init(type.keySize);
 	    	return kg.generateKey();
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(KeyGen.class, "Internal error; please report:", e);

@@ -52,7 +52,7 @@ public final class PreferredAlgorithms{
 	public static final MACType preferredMAC = MACType.Poly1305;
 	public static final KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
 	public static final CryptBucketType preferredCryptBucketAlg = CryptBucketType.AEADAESOCB;
-	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha;
+	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
 
 	public static Provider aesCTRProvider; 
 	public static final Provider keyPairProvider;
@@ -72,12 +72,12 @@ public final class PreferredAlgorithms{
 		byte[] input = new byte[1024];
 		byte[] output = new byte[md.getDigestLength()];
 		// warm-up
-		for (int i = 0; i < 32; i++) {
-			md.update(input, 0, input.length);
-			md.digest(output, 0, output.length);
-			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
-		}
-		for (int i = 0; i < 128; i++) {
+//		for (int i = 0; i < 32; i++) {
+//			md.update(input, 0, input.length);
+//			md.digest(output, 0, output.length);
+//			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
+//		}
+		for (int i = 0; i < 10028; i++) {
 			long startTime = System.nanoTime();
 			for (int j = 0; j < 4; j++) {
 				for (int k = 0; k < 32; k ++) {
@@ -101,13 +101,13 @@ public final class PreferredAlgorithms{
 		final String algo = mac.getAlgorithm();
 		mac.init(new SecretKeySpec(key, algo));
 		// warm-up
-		for (int i = 0; i < 32; i++) {
-			mac.update(input, 0, input.length);
-			mac.doFinal(output, 0);
-			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
-		}
+//		for (int i = 0; i < 32; i++) {
+//			mac.update(input, 0, input.length);
+//			mac.doFinal(output, 0);
+//			System.arraycopy(output, 0, input, (i*output.length)%(input.length-output.length), output.length);
+//		}
 		System.arraycopy(output, 0, key, 0, Math.min(key.length, output.length));
-		for (int i = 0; i < 128; i++) {
+		for (int i = 0; i < 10028; i++) {
 			long startTime = System.nanoTime();
 			mac.init(new SecretKeySpec(key, algo));
 			for (int j = 0; j < 8; j++) {
@@ -131,11 +131,11 @@ public final class PreferredAlgorithms{
 		byte[] output = new byte[input.length*32];
 		cipher.init(Cipher.ENCRYPT_MODE, key, IV);
 		// warm-up
-		for (int i = 0; i < 32; i++) {
-			cipher.doFinal(input, 0, input.length, output, 0);
-			System.arraycopy(output, 0, input, 0, input.length);
-		}
-		for (int i = 0; i < 128; i++) {
+//		for (int i = 0; i < 32; i++) {
+//			cipher.doFinal(input, 0, input.length, output, 0);
+//			System.arraycopy(output, 0, input, 0, input.length);
+//		}
+		for (int i = 0; i < 10028; i++) {
 			long startTime = System.nanoTime();
 			cipher.init(Cipher.ENCRYPT_MODE, key, IV);
 			for (int j = 0; j < 4; j++) {
@@ -157,10 +157,10 @@ public final class PreferredAlgorithms{
 		@SuppressWarnings("unused")
 		SecretKey key;
 		//warmup
-		for (int i = 0; i < 32; i++) {
-			key = kg.generateKey();
-		}
-		for (int i = 0; i < 128; i++) {
+//		for (int i = 0; i < 32; i++) {
+//			key = kg.generateKey();
+//		}
+		for (int i = 0; i < 10028; i++) {
 			long startTime = System.nanoTime();
 			key = kg.generateKey();
 			long endTime = System.nanoTime();
@@ -183,25 +183,25 @@ public final class PreferredAlgorithms{
 		@SuppressWarnings("unused")
 		PrivateKey pk2;
 		//warmup
-		for (int i = 0; i < 32; i++) {
-			key = kg.generateKeyPair();
-			pub = key.getPublic();
-			pk = key.getPrivate();
-			pubkey = pub.getEncoded();
-			pkey = pk.getEncoded();
-			if(pubkey.length > modulusSize || pubkey.length == 0)
-				throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
-			
-			pub2 = kf.generatePublic(
-					new X509EncodedKeySpec(pubkey)
-					);
-			if(!Arrays.equals(pub2.getEncoded(), pubkey))
-				throw new Error("Pubkey encoding mismatch");
-			pk2 = kf.generatePrivate(
-					new PKCS8EncodedKeySpec(pkey)
-					);
-		}
-		for (int i = 0; i < 128; i++) {
+//		for (int i = 0; i < 32; i++) {
+//			key = kg.generateKeyPair();
+//			pub = key.getPublic();
+//			pk = key.getPrivate();
+//			pubkey = pub.getEncoded();
+//			pkey = pk.getEncoded();
+//			if(pubkey.length > modulusSize || pubkey.length == 0)
+//				throw new Error("Unexpected pubkey length: "+pubkey.length+"!="+modulusSize);
+//			
+//			pub2 = kf.generatePublic(
+//					new X509EncodedKeySpec(pubkey)
+//					);
+//			if(!Arrays.equals(pub2.getEncoded(), pubkey))
+//				throw new Error("Pubkey encoding mismatch");
+//			pk2 = kf.generatePrivate(
+//					new PKCS8EncodedKeySpec(pkey)
+//					);
+//		}
+		for (int i = 0; i < 10028; i++) {
 			long startTime = System.nanoTime();
 			
 			key = kg.generateKeyPair();
@@ -255,15 +255,15 @@ public final class PreferredAlgorithms{
                 );
         
 		//warmup
-		for (int i = 0; i < 32; i++) {
-			sig.initSign(key.getPrivate());
-			byte[] sign = sig.sign();
-			sig.initVerify(key.getPublic());
-			boolean verified = sig.verify(sign);
-			if (!verified)
-				throw new Error("Verification failed");
-		}
-		for (int i = 0; i < 128; i++) {
+//		for (int i = 0; i < 32; i++) {
+//			sig.initSign(key.getPrivate());
+//			byte[] sign = sig.sign();
+//			sig.initVerify(key.getPublic());
+//			boolean verified = sig.verify(sign);
+//			if (!verified)
+//				throw new Error("Verification failed");
+//		}
+		for (int i = 0; i < 10028; i++) {
 			long startTime = System.nanoTime();
 		
 			sig.initSign(key.getPrivate());
@@ -310,7 +310,7 @@ public final class PreferredAlgorithms{
 		//Message Digest Algorithm Benchmarking
 		HashMap<String,Provider> mdProviders_internal = new HashMap<String, Provider>();
 		for (String algo: new String[] {
-				"SHA1", "MD5", "SHA-256", "SHA-384", "SHA-512"
+				"SHA-256", "SHA1", "MD5", "SHA-384", "SHA-512"
 			}) {;
 			try {
 				MessageDigest md = MessageDigest.getInstance(algo);
@@ -674,7 +674,11 @@ public final class PreferredAlgorithms{
 					// ignore
 				}
 			}
-
+//		if(NSS != null)
+//			keyPairProvider = NSS;
+//		else
+//			keyPairProvider = BC;
+//		
 			keyPairProvider = fastest(time_def, kpg.getProvider(), time_sun, time_nss, time_bc);
 			System.out.println("KeyPairGen " + algo + ": using " + keyPairProvider);
 			Logger.normal(clazz, "KeyPairGen " + algo + ": using " + keyPairProvider);
@@ -685,7 +689,7 @@ public final class PreferredAlgorithms{
 		//Signature benchmarks
 		HashMap<String,Provider> sigProviders_internal = new HashMap<String, Provider>();
 		for (SigType sigAlgo: new SigType[] {
-				SigType.ECDSAP256//, SigType.ECDSAP384, SigType.ECDSAP512
+				SigType.ECDSAP256, SigType.ECDSAP384, SigType.ECDSAP512
 		}) {;
 			algo = sigAlgo.algName;
 			try {
@@ -729,8 +733,12 @@ public final class PreferredAlgorithms{
 				Provider fastestSig = fastest(time_def, sig.getProvider(), time_sun, time_nss, time_bc);
 				System.out.println(algo + ": using " + fastestSig);
 				Logger.normal(clazz, algo + ": using " + fastestSig);
-
 				sigProviders_internal.put(algo, fastestSig);
+//			if(NSS != null)
+//				sigProviders_internal.put(algo, NSS);
+//			else
+//				sigProviders_internal.put(algo, BC);
+			
 			} catch(GeneralSecurityException e){
 				throw new Error(e);
 			}

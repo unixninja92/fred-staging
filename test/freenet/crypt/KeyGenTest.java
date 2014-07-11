@@ -1,30 +1,68 @@
 package freenet.crypt;
 
+import java.security.MessageDigest;
+import java.security.PublicKey;
+
 import javax.crypto.SecretKey;
 
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 
 import junit.framework.TestCase;
 
 public class KeyGenTest extends TestCase {
-	private int trueLength = 16;
-	private int falseLength = -1;
-	private KeyType[] keyTypes = KeyType.values();
-	private KeyPairType[] trueKeyPairTypes = {KeyPairType.ECP256, 
+	private final int trueLength = 16;
+	private final int falseLength = -1;
+	private final KeyType[] keyTypes = KeyType.values();
+	private final byte[][] trueSecretKeys = {
+			Hex.decode("20e86dc31ebf2c0e37670e30f8f45c57"),
+			Hex.decode("8c6c2e0a60b3b73e9dbef076b68b686bacc9d20081e8822725d14b10b5034f48"),
+			Hex.decode("33a4a38b71c8e350d3a98357d1bc9ecd"),
+			Hex.decode("be56dbec20bff9f6f343800367287b48c0c28bf47f14b46aad3a32e4f24f0f5e"),
+			Hex.decode("53e5a3fd40382755f582f4ff3a4ccb373babd087"),
+			Hex.decode("ad8ce252fcac490700b7cecc560391ca783794a5bc86ab5892679bbcbabb5b73"),
+			Hex.decode("a92e3fa63e8cbe50869fb352d883911271bf2b0e9048ad04c013b20e901f5806"),
+			Hex.decode("45d6c9656b3b115263ba12739e90dcc1"),
+			Hex.decode("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
+	};
+	
+	private final KeyPairType[] trueKeyPairTypes = {KeyPairType.ECP256, 
 			KeyPairType.ECP384, KeyPairType.ECP512};
-	private KeyPairType falseKeyPairType = KeyPairType.DSA;
+	private final KeyPairType falseKeyPairType = KeyPairType.DSA;
+	private final byte[][] truePublicKeys = {
+			Hex.decode("3059301306072a8648ce3d020106082a8648ce3d030107034200040126491fbe391419fcdca058122a8520a816d3b7af9bc3a3af038e455b311b8234e5915ae2da11550a9f0ff9da5c65257c95c2bd3d5c21bcf16f6c15a94a50cb"),
+			Hex.decode("3076301006072a8648ce3d020106052b81040022036200043a095518fc49cfaf6feb5af01cf71c02ebfff4fe581d93c6e252c8c607e6568db7267e0b958c4a262a6e6fa7c18572c3af59cd16535a28759d04488bae6c3014bbb4b89c25cbe3b76d7b540dabb13aed5793eb3ce572811b560bb18b00a5ac93"),
+			Hex.decode("30819b301006072a8648ce3d020106052b8104002303818600040076083359c8b0b34a903461e435188cb90f7501bcb7ed97e8c506c5b60ff21178a625f80f5729ed4746d8e83b28145a51b9495880bf41b8ff0746ea0fe684832cc100ef1b01793c84abf64f31452d95bf0ef43d32440d8bc0d67501fcffaf51ae4956e5ff22f3baffea5edddbebbeed0ec3b4af28d18568aaf97b5cd026f6753881e0c4")
+	};
+	private final byte[][] truePrivateKeys = {
+			Hex.decode("3041020100301306072a8648ce3d020106082a8648ce3d030107042730250201010420f8cb4b29aa51153ba811461e93fd1b2e69a127972f7100c5e246a3b2dcdd1b1c"),
+			Hex.decode("304e020100301006072a8648ce3d020106052b81040022043730350201010430b88fe05d03b20dca95f19cb0fbabdfef1211452b29527ccac2ea37236d31ab6e7cada08315c62912b5c17cdf2d87fa3d"),
+			Hex.decode("3060020100301006072a8648ce3d020106052b8104002304493047020101044201b4f573157d51f2e64a8b465fa92e52bae3529270951d448c18e4967beaa04b1f1fedb0e7a1e26f2eefb30566a479e1194358670b044fae438d11717eb2a795c3a8")
+	};
 	
 	public void testGenKeyPair() {
 		for(KeyPairType type: trueKeyPairTypes){
 			try {
-				assertNotNull("KeyPairType: "+type.name(),KeyGen.genKeyPair(type));
+				assertNotNull("KeyPairType: "+type.name(), KeyGen.genKeyPair(type));
+				} catch (UnsupportedTypeException e) {
+				fail("UnsupportedTypeException thrown");
+			}
+		}
+	}
+	
+	public void testGenKeyPairPublicKeyLenght() {
+		for(int i = 0; i < trueKeyPairTypes.length; i++){
+			try {
+				KeyPairType type = trueKeyPairTypes[i];
+				byte[] publicKey = KeyGen.genKeyPair(type).getPublic().getEncoded();
+				assertEquals("KeyPairType: "+type.name(), truePublicKeys[i].length, publicKey.length);
 			} catch (UnsupportedTypeException e) {
 				fail("UnsupportedTypeException thrown");
 			}
 		}
 	}
 	
-	public void testGenKeyPairDSAInput() {
+	public void testGenKeyPairDSAType() {
 		boolean throwException = false;
 		try{
 			KeyGen.genKeyPair(falseKeyPairType);
@@ -41,13 +79,55 @@ public class KeyGenTest extends TestCase {
 		} catch(NullPointerException e){
 			throwException = true;
 		} catch (UnsupportedTypeException e) {
-			fail("UnsupportedTypeException thrown");
+			throwException = true;
 		}
 		assertTrue(throwException);
 	}
 
 	public void testGetPublicKey() {
-		fail("Not yet implemented");
+		for(int i = 0; i < trueKeyPairTypes.length; i++){
+			try{
+				KeyPairType type = trueKeyPairTypes[i];
+				PublicKey key = KeyGen.getPublicKey(type, truePublicKeys[i]);
+				assertTrue("KeyPairType: "+type.name(), MessageDigest.isEqual(key.getEncoded(), truePublicKeys[i]));
+			} catch (UnsupportedTypeException e) {
+				fail("UnsupportedTypeException thrown");
+			}
+		}
+	}
+	
+	public void testGetPublicKeyDSAType() {
+		boolean throwException = false;
+		try{
+			KeyGen.getPublicKey(falseKeyPairType, null);
+		} catch(UnsupportedTypeException e){
+			throwException = true;
+		}
+		assertTrue(throwException);
+	}
+	
+	public void testGetPublicKeyNullInput1() {
+		boolean throwException = false;
+		try{
+			KeyGen.getPublicKey(null, truePublicKeys[0]);
+		} catch(NullPointerException e){
+			throwException = true;
+		} catch (UnsupportedTypeException e) {
+			throwException = true;
+		}
+		assertTrue(throwException);
+	}
+	
+	public void testGetPublicKeyNullInput2() {
+		boolean throwException = false;
+		try{
+			KeyGen.getPublicKey(trueKeyPairTypes[0], null);
+		} catch(NullPointerException e){
+			throwException = true;
+		} catch (UnsupportedTypeException e) {
+			throwException = true;
+		}
+		assertTrue(throwException);
 	}
 
 	public void testGetPublicKeyPair() {
@@ -65,6 +145,7 @@ public class KeyGenTest extends TestCase {
 	public void testGenSecretKey() {
 		for(KeyType type: keyTypes){
 			assertNotNull("KeyType: "+type.name(), KeyGen.genSecretKey(type));
+			System.out.println(type.name()+": "+Hex.toHexString(KeyGen.genSecretKey(type).getEncoded()));
 		}
 	}
 	
