@@ -7,7 +7,6 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 
 import net.i2p.util.NativeBigInteger;
-
 import freenet.support.HexUtil;
 
 /**
@@ -19,6 +18,7 @@ import freenet.support.HexUtil;
  *
  */
 public final class Hash{
+	public static final HashType preferredHashAlg = HashType.SHA256;
 	private final HashType type;
 	private MessageDigest digest;
 	

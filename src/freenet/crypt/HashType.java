@@ -50,7 +50,7 @@ public enum HashType {
 			return freenet.crypt.SHA256.getMessageDigest();
 		} else {
 			try {
-				return MessageDigest.getInstance(javaName, PreferredAlgorithms.mdProviders.get(javaName));
+				return MessageDigest.getInstance(javaName, Util.mdProviders.get(javaName));
 			} catch (NoSuchAlgorithmException e) {
 				Logger.error(HashType.class, "Internal error; please report:", e);
 			}
