@@ -20,7 +20,7 @@ import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
 
 public final class CryptSignature{
-	
+	public static final SigType preferredSignature = SigType.ECDSAP256;
 	private boolean verifyOnly;
 	
 	/* variables for ECDSA signatures */

@@ -17,6 +17,7 @@ import freenet.support.HexUtil;
 import freenet.support.Logger;
 
 public class KeyExchange extends KeyAgreementSchemeContext{
+	public static final KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
     private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
 

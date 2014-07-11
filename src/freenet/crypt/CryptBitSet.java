@@ -19,6 +19,7 @@ import freenet.support.Logger;
  * @author unixninja92
 */
 public class CryptBitSet {
+	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
 	private CryptBitSetType type;
 	private SecretKey key;
 	private IvParameterSpec iv;

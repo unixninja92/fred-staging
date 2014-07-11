@@ -23,6 +23,7 @@ import freenet.support.Logger;
  *
  */
 public final class MessageAuthCode {
+	public static final MACType preferredMAC = MACType.Poly1305;
 	private final MACType type;
 	private Mac mac;
 	private SecretKey key;
