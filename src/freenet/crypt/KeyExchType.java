@@ -12,7 +12,8 @@ import freenet.support.Logger;
 
 public enum KeyExchType {
 	ECDHP256(2, "ECDH", "secp256r1", 91, 32, SigType.ECDSAP256),
-	ECDHP384(2, "ECDH", "secp384r1", 120, 48, SigType.ECDSAP384);
+	ECDHP384(2, "ECDH", "secp384r1", 120, 48, SigType.ECDSAP384),
+	ECDHP521(2, "ECDH", "secp521r1", 158, 66, SigType.ECDSAP512);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
