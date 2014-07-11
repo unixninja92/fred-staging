@@ -1,5 +1,6 @@
 package freenet.crypt;
 
+import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.PublicKey;
 
@@ -129,11 +130,66 @@ public class KeyGenTest extends TestCase {
 		}
 		assertTrue(throwException);
 	}
-
+	
 	public void testGetPublicKeyPair() {
-		fail("Not yet implemented");
+		for(int i = 0; i < trueKeyPairTypes.length; i++){
+			try{
+				KeyPairType type = trueKeyPairTypes[i];
+				KeyPair key = KeyGen.getPublicKeyPair(type, truePublicKeys[i]);
+				assertTrue("KeyPairType: "+type.name(), MessageDigest.isEqual(key.getPublic().getEncoded(), truePublicKeys[i]));
+				assertNull("KeyPairType: "+type.name(), key.getPrivate());
+			} catch (UnsupportedTypeException e) {
+				fail("UnsupportedTypeException thrown");
+			}
+		}
 	}
 
+	public void testGetPublicKeyPairNotNull() {
+		for(int i = 0; i < trueKeyPairTypes.length; i++){
+			try {
+				KeyPairType type = trueKeyPairTypes[i];
+				assertNotNull("KeyPairType: "+type.name(), KeyGen.getPublicKey(type, truePublicKeys[i]));
+				} catch (UnsupportedTypeException e) {
+				fail("UnsupportedTypeException thrown");
+			}
+		}
+	}
+	
+	public void testGetPublicKeyPairDSAType() {
+		boolean throwException = false;
+		try{
+			KeyGen.getPublicKeyPair(falseKeyPairType, null);
+		} catch(UnsupportedTypeException e){
+			throwException = true;
+		}
+		assertTrue(throwException);
+	}
+
+	public void testGetPublicKeyPairNullInput1() {
+		boolean throwException = false;
+		try{
+			KeyGen.getPublicKeyPair(null, truePublicKeys[0]);
+		} catch(NullPointerException e){
+			throwException = true;
+		} catch (UnsupportedTypeException e) {
+			throwException = true;
+		}
+		assertTrue(throwException);
+	}
+	
+	public void testGetPublicKeyPairNullInput2() {
+		boolean throwException = false;
+		try{
+			KeyGen.getPublicKeyPair(trueKeyPairTypes[0], null);
+		} catch(NullPointerException e){
+			throwException = true;
+		} catch (UnsupportedTypeException e) {
+			throwException = true;
+		}
+		assertTrue(throwException);
+	}
+
+	
 	public void testGetKeyPairByteArrayByteArray() {
 		fail("Not yet implemented");
 	}
