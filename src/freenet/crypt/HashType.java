@@ -26,19 +26,19 @@ public enum HashType {
 	public final String javaName;
 	public final int hashLength;
 
-	HashType(int bitmask, int hashLength) {
+	private HashType(int bitmask, int hashLength) {
 		this.bitmask = bitmask;
 		this.javaName = super.name();
 		this.hashLength = hashLength;
 	}
 
-	HashType(int bitmask, String name, int hashLength) {
+	private HashType(int bitmask, String name, int hashLength) {
 		this.bitmask = bitmask;
 		this.javaName = name;
 		this.hashLength = hashLength;
 	}
 
-	public MessageDigest get() {
+	public final MessageDigest get() {
 		if(javaName == null) {
 			if(this.name().equals("ED2K"))
 				return new Ed2MessageDigest();
@@ -57,8 +57,8 @@ public enum HashType {
 			return null;
 		}
 	}
-	
-	public void recycle(MessageDigest md) {
+
+	public final void recycle(MessageDigest md) {
 		if(this.equals(SHA256)) {
 			freenet.crypt.SHA256.returnMessageDigest(md);
 		} // Else no pooling.
