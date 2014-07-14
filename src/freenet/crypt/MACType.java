@@ -21,14 +21,14 @@ public enum MACType {
 	public final int ivlen;
 	public final KeyType keyType;
 	
-	MACType(int bitmask, String mac, KeyType type){
+	private MACType(int bitmask, String mac, KeyType type){
 		this.bitmask = bitmask;
 		this.mac = mac;
 		ivlen = -1;
 		keyType = type;
 	}
 	
-	MACType(int bitmask, String mac, int ivlen, KeyType type){
+	private MACType(int bitmask, String mac, int ivlen, KeyType type){
 		this.bitmask = bitmask;
 		this.mac = mac;
 		this.ivlen = ivlen;

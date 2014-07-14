@@ -18,7 +18,7 @@ public enum CryptBitSetType {
 	public final String cipherName;
 	public final KeyType keyType;
 	
-	CryptBitSetType(int bitmask, KeyType keyType){
+	private CryptBitSetType(int bitmask, KeyType keyType){
 		this.bitmask = bitmask;
 		this.keyType = keyType;
 		this.cipherName = keyType.alg;
@@ -26,7 +26,7 @@ public enum CryptBitSetType {
 		algName = name();
 	}
 	
-	CryptBitSetType(int bitmask, KeyType keyType, int blockSize){
+	private CryptBitSetType(int bitmask, KeyType keyType, int blockSize){
 		this.bitmask = bitmask;
 		this.keyType = keyType;
 		this.cipherName = keyType.alg;
@@ -34,7 +34,7 @@ public enum CryptBitSetType {
 		algName = name();
 	}
 	
-	CryptBitSetType(int bitmask, String algName, KeyType keyType){
+	private CryptBitSetType(int bitmask, String algName, KeyType keyType){
 		this.bitmask = bitmask;
 		this.cipherName = keyType.alg;
 		this.blockSize = keyType.keySize;
@@ -42,7 +42,7 @@ public enum CryptBitSetType {
 		this.keyType = keyType;
 	}
 	
-	public int getIVSize(){//number bytes
+	public final int getIVSize(){//number bytes
 		if(this.keyType.alg == "ChaCha"){
 			return 8;
 		}

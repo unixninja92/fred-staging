@@ -28,7 +28,7 @@ public enum SigType{
     /** Maximum (padded) size of a DER-encoded signature (network-format) */
 	public final int maxSigSize;
 	
-	SigType(int bitmask){
+	private SigType(int bitmask){
 		this.bitmask = bitmask;
 		this.keyType = null;
 		this.algName = this.name();
@@ -36,7 +36,7 @@ public enum SigType{
 		maxSigSize = -1;
 	}
 	
-	SigType(int bitmask, KeyPairType curve, String alg, int modulus, int maxSize){
+	private SigType(int bitmask, KeyPairType curve, String alg, int modulus, int maxSize){
 		this.bitmask = bitmask;
 		keyType = curve;
 		algName = alg;
@@ -44,7 +44,7 @@ public enum SigType{
 		maxSigSize = maxSize;
 	}
 	
-	public Signature get(){
+	public final Signature get(){
 		try {
 			return Signature.getInstance(algName);
 		} catch (NoSuchAlgorithmException e) {
@@ -53,21 +53,21 @@ public enum SigType{
 		return null;
 	}
 	
-	public DSASignature get(String sig) throws UnsupportedTypeException{
+	public final DSASignature get(String sig) throws UnsupportedTypeException{
 		if(this != DSA){
 			throw new UnsupportedTypeException(this);
 		}
 		return new DSASignature(sig);
 	}
 	
-	public DSASignature get(InputStream in) throws IOException, UnsupportedTypeException{
+	public final DSASignature get(InputStream in) throws IOException, UnsupportedTypeException{
 		if(this != DSA){
 			throw new UnsupportedTypeException(this);
 		}
 		return new DSASignature(in);
 	}
 	
-	public DSASignature get(BigInteger r, BigInteger s) throws UnsupportedTypeException{
+	public final DSASignature get(BigInteger r, BigInteger s) throws UnsupportedTypeException{
 		if(this != DSA){
 			throw new UnsupportedTypeException(this);
 		}

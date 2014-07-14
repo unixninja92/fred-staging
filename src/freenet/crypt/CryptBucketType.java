@@ -19,14 +19,14 @@ public enum CryptBucketType {
 	public final int blockSize;
 	public final int nonceSize;
 	
-	CryptBucketType(int bitmask, KeyType keyType, int nonceSize){
+	private CryptBucketType(int bitmask, KeyType keyType, int nonceSize){
 		this.bitmask = bitmask;
 		this.keyType = keyType;
 		this.blockSize = 128;
 		this.nonceSize = nonceSize;
 	}
 	
-	public AEADBlockCipher getBlockCipher(){
+	public final AEADBlockCipher getBlockCipher(){
 		BlockCipher hashCipher = new AESLightEngine();
 		BlockCipher mainCipher = new AESFastEngine();
 		if(nonceSize == 16){

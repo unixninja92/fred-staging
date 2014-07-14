@@ -18,7 +18,7 @@ import freenet.support.Logger;
  * algorithm, key, and also an iv if the algorithm requires one. 
  * @author unixninja92
 */
-public class CryptBitSet {
+public final class CryptBitSet {
 	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
 	private CryptBitSetType type;
 	private SecretKey key;

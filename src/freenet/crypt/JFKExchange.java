@@ -10,7 +10,7 @@ import freenet.node.PeerNode;
 import freenet.support.Logger;
 
 public abstract class JFKExchange {
-	protected static final RandomSource rand = PreferredAlgorithms.random;
+//	protected static final RandomSource rand = PreferredAlgorithms.random;
     protected static volatile boolean logMINOR;
     protected static volatile boolean logDEBUG;
     protected MessageAuthCode mac;
@@ -57,8 +57,7 @@ public abstract class JFKExchange {
 		this.modulusLength = underlyingExch.type.modulusSize;
 		this.peer = pn;
 
-		nonceI = new byte[nonceSize];
-		rand.nextBytes(nonceI);
+		nonceI = KeyGenUtils.genNonce(nonceSize);
 
 		Hash hash = new Hash(HashType.SHA256);
 		hashnI = hash.genHash(nonceI);

@@ -13,7 +13,7 @@ import org.bouncycastle.util.Arrays;
 import freenet.node.PeerNode;
 import freenet.support.Logger;
 
-public class JFKReceiver extends JFKExchange {
+public final class JFKReceiver extends JFKExchange {
 	public JFKReceiver(KeyExchType underlying, PeerNode peerNode, int nonceSize, byte[] nonceI, byte[] exponentialI){
 		super(underlying, nonceSize, peerNode);
 		this.processMessage1(nonceSize, nonceI, exponentialI);
@@ -27,8 +27,7 @@ public class JFKReceiver extends JFKExchange {
 			Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
 		}
 		
-		this.nonceR = new byte[nonceSize];
-		rand.nextBytes(nonceR);
+		this.nonceR = KeyGenUtils.genNonce(nonceSize);
 		
 		Hash hash = new Hash(HashType.SHA256);
 		hashnR = hash.genHash(nonceR);

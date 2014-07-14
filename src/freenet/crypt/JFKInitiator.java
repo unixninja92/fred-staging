@@ -14,7 +14,7 @@ import freenet.support.Fields;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
 
-public class JFKInitiator extends JFKExchange {
+public final class JFKInitiator extends JFKExchange {
 
 	public JFKInitiator(KeyExchType underlying, int nonceSize, PeerNode pn){
 		super(underlying, nonceSize, pn);
@@ -127,9 +127,8 @@ public class JFKInitiator extends JFKExchange {
 				| ((sharedData[13] & 0xFF) << 16)
 				| ((sharedData[14] & 0xFF) << 8)
 				| (sharedData[15] & 0xFF);
-
-		byte[] iv = new byte[ivSize];
-		PreferredAlgorithms.random.nextBytes(iv);
+		
+		byte[] iv = KeyGenUtils.genNonce(ivSize);
 
 		int cleartextOffset = 0;
 		byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivSize + sig.length + data.length];
