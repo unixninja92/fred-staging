@@ -20,6 +20,13 @@ import javax.crypto.spec.SecretKeySpec;
 
 import freenet.support.Logger;
 
+/**
+ * KeyGenUtils offers a set of methods to easily generate Keys and KeyPairs for 
+ * specific algorithms as well as for generating IVs and nonces. It will also take
+ * keys stored in byte arrays and put them in SecertKey or KeyPair instances.
+ * @author unixninja92
+ *
+ */
 public class KeyGenUtils {
 	
 	/**
