@@ -16,7 +16,7 @@ public enum SigType{
 	DSA(1),
 	ECDSAP256(2, KeyPairType.ECP256, "SHA256withECDSA", 91, 72),
 	ECDSAP384(4, KeyPairType.ECP384, "SHA384withECDSA", 120, 104),
-	ECDSAP512(8, KeyPairType.ECP512, "SHA512withECDSA", 158, 139);
+	ECDSAP512(8, KeyPairType.ECP521, "SHA512withECDSA", 158, 139);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;

@@ -3,6 +3,12 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+/**
+ * Keeps track of keysizes and names of keygen algorithm names for all of
+ * the one-way and symmetric encryption schemes available to Freenet. 
+ * @author unixninja92
+ *
+ */
 public enum KeyType {
 	Rijndael128("RIJNDAEL", 128),
 	Rijndael256("RIJNDAEL", 256),
@@ -13,11 +19,17 @@ public enum KeyType {
 	POLY1305("POLY1305-AES", 256),
 	ChaCha128("CHACHA", 128),
 	ChaCha256("CHACHA", 256);
-	
+
 	public final String alg;
 	public final int keySize;
-	
-	KeyType(String alg, int keySize){
+
+	/**
+	 * Creates an enum value for the specified algorithm and keysize
+	 * @param alg The name of the algorithm KeyGenerator should use to 
+	 * create a key
+	 * @param keySize The size of the key that KeyGenerator should generate
+	 */
+	private KeyType(String alg, int keySize){
 		this.alg = alg;
 		this.keySize = keySize;
 	}
