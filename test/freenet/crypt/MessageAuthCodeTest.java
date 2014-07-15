@@ -33,6 +33,7 @@ public class MessageAuthCodeTest extends TestCase {
 		fail("Not yet implemented");
 	}
 
+	//tests .genMac() and .addBytes(byte[]...] as well
 	public void testGetMacByteArrayArray() {
 		for(int i = 0; i < types.length; i++){
 			try {
@@ -47,8 +48,6 @@ public class MessageAuthCodeTest extends TestCase {
 				assertTrue(MessageAuthCode.verify(result, Hex.decode(macs[i])));
 			} catch (GeneralSecurityException e) {
 				fail("GeneralSecurityException thrown");
-			} catch (UnsupportedTypeException e) {
-				fail("UnsupportedTypeException thrown");
 			}
 		}
 	}
