@@ -440,7 +440,14 @@ public class MessageAuthCodeTest extends TestCase {
 	}
 
 	public void testSetIVIvParameterSpec() {
-		fail("Not yet implemented");
+		try {
+			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+			mac.genIv();
+			mac.setIv(IVs[1]);
+			assertTrue(MessageDigest.isEqual(IVs[1].getIV(), mac.getIv().getIV()));
+		} catch (GeneralSecurityException e) {
+			fail("GeneralSecurityException thrown");
+		}
 	}
 	
 	public void testSetIVIvParameterSpecNullInput() {
@@ -471,7 +478,21 @@ public class MessageAuthCodeTest extends TestCase {
 	}
 
 	public void testGenIV() {
-		fail("Not yet implemented");
+		try {
+			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+			assertNotNull(mac.genIv());
+		} catch (GeneralSecurityException e) {
+			fail("GeneralSecurityException thrown");
+		}
+	}
+	
+	public void testGenIVLength() {
+		try {
+			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+			assertEquals(mac.genIv().getIV().length, types[1].ivlen);
+		} catch (GeneralSecurityException e) {
+			fail("GeneralSecurityException thrown");
+		}
 	}
 	
 	public void testGenIVUnsupportedTypeException() {
