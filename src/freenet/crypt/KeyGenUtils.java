@@ -134,6 +134,7 @@ public final class KeyGenUtils {
 			}
 			else{
 				kg = KeyGenerator.getInstance(type.alg);
+				System.out.println(kg.getAlgorithm()+" "+kg.getProvider());
 			}
 			kg.init(type.keySize);
 			return kg.generateKey();

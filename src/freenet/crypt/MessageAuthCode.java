@@ -152,6 +152,9 @@ public final class MessageAuthCode {
 	 */
 	public final void addBytes(byte[]... input){
 		for(byte[] b: input){
+			if(b == null){
+				throw new NullPointerException();
+			}
 			mac.update(b);
 		}
 	}
@@ -173,6 +176,9 @@ public final class MessageAuthCode {
 	 * @param len How many bytes after offset to add to buffer
 	 */
 	public final void addBytes(byte[] input, int offset, int len){
+		if(input == null){
+			throw new NullPointerException();
+		}
 		mac.update(input, offset, len);
 	}
 	
