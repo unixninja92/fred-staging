@@ -53,21 +53,21 @@ public enum SigType{
 		return null;
 	}
 	
-	public final DSASignature get(String sig) throws UnsupportedTypeException{
+	public final DSASignature get(String sig){
 		if(this != DSA){
 			throw new UnsupportedTypeException(this);
 		}
 		return new DSASignature(sig);
 	}
 	
-	public final DSASignature get(InputStream in) throws IOException, UnsupportedTypeException{
+	public final DSASignature get(InputStream in) throws IOException{
 		if(this != DSA){
 			throw new UnsupportedTypeException(this);
 		}
 		return new DSASignature(in);
 	}
 	
-	public final DSASignature get(BigInteger r, BigInteger s) throws UnsupportedTypeException{
+	public final DSASignature get(BigInteger r, BigInteger s){
 		if(this != DSA){
 			throw new UnsupportedTypeException(this);
 		}

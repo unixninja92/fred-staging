@@ -73,7 +73,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
 	}
 	
 	@Deprecated
-	public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException, UnsupportedTypeException{
+	public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException{
 		return getSharedSecrect(peerExponential);
 	}
 	

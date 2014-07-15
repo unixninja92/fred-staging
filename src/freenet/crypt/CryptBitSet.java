@@ -20,8 +20,8 @@ import freenet.support.Logger;
 */
 public final class CryptBitSet {
 	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
-	private CryptBitSetType type;
-	private SecretKey key;
+	private final CryptBitSetType type;
+	private final SecretKey key;
 	private IvParameterSpec iv;
 
 	//Used for AES and ChaCha ciphers
@@ -39,6 +39,7 @@ public final class CryptBitSet {
 	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key){
 		this.type = type;
+		this.key = key;
 		try {
 			 if(type.cipherName == "Rijndael"){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
@@ -49,7 +50,6 @@ public final class CryptBitSet {
 			 } 
 			 else {
 				 cipher = Cipher.getInstance(type.algName);
-				 this.key = key;
 				 genIV();
 			 }
 		}  catch (GeneralSecurityException e) {
@@ -77,7 +77,7 @@ public final class CryptBitSet {
 	 * @param iv
 	 * @throws UnsupportedTypeException 
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) throws UnsupportedTypeException {
+	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv){
 		if(type.equals(CryptBitSetType.RijndaelECB)|| type.equals(CryptBitSetType.RijndaelECB128)){
 			throw new UnsupportedTypeException(type, "Rijndael in ECB mode does not take an IV.");
 		}
@@ -91,7 +91,6 @@ public final class CryptBitSet {
 				pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
 			} else{
 				cipher = Cipher.getInstance(type.algName);
-				this.key = key;
 			}
 		} catch (GeneralSecurityException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
@@ -100,19 +99,19 @@ public final class CryptBitSet {
 		}
 	}
 	
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws UnsupportedTypeException {
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset){
 		this(type, key, new IvParameterSpec(iv, offset, type.getIVSize()));
 	}
 	
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) throws UnsupportedTypeException{
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv){
 		this(type, key, iv, 0);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws UnsupportedTypeException {
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset){
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType), iv, offset);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) throws UnsupportedTypeException {
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv){
 		this(type, key, iv, 0);
 	}
 

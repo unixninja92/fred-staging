@@ -150,7 +150,7 @@ public final class CryptSignature{
 	 * @param input Byte to be signed
 	 * @throws UnsupportedTypeException 
 	 */
-	public void addByte(byte input) throws UnsupportedTypeException{
+	public void addByte(byte input) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -165,7 +165,7 @@ public final class CryptSignature{
 	 * Add the passed in byte[] to the bytes that will be signed.
 	 * @param input Byte[] to be signed
 	 */
-	public void addBytes(byte[] input) throws UnsupportedTypeException{
+	public void addBytes(byte[] input) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -183,7 +183,7 @@ public final class CryptSignature{
 	 * @param offset Where to start reading bytes for signature
 	 * @param length How many bytes after offset to use for signature
 	 */
-	public void addBytes(byte[] data, int offset, int length) throws UnsupportedTypeException{
+	public void addBytes(byte[] data, int offset, int length) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -198,7 +198,7 @@ public final class CryptSignature{
 	 * Adds the ByteBuffer to the bytes that will be signed.
 	 * @param input ByteBuffer to be signed
 	 */
-	public void addBytes(ByteBuffer input) throws UnsupportedTypeException{
+	public void addBytes(ByteBuffer input) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -262,7 +262,7 @@ public final class CryptSignature{
 	 * @return Returns the DSASignature of the data
 	 * @throws UnsupportedTypeException 
 	 */
-	public DSASignature signToDSASignature(byte[]... data) throws UnsupportedTypeException{
+	public DSASignature signToDSASignature(byte[]... data) {
 		if(type != SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -275,7 +275,7 @@ public final class CryptSignature{
 	 * @return Returns the DSASignature of m
 	 * @throws UnsupportedTypeException 
 	 */
-	public DSASignature signToDSASignature(BigInteger m) throws UnsupportedTypeException{
+	public DSASignature signToDSASignature(BigInteger m) {
 		if(type != SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -319,7 +319,7 @@ public final class CryptSignature{
      * @param signature The signature to verify
      * @return If the signature is valid it returns true, otherwise it returns false.
      */
-	public boolean verify(byte[] signature) throws UnsupportedTypeException{
+	public boolean verify(byte[] signature) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -370,25 +370,25 @@ public final class CryptSignature{
 	 * @return True if the signature matches the signature generated for the passed in 
 	 * data, otherwise false
 	 */
-    public boolean verify(DSASignature sig, BigInteger m) throws UnsupportedTypeException{
+    public boolean verify(DSASignature sig, BigInteger m) {
 		if(type != SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
     	return DSA.verify(dsaPubK, sig, m, false);
     }
     
-    public boolean verify(BigInteger r, BigInteger s, BigInteger m) throws UnsupportedTypeException{
+    public boolean verify(BigInteger r, BigInteger s, BigInteger m) {
 		if(type != SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
     	return DSA.verify(dsaPubK, new DSASignature(r, s), m, false);
     }
     
-    public boolean verify(DSASignature sig, byte[]... data) throws UnsupportedTypeException{
+    public boolean verify(DSASignature sig, byte[]... data) {
     	return verify(sig, new NativeBigInteger(1, sha256.genHash(data)));
     }
     
-    public boolean verify(BigInteger r, BigInteger s, byte[]... data) throws UnsupportedTypeException{
+    public boolean verify(BigInteger r, BigInteger s, byte[]... data) {
     	return verify(r, s, new NativeBigInteger(1, sha256.genHash(data)));
     }
     
@@ -409,7 +409,7 @@ public final class CryptSignature{
      * @param includePrivate - include the (secret) private key
      * @return SimpleFieldSet
      */
-    public SimpleFieldSet asFieldSet(boolean includePrivate) throws UnsupportedTypeException{
+    public SimpleFieldSet asFieldSet(boolean includePrivate) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}

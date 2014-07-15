@@ -36,7 +36,7 @@ public enum KeyExchType {
 		this.sigType = sigType;
 	}
 	
-	public final KeyAgreement get()throws UnsupportedTypeException{
+	public final KeyAgreement get() {
 		try {
 			return KeyAgreement.getInstance(algName);
 		} catch (NoSuchAlgorithmException e) {
@@ -45,7 +45,7 @@ public enum KeyExchType {
 		return null;
 	}
 	
-	public final ECGenParameterSpec getSpec()throws UnsupportedTypeException{
+	public final ECGenParameterSpec getSpec() {
 		return new ECGenParameterSpec(specName);
 	}
 }
