@@ -2,8 +2,6 @@ package freenet.crypt;
 
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 
 import javax.crypto.spec.IvParameterSpec;
@@ -33,7 +31,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -54,7 +52,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -79,7 +77,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -98,7 +96,7 @@ public class MessageAuthCodeTest extends TestCase {
 			int i = 0;
 			MessageAuthCode mac;
 			if(types[i].ivlen != -1){
-				mac = new MessageAuthCode(keys[i], IVs[i]);
+				mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 			} else{
 				mac = new MessageAuthCode(types[i], keys[i]);
 			}
@@ -122,7 +120,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -141,7 +139,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -166,7 +164,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -190,7 +188,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				} else{
 					mac = new MessageAuthCode(types[i], keys[i]);
 				}
@@ -215,7 +213,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -233,7 +231,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -252,7 +250,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -275,7 +273,7 @@ public class MessageAuthCodeTest extends TestCase {
 	
 	public void testGetMacByteArrayArrayNullMatrixElementInput() {
 		try {
-			MessageAuthCode mac = new MessageAuthCode(keys[1], IVs[1]);				
+			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);				
 			boolean throwNull = false;
 			byte[][] nullMatrix = {messages[1], null};
 			try{
@@ -325,7 +323,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -342,7 +340,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -359,7 +357,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -383,7 +381,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -407,7 +405,7 @@ public class MessageAuthCodeTest extends TestCase {
 			try {
 				MessageAuthCode mac;
 				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
+					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
 				}
 				else{
 					mac = new MessageAuthCode(types[i], keys[i]);
@@ -419,27 +417,10 @@ public class MessageAuthCodeTest extends TestCase {
 		}
 	}
 
-	public void testGetEncodedKey() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				assertTrue("MACType: "+types[i].name(), MessageDigest.isEqual(mac.getEncodedKey(), keys[i]));
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
-
 	public void testGetIV() {
 		try {
-			MessageAuthCode mac = new MessageAuthCode(keys[1], IVs[1]);
-			assertTrue(MessageDigest.isEqual(mac.getIv(), IVs[1].getIV()));
+			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+			assertTrue(MessageDigest.isEqual(mac.getIv().getIV(), IVs[1].getIV()));
 		} catch (GeneralSecurityException e) {
 			fail("GeneralSecurityException thrown");
 		}
@@ -458,20 +439,52 @@ public class MessageAuthCodeTest extends TestCase {
 		assertTrue(throwNull);
 	}
 
-	public void testGetIVSpec() {
+	public void testSetIVIvParameterSpec() {
 		fail("Not yet implemented");
 	}
-
-	public void testChangeIVIvParameterSpec() {
-		fail("Not yet implemented");
+	
+	public void testSetIVIvParameterSpecNullInput() {
+		boolean throwNull = false;
+		IvParameterSpec nullInput = null;
+		try{
+			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+			mac.setIv(nullInput);
+		} catch(IllegalArgumentException e){
+			throwNull = true;
+		} catch (GeneralSecurityException e) {
+			fail("GeneralSecurityException thrown");
+		}
+		assertTrue(throwNull);
 	}
-
-	public void testChangeIVByteArray() {
-		fail("Not yet implemented");
+	
+	public void testSetIVIvParameterSpecUnsupportedTypeException() {
+		boolean throwNull = false;
+		try{
+			MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
+			mac.setIv(IVs[1]);
+		} catch(UnsupportedTypeException e){
+			throwNull = true;
+		} catch (GeneralSecurityException e) {
+			fail("GeneralSecurityException thrown");
+		}
+		assertTrue(throwNull);
 	}
 
 	public void testGenIV() {
 		fail("Not yet implemented");
+	}
+	
+	public void testGenIVUnsupportedTypeException() {
+		boolean throwNull = false;
+		try{
+			MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
+			mac.genIv();
+		} catch(UnsupportedTypeException e){
+			throwNull = true;
+		} catch (GeneralSecurityException e) {
+			fail("GeneralSecurityException thrown");
+		}
+		assertTrue(throwNull);
 	}
 
 }
