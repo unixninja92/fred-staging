@@ -10,8 +10,6 @@ import javax.crypto.Mac;
 import freenet.support.Logger;
 
 public enum MACType {
-	@Deprecated
-	HMACSHA1(1, "HMACSHA1", KeyType.HMACSHA1),
 	HMACSHA256(2, "HmacSHA256", KeyType.HMACSHA256),
 	Poly1305(4, "POLY1305-AES", 16, KeyType.POLY1305);
 	
@@ -37,6 +35,10 @@ public enum MACType {
 	
 	public final Mac get(){
 		try {
+			//If provider is not specified, Poly1305 will not be found. 
+			if(this == Poly1305){
+				return Mac.getInstance(mac, JceLoader.BouncyCastle);
+			}
 			return Mac.getInstance(mac);
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(MACType.class, "Internal error; please report:", e);
