@@ -1,6 +1,7 @@
 package freenet.crypt;
 
 import java.io.IOException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -15,7 +16,8 @@ import freenet.support.io.RandomAccessThing;
  * @author unixninja92
  *
  */
-public final class EncryptedRandomAccessThing implements RandomAccessThing {
+public final class EncryptedRandomAccessThing implements RandomAccessThing { 
+	private final ReentrantLock lock = new ReentrantLock();
 	private final EncryptedRandomAccessThingType type;
 	private final RandomAccessThing underlyingThing;
 	private SkippingStreamCipher cipherRead;
@@ -45,31 +47,42 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	@Override
 	public void pread(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
-		cipherRead.seekTo(fileOffset);
 		
 		byte[] cipherText = new byte[length];
 		underlyingThing.pread(fileOffset, cipherText, 0, length);
-		cipherRead.processBytes(buf, 0, length, buf, bufOffset);
+
+		lock.lock();
+		try{
+			cipherRead.seekTo(fileOffset);
+			cipherRead.processBytes(buf, 0, length, buf, bufOffset);
+		}finally{
+			lock.unlock();
+		}
 	}
 
 	@Override
 	public void pwrite(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
-		cipherWrite.seekTo(fileOffset);
-		
 		byte[] cipherText = new byte[length];
-		cipherWrite.processBytes(buf, bufOffset, length, cipherText, 0);
+		lock.lock();
+		try{
+			cipherWrite.seekTo(fileOffset);
+			cipherWrite.processBytes(buf, bufOffset, length, cipherText, 0);
+		}finally{
+			lock.unlock();
+		}
+		
 		underlyingThing.pwrite(fileOffset, cipherText, 0, length);
 	}
 
 	@Override
 	public void close() {
-		underlyingThing.close();
 		cipherRead = null;
 		cipherWrite = null;
 		key = null;
 		iv = null;
 		cipherParams = null;
+		underlyingThing.close();
 	}
 
 }
