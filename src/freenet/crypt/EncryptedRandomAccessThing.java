@@ -17,14 +17,12 @@ import freenet.support.io.RandomAccessThing;
  *
  */
 public final class EncryptedRandomAccessThing implements RandomAccessThing { 
-	private final ReentrantLock lockRead = new ReentrantLock();
-	private final ReentrantLock lockWrite = new ReentrantLock();
+	private final ReentrantLock readLock = new ReentrantLock();
+	private final ReentrantLock writeLock = new ReentrantLock();
 	private final EncryptedRandomAccessThingType type;
 	private final RandomAccessThing underlyingThing;
 	private SkippingStreamCipher cipherRead;
-	private SkippingStreamCipher cipherWrite; 
-	private KeyParameter key;
-	private IvParameterSpec iv;
+	private SkippingStreamCipher cipherWrite;
 	private ParametersWithIV cipherParams;
 	
 	public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, RandomAccessThing underlyingThing, SecretKey key, IvParameterSpec iv){
@@ -32,9 +30,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 		this.underlyingThing = underlyingThing;
 		this.cipherRead = this.type.get();
 		this.cipherWrite = this.type.get();
-		this.key = new KeyParameter(key.getEncoded());
-		this.iv = iv;
-		this.cipherParams = new ParametersWithIV(this.key, iv.getIV());
+		this.cipherParams = new ParametersWithIV(new KeyParameter(key.getEncoded()), iv.getIV());
 		
 		cipherRead.init(false, cipherParams);
 		cipherWrite.init(true, cipherParams);
@@ -52,12 +48,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 		byte[] cipherText = new byte[length];
 		underlyingThing.pread(fileOffset, cipherText, 0, length);
 
-		lockRead.lock();
+		readLock.lock();
 		try{
 			cipherRead.seekTo(fileOffset);
 			cipherRead.processBytes(buf, 0, length, buf, bufOffset);
 		}finally{
-			lockRead.unlock();
+			readLock.unlock();
 		}
 	}
 
@@ -66,12 +62,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 			throws IOException {
 		byte[] cipherText = new byte[length];
 		
-		lockWrite.lock();
+		writeLock.lock();
 		try{
 			cipherWrite.seekTo(fileOffset);
 			cipherWrite.processBytes(buf, bufOffset, length, cipherText, 0);
 		}finally{
-			lockWrite.unlock();
+			writeLock.unlock();
 		}
 		
 		underlyingThing.pwrite(fileOffset, cipherText, 0, length);
@@ -81,8 +77,6 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	public void close() {
 		cipherRead = null;
 		cipherWrite = null;
-		key = null;
-		iv = null;
 		cipherParams = null;
 		underlyingThing.close();
 	}

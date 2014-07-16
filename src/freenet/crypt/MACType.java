@@ -9,9 +9,16 @@ import javax.crypto.Mac;
 
 import freenet.support.Logger;
 
+/**
+ * Keeps track of properties of different Message Authentication Code 
+ * algorithms available to Freenet including key type, name of the 
+ * algorithm, and iv length if required. 
+ * @author unixninja92
+ *
+ */
 public enum MACType {
-	HMACSHA256(2, "HmacSHA256", KeyType.HMACSHA256),
-	Poly1305(4, "POLY1305-AES", 16, KeyType.POLY1305);
+	HMACSHA256(1, "HmacSHA256", KeyType.HMACSHA256),
+	Poly1305(2, "POLY1305-AES", 16, KeyType.POLY1305);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;
@@ -19,6 +26,12 @@ public enum MACType {
 	public final int ivlen;
 	public final KeyType keyType;
 	
+	/**
+	 * Creates the HMACSHA256 enum. Sets the ivlen as -1.
+	 * @param bitmask
+	 * @param mac Name of the algorithm that java uses. 
+	 * @param type The type of key the alg requires
+	 */
 	private MACType(int bitmask, String mac, KeyType type){
 		this.bitmask = bitmask;
 		this.mac = mac;
@@ -26,6 +39,13 @@ public enum MACType {
 		keyType = type;
 	}
 	
+	/**
+	 * Creates the Poly1305 enum.
+	 * @param bitmask
+	 * @param mac Name of the algorithm that java uses. 
+	 * @param ivlen Length of the IV
+	 * @param type The type of key the alg requires
+	 */
 	private MACType(int bitmask, String mac, int ivlen, KeyType type){
 		this.bitmask = bitmask;
 		this.mac = mac;
@@ -33,6 +53,10 @@ public enum MACType {
 		keyType = type;
 	}
 	
+	/**
+	 * Gets an instance of Mac using the specified algorithm. 
+	 * @return Returns an instance of Mac
+	 */
 	public final Mac get(){
 		try {
 			return Mac.getInstance(mac);
