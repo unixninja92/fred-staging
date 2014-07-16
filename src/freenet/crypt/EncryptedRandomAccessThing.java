@@ -18,7 +18,8 @@ import freenet.support.io.RandomAccessThing;
 public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	private final EncryptedRandomAccessThingType type;
 	private final RandomAccessThing underlyingThing;
-	private SkippingStreamCipher cipher; 
+	private SkippingStreamCipher cipherRead;
+	private SkippingStreamCipher cipherWrite; 
 	private KeyParameter key;
 	private IvParameterSpec iv;
 	private ParametersWithIV cipherParams;
@@ -26,10 +27,14 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, RandomAccessThing underlyingThing, SecretKey key, IvParameterSpec iv){
 		this.type = type;
 		this.underlyingThing = underlyingThing;
-		this.cipher = this.type.get();
+		this.cipherRead = this.type.get();
+		this.cipherWrite = this.type.get();
 		this.key = new KeyParameter(key.getEncoded());
 		this.iv = iv;
 		this.cipherParams = new ParametersWithIV(this.key, iv.getIV());
+		
+		cipherRead.init(false, cipherParams);
+		cipherWrite.init(true, cipherParams);
 	}
 	
 	@Override
@@ -40,31 +45,28 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	@Override
 	public void pread(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
-		cipher.init(false, cipherParams);
-		cipher.seekTo(fileOffset);
+		cipherRead.seekTo(fileOffset);
 		
 		byte[] cipherText = new byte[length];
 		underlyingThing.pread(fileOffset, cipherText, 0, length);
-		cipher.processBytes(buf, 0, length, buf, bufOffset);
-		cipher.reset();
+		cipherRead.processBytes(buf, 0, length, buf, bufOffset);
 	}
 
 	@Override
 	public void pwrite(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
-		cipher.init(true, cipherParams);
-		cipher.seekTo(fileOffset);
+		cipherWrite.seekTo(fileOffset);
 		
 		byte[] cipherText = new byte[length];
-		cipher.processBytes(buf, bufOffset, length, cipherText, 0);
+		cipherWrite.processBytes(buf, bufOffset, length, cipherText, 0);
 		underlyingThing.pwrite(fileOffset, cipherText, 0, length);
-		cipher.reset();
 	}
 
 	@Override
 	public void close() {
 		underlyingThing.close();
-		cipher = null;
+		cipherRead = null;
+		cipherWrite = null;
 		key = null;
 		iv = null;
 		cipherParams = null;
