@@ -17,7 +17,8 @@ import freenet.support.io.RandomAccessThing;
  *
  */
 public final class EncryptedRandomAccessThing implements RandomAccessThing { 
-	private final ReentrantLock lock = new ReentrantLock();
+	private final ReentrantLock lockRead = new ReentrantLock();
+	private final ReentrantLock lockWrite = new ReentrantLock();
 	private final EncryptedRandomAccessThingType type;
 	private final RandomAccessThing underlyingThing;
 	private SkippingStreamCipher cipherRead;
@@ -51,12 +52,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 		byte[] cipherText = new byte[length];
 		underlyingThing.pread(fileOffset, cipherText, 0, length);
 
-		lock.lock();
+		lockRead.lock();
 		try{
 			cipherRead.seekTo(fileOffset);
 			cipherRead.processBytes(buf, 0, length, buf, bufOffset);
 		}finally{
-			lock.unlock();
+			lockRead.unlock();
 		}
 	}
 
@@ -64,12 +65,13 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	public void pwrite(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
 		byte[] cipherText = new byte[length];
-		lock.lock();
+		
+		lockWrite.lock();
 		try{
 			cipherWrite.seekTo(fileOffset);
 			cipherWrite.processBytes(buf, bufOffset, length, cipherText, 0);
 		}finally{
-			lock.unlock();
+			lockWrite.unlock();
 		}
 		
 		underlyingThing.pwrite(fileOffset, cipherText, 0, length);
