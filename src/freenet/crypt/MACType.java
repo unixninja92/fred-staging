@@ -35,10 +35,6 @@ public enum MACType {
 	
 	public final Mac get(){
 		try {
-			//If provider is not specified, Poly1305 will not be found. 
-			if(this == Poly1305){
-				return Mac.getInstance(mac, JceLoader.BouncyCastle);
-			}
 			return Mac.getInstance(mac);
 		} catch (NoSuchAlgorithmException e) {
 			Logger.error(MACType.class, "Internal error; please report:", e);
