@@ -2,11 +2,9 @@ package freenet.crypt;
 
 import java.io.IOException;
 
-import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.SkippingStreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
@@ -18,8 +16,8 @@ import freenet.support.io.RandomAccessThing;
  *
  */
 public final class EncryptedRandomAccessThing implements RandomAccessThing {
-	private EncryptedRandomAccessThingType type;
-	private RandomAccessThing underlyingThing;
+	private final EncryptedRandomAccessThingType type;
+	private final RandomAccessThing underlyingThing;
 	private SkippingStreamCipher cipher; 
 	private KeyParameter key;
 	private IvParameterSpec iv;
@@ -43,25 +41,33 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	public void pread(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
 		cipher.init(false, cipherParams);
+		cipher.seekTo(fileOffset);
 		
 		byte[] cipherText = new byte[length];
 		underlyingThing.pread(fileOffset, cipherText, 0, length);
 		cipher.processBytes(buf, 0, length, buf, bufOffset);
+		cipher.reset();
 	}
 
 	@Override
 	public void pwrite(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
 		cipher.init(true, cipherParams);
+		cipher.seekTo(fileOffset);
 		
 		byte[] cipherText = new byte[length];
 		cipher.processBytes(buf, bufOffset, length, cipherText, 0);
 		underlyingThing.pwrite(fileOffset, cipherText, 0, length);
+		cipher.reset();
 	}
 
 	@Override
 	public void close() {
 		underlyingThing.close();
+		cipher = null;
+		key = null;
+		iv = null;
+		cipherParams = null;
 	}
 
 }
