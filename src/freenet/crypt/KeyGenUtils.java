@@ -129,12 +129,7 @@ public final class KeyGenUtils {
 	public static SecretKey genSecretKey(KeyType type){
 		try{
 			KeyGenerator kg;
-			if(type.equals(KeyType.POLY1305)){
-				kg = KeyGenerator.getInstance(type.alg, JceLoader.BouncyCastle);
-			}
-			else{
-				kg = KeyGenerator.getInstance(type.alg);
-			}
+			kg = KeyGenerator.getInstance(type.alg);
 			kg.init(type.keySize);
 			return kg.generateKey();
 		} catch (NoSuchAlgorithmException e) {
