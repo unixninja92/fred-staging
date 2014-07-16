@@ -8,6 +8,8 @@ import javax.crypto.spec.IvParameterSpec;
 
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.SkippingStreamCipher;
+import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.crypto.params.ParametersWithIV;
 
 import freenet.support.io.RandomAccessThing;
 /**
@@ -19,13 +21,17 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	private EncryptedRandomAccessThingType type;
 	private RandomAccessThing underlyingThing;
 	private SkippingStreamCipher cipher; 
-	private CipherParameters key;
+	private KeyParameter key;
+	private IvParameterSpec iv;
+	private ParametersWithIV cipherParams;
 	
-	public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, RandomAccessThing underlyingThing, SecretKey key){
+	public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, RandomAccessThing underlyingThing, SecretKey key, IvParameterSpec iv){
 		this.type = type;
 		this.underlyingThing = underlyingThing;
 		this.cipher = this.type.get();
-//		this.key =  KeyParameters(key, new IvParameterSpec(new byte[8]));
+		this.key = new KeyParameter(key.getEncoded());
+		this.iv = iv;
+		this.cipherParams = new ParametersWithIV(this.key, iv.getIV());
 	}
 	
 	@Override
@@ -36,21 +42,26 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 	@Override
 	public void pread(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
-//		cipher.init(Cipher.DECRYPT_MODE, key);
-
+		cipher.init(false, cipherParams);
+		
+		byte[] cipherText = new byte[length];
+		underlyingThing.pread(fileOffset, cipherText, 0, length);
+		cipher.processBytes(buf, 0, length, buf, bufOffset);
 	}
 
 	@Override
 	public void pwrite(long fileOffset, byte[] buf, int bufOffset, int length)
 			throws IOException {
-		// TODO Auto-generated method stub
-
+		cipher.init(true, cipherParams);
+		
+		byte[] cipherText = new byte[length];
+		cipher.processBytes(buf, bufOffset, length, cipherText, 0);
+		underlyingThing.pwrite(fileOffset, cipherText, 0, length);
 	}
 
 	@Override
 	public void close() {
-		// TODO Auto-generated method stub
-
+		underlyingThing.close();
 	}
 
 }
