@@ -11,7 +11,7 @@ import freenet.support.Logger;
 
 public enum MACType {
 	HMACSHA256(2, "HmacSHA256", KeyType.HMACSHA256),
-	Poly1305(4, "POLY1305-AES", 16, KeyType.POLY1305);
+	Poly1305AES(4, "POLY1305-AES", 16, KeyType.POLY1305AES);
 	
 	/** Bitmask for aggregation. */
 	public final int bitmask;

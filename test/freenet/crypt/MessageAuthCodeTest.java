@@ -14,7 +14,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 public class MessageAuthCodeTest extends TestCase {
 	static private final MACType[] types = 
-		{ MACType.HMACSHA256, MACType.Poly1305};
+		{ MACType.HMACSHA256, MACType.Poly1305AES};
 	static private final byte[][] keys = 
 		{ Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"), 
 		Hex.decode("95cc0e44d0b79a8856afcae1bec4fe3c01bcb20bfc8b6e03609ddd09f44b060f")};
