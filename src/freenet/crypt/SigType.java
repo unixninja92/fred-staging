@@ -14,7 +14,8 @@ import freenet.support.Logger;
 public enum SigType{
 	@Deprecated
 	DSA(1),
-	ECDSAP256(2, KeyPairType.ECP256, "SHA256withECDSA", 91, 72),
+	ECDSAP256r(2, KeyPairType.ECP256r, "SHA256withECDSA", 91, 72),
+	ECDSAP256k(2, KeyPairType.ECP256k, "SHA256withECDSA", 91, 72),
 	ECDSAP384(4, KeyPairType.ECP384, "SHA384withECDSA", 120, 104),
 	ECDSAP512(8, KeyPairType.ECP521, "SHA512withECDSA", 158, 139);
 	

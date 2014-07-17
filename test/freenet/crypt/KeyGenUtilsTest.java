@@ -35,7 +35,7 @@ public class KeyGenUtilsTest extends TestCase {
 			HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
 	};
 	
-	private static final KeyPairType[] trueKeyPairTypes = {KeyPairType.ECP256, 
+	private static final KeyPairType[] trueKeyPairTypes = {KeyPairType.ECP256r, 
 			KeyPairType.ECP384, KeyPairType.ECP521};
 	@SuppressWarnings("deprecation")
 	private static final KeyPairType falseKeyPairType = KeyPairType.DSA;

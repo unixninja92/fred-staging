@@ -23,7 +23,7 @@ import freenet.support.SimpleFieldSet;
 
 @SuppressWarnings("deprecation")
 public final class CryptSignature{
-	public static final SigType preferredSignature = SigType.ECDSAP256;
+	public static final SigType preferredSignature = SigType.ECDSAP256k;
 	private boolean verifyOnly;
 	
 	/* variables for ECDSA signatures */

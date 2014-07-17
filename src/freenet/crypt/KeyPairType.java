@@ -18,7 +18,8 @@ public enum KeyPairType {
 	 */
 	@Deprecated
 	DSA(),
-	ECP256("EC", "secp256r1"),
+	ECP256r("EC", "secp256r1"),
+	ECP256k("EC", "secp256k1"),
 	ECP384("EC", "secp384r1"),
 	ECP521("EC",  "secp521r1");
 
