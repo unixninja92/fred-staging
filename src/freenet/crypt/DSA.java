@@ -3,8 +3,11 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import freenet.node.NodeStarter;
 import freenet.support.LogThresholdCallback;
+
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Random;
 
 import net.i2p.util.NativeBigInteger;
@@ -42,7 +45,7 @@ public class DSA {
 			DSAPrivateKey x,
 			BigInteger k, 
 			BigInteger m,
-			RandomSource random) {
+			SecureRandom random) {
 		if(k.signum() == -1) throw new IllegalArgumentException();
 		if(m.signum() == -1) throw new IllegalArgumentException();
 		if(g.getQ().bitLength() == 256)
@@ -56,7 +59,7 @@ public class DSA {
 	} 
 
 	public static DSASignature sign(DSAGroup g, DSAPrivateKey x, BigInteger m,
-			RandomSource r) {
+			SecureRandom r) {
 		BigInteger k = DSA.generateK(g, r);
 		return sign(g, x, k, m, r);
 	}
@@ -68,7 +71,7 @@ public class DSA {
 	 */
 	static DSASignature sign(DSAGroup g, DSAPrivateKey x,
 			BigInteger r, BigInteger kInv, 
-			BigInteger m, RandomSource random) {
+			BigInteger m, SecureRandom random) {
 		BigInteger s1=m.add(x.getX().multiply(r)).mod(g.getQ());
 		BigInteger s=kInv.multiply(s1).mod(g.getQ());
 		if((r.compareTo(BigInteger.ZERO) == 0) || (s.compareTo(BigInteger.ZERO) == 0)) {
@@ -136,8 +139,8 @@ public class DSA {
 		DSAGroup g = Global.DSAgroupBigA;
 		if (fs != null)
 			g = DSAGroup.create(fs.subset("dsaGroup"));
-		RandomSource y = new DummyRandomSource();
-		if (args.length >= 2 && args[1].equals("yarrow")) y = new Yarrow();
+		SecureRandom y =  NodeStarter.getGlobalSecureRandom();
+//		if (args.length >= 2 && args[1].equals("yarrow")) y = new Yarrow();
 		DSAPrivateKey pk=new DSAPrivateKey(g, y);
 		DSAPublicKey pub=new DSAPublicKey(g, pk);
 		if (fs != null) {

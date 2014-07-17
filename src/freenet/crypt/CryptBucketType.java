@@ -26,6 +26,7 @@ public enum CryptBucketType {
 		this.nonceSize = nonceSize;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public final AEADBlockCipher getBlockCipher(){
 		BlockCipher hashCipher = new AESLightEngine();
 		BlockCipher mainCipher = new AESFastEngine();

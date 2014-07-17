@@ -9,16 +9,19 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.interfaces.ECPublicKey;
 
 import net.i2p.util.NativeBigInteger;
 import freenet.node.FSParseException;
+import freenet.node.NodeStarter;
 import freenet.support.Base64;
 import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
 
+@SuppressWarnings("deprecation")
 public final class CryptSignature{
 	public static final SigType preferredSignature = SigType.ECDSAP256;
 	private boolean verifyOnly;
@@ -32,8 +35,8 @@ public final class CryptSignature{
 	/** Length of signature parameters R and S */
 	private static final int SIGNATURE_PARAMETER_LENGTH = 32;
 	private static final DSAGroup dsaGroup = Global.DSAgroupBigA;
+	private static final SecureRandom random = NodeStarter.getGlobalSecureRandom();
 	private final Hash sha256 = new Hash(HashType.SHA256);
-	private RandomSource random;
 	private DSAPrivateKey dsaPrivK;
 	private DSAPublicKey dsaPubK;
 	
@@ -45,7 +48,6 @@ public final class CryptSignature{
 	public CryptSignature(SigType type){
 		this.type = type;
 		if(type.name()=="DSA"){
-			random = PreferredAlgorithms.random;
 			dsaPrivK = new DSAPrivateKey(dsaGroup, random);
 			dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		}
@@ -77,7 +79,6 @@ public final class CryptSignature{
 		this.type = type;
 		verifyOnly = true;
 		if(type.name()=="DSA"){
-			random = PreferredAlgorithms.random;
 			dsaPrivK = null;
 			dsaPubK = DSAPublicKey.create(publicKey);
 		}
@@ -125,23 +126,8 @@ public final class CryptSignature{
 	 */
 	public CryptSignature(DSAPrivateKey priv, DSAPublicKey pub){
 		type = SigType.DSA;
-		random = PreferredAlgorithms.random;
 		dsaPrivK = priv;
 		dsaPubK = pub;
-		verifyOnly = false;
-	}
-
-	
-	/**
-	 * Creates an instance of CryptSignature using DSA and the global DSAGroup
-	 * with a key pair generated using the passed in RandomSource
-	 * @param r
-	 */
-	public CryptSignature(RandomSource r){
-		type = SigType.DSA;
-		random = r;
-		dsaPrivK = new DSAPrivateKey(dsaGroup, random);
-		dsaPubK = new DSAPublicKey(dsaGroup, dsaPrivK);
 		verifyOnly = false;
 	}
 	
@@ -251,7 +237,7 @@ public final class CryptSignature{
         	}
         }
         else{
-        	//TODO log this
+        	throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
         }
         return result;
     }
@@ -283,7 +269,7 @@ public final class CryptSignature{
         if(!verifyOnly){
         	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
         } else{
-        	//TODO log this
+        	throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
         }
         return result;
 	}
@@ -308,7 +294,7 @@ public final class CryptSignature{
         		plainsig = newData;
         	}
         } else{
-        	//TODO log this
+        	throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
         }
         return plainsig;
     }

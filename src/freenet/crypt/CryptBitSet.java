@@ -115,53 +115,53 @@ public final class CryptBitSet {
 		this(type, key, iv, 0);
 	}
 
-	/**
-	 * Encrypts or decrypts a specified section of input.
-	 * @param mode Sets mode to either encrypt or decrypt. 0 for decryption,
-	 * 1 for encryption.
-	 * @param input The byte[] to be processes(either encrypted or decrypted)
-	 * @param offset The position in the byte[] to start processing at
-	 * @param len How many more bytes to process in the array past offset
-	 * @return Depending on the value of mode will either return an encrypted
-	 * or decrypted version of the selected portion of the byte[] input
-	 */
-	private byte[] processesBytes(boolean encrypt, byte[] input, int offset, int len){
-		try {
-			if(!encrypt){
-				if(type == CryptBitSetType.RijndaelPCFB){
-					return pcfb.blockDecipher(input, offset, len);
-				} 
-				else if(type.cipherName == "Rijndael"){
-					byte[] actualInput = extractSmallerArray(input, offset, len);
-					byte[] result = new byte[len];
-					blockCipher.decipher(actualInput, result);
-					return result;
-				}
-				else{
-					cipher.init(Cipher.DECRYPT_MODE, key, iv);
-					return cipher.doFinal(input, offset, len);
-				}
-			}
-			else {
-				if(type == CryptBitSetType.RijndaelPCFB){
-					return pcfb.blockEncipher(input, offset, len);
-				} 
-				else if(type.cipherName == "Rijndael"){
-					byte[] actualInput = extractSmallerArray(input, offset, len);
-					byte[] result = new byte[len];
-					blockCipher.encipher(actualInput, result);
-					return result;
-				}
-				else{
-					cipher.init(Cipher.ENCRYPT_MODE, key, iv);
-					return cipher.doFinal(input, offset, len);
-				}
-			}
-		} catch (GeneralSecurityException e) {
-			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
-		} 
-		return null;
-	}
+//	/**
+//	 * Encrypts or decrypts a specified section of input.
+//	 * @param mode Sets mode to either encrypt or decrypt. 0 for decryption,
+//	 * 1 for encryption.
+//	 * @param input The byte[] to be processes(either encrypted or decrypted)
+//	 * @param offset The position in the byte[] to start processing at
+//	 * @param len How many more bytes to process in the array past offset
+//	 * @return Depending on the value of mode will either return an encrypted
+//	 * or decrypted version of the selected portion of the byte[] input
+//	 */
+//	private byte[] processesBytes(boolean encrypt, byte[] input, int offset, int len){
+//		try {
+//			if(!encrypt){
+//				if(type == CryptBitSetType.RijndaelPCFB){
+//					return pcfb.blockDecipher(input, offset, len);
+//				} 
+//				else if(type.cipherName == "Rijndael"){
+//					byte[] actualInput = extractSmallerArray(input, offset, len);
+//					byte[] result = new byte[len];
+//					blockCipher.decipher(actualInput, result);
+//					return result;
+//				}
+//				else{
+//					cipher.init(Cipher.DECRYPT_MODE, key, iv);
+//					return cipher.doFinal(input, offset, len);
+//				}
+//			}
+//			else {
+//				if(type == CryptBitSetType.RijndaelPCFB){
+//					return pcfb.blockEncipher(input, offset, len);
+//				} 
+//				else if(type.cipherName == "Rijndael"){
+//					byte[] actualInput = extractSmallerArray(input, offset, len);
+//					byte[] result = new byte[len];
+//					blockCipher.encipher(actualInput, result);
+//					return result;
+//				}
+//				else{
+//					cipher.init(Cipher.ENCRYPT_MODE, key, iv);
+//					return cipher.doFinal(input, offset, len);
+//				}
+//			}
+//		} catch (GeneralSecurityException e) {
+//			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
+//		} 
+//		return null;
+//	}
 	
 	/**
 	 * Encrypts the specified section of input
@@ -171,7 +171,23 @@ public final class CryptBitSet {
 	 * @return Returns byte[] input with the specified section encrypted
 	 */
 	public byte[] encrypt(byte[] input, int offset, int len){
-		return processesBytes(true, input, offset, len);
+		try{
+			if(type == CryptBitSetType.RijndaelPCFB){
+				return pcfb.blockEncipher(input, offset, len);
+			} 
+			else if(type.cipherName == "Rijndael"){
+				byte[] result = new byte[len];
+				blockCipher.encipher(extractSmallerArray(input, offset, len), result);
+				return result;
+			}
+			else{
+				cipher.init(Cipher.ENCRYPT_MODE, key, iv);
+				return cipher.doFinal(input, offset, len);
+			}
+		} catch (GeneralSecurityException e) {
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
+		} 
+		return null;
 	}
 	
 	/**
@@ -200,7 +216,23 @@ public final class CryptBitSet {
 	 * @return Returns byte[] input with the specified section decrypted
 	 */
 	public byte[] decrypt(byte[] input, int offset, int len){
-		return processesBytes(false, input, offset, len);
+		try{
+			if(type == CryptBitSetType.RijndaelPCFB){
+				return pcfb.blockDecipher(input, offset, len);
+			} 
+			else if(type.cipherName == "Rijndael"){
+				byte[] result = new byte[len];
+				blockCipher.decipher(extractSmallerArray(input, offset, len), result);
+				return result;
+			}
+			else{
+				cipher.init(Cipher.DECRYPT_MODE, key, iv);
+				return cipher.doFinal(input, offset, len);
+			}
+		} catch (GeneralSecurityException e) {
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
+		} 
+		return null;
 	}
 	
 	/**
@@ -235,7 +267,7 @@ public final class CryptBitSet {
 	}
 	
 	private byte[] extractSmallerArray(byte[] input, int offset, int len){
-		if(input.length == len){
+		if(input.length == len && offset == 0){
 			return input;
 		}
 		else{
