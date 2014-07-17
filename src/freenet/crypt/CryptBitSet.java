@@ -125,38 +125,37 @@ public final class CryptBitSet {
 	 * @return Depending on the value of mode will either return an encrypted
 	 * or decrypted version of the selected portion of the byte[] input
 	 */
-	private byte[] processesBytes(int mode, byte[] input, int offset, int len){
+	private byte[] processesBytes(boolean encrypt, byte[] input, int offset, int len){
 		try {
-			if(type.cipherName == "Rijndael"){
-				if(mode == Cipher.DECRYPT_MODE){
-					if(type == CryptBitSetType.RijndaelPCFB){
-						return pcfb.blockDecipher(input, offset, len);
-					} 
-					else{
-						byte[] actualInput = extractSmallerArray(input, offset, len);
-						byte[] result = new byte[len];
-						blockCipher.decipher(actualInput, result);
-						return result;
-					}
-				}
-				else if(mode == Cipher.ENCRYPT_MODE){
-					if(type == CryptBitSetType.RijndaelPCFB){
-						return pcfb.blockEncipher(input, offset, len);
-					} 
-					else{
-						byte[] actualInput = extractSmallerArray(input, offset, len);
-						byte[] result = new byte[len];
-						blockCipher.encipher(actualInput, result);
-						return result;
-					}
+			if(!encrypt){
+				if(type == CryptBitSetType.RijndaelPCFB){
+					return pcfb.blockDecipher(input, offset, len);
+				} 
+				else if(type.cipherName == "Rijndael"){
+					byte[] actualInput = extractSmallerArray(input, offset, len);
+					byte[] result = new byte[len];
+					blockCipher.decipher(actualInput, result);
+					return result;
 				}
 				else{
-					//throw unsupported mode error
+					cipher.init(Cipher.DECRYPT_MODE, key, iv);
+					return cipher.doFinal(input, offset, len);
 				}
 			}
-			else{
-				cipher.init(mode, key, iv);
-				return cipher.doFinal(input, offset, len);
+			else {
+				if(type == CryptBitSetType.RijndaelPCFB){
+					return pcfb.blockEncipher(input, offset, len);
+				} 
+				else if(type.cipherName == "Rijndael"){
+					byte[] actualInput = extractSmallerArray(input, offset, len);
+					byte[] result = new byte[len];
+					blockCipher.encipher(actualInput, result);
+					return result;
+				}
+				else{
+					cipher.init(Cipher.ENCRYPT_MODE, key, iv);
+					return cipher.doFinal(input, offset, len);
+				}
 			}
 		} catch (GeneralSecurityException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
@@ -172,7 +171,7 @@ public final class CryptBitSet {
 	 * @return Returns byte[] input with the specified section encrypted
 	 */
 	public byte[] encrypt(byte[] input, int offset, int len){
-		return processesBytes(1, input, offset, len);
+		return processesBytes(true, input, offset, len);
 	}
 	
 	/**
@@ -201,7 +200,7 @@ public final class CryptBitSet {
 	 * @return Returns byte[] input with the specified section decrypted
 	 */
 	public byte[] decrypt(byte[] input, int offset, int len){
-		return processesBytes(0, input, offset, len);
+		return processesBytes(false, input, offset, len);
 	}
 	
 	/**
