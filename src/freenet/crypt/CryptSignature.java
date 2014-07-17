@@ -103,16 +103,22 @@ public final class CryptSignature{
 		this.type = type;
 		verifyOnly = false;
         try {
-    		byte[] pub = null;
-            byte[] pri = null;
-            pub = Base64.decode(sfs.get("pub"));
-            pri = Base64.decode(sfs.get("pri"));
-            
-            keys = KeyGenUtils.getKeyPair(type.keyType, pub, pri);
-            
-            sig = type.get();
-			sig.initSign(keys.getPrivate());
-			sig.initVerify(keys.getPublic());
+        	if(type.equals(SigType.DSA)){
+        		dsaPrivK = DSAPrivateKey.create(sfs.subset("dsaPrivKey"), dsaGroup);
+        		dsaPubK = DSAPublicKey.create(sfs.subset("dsaPubKey"), dsaGroup);
+        	}
+        	else{
+        		byte[] pub = null;
+        		byte[] pri = null;
+        		pub = Base64.decode(sfs.get("pub"));
+        		pri = Base64.decode(sfs.get("pri"));
+
+        		keys = KeyGenUtils.getKeyPair(type.keyType, pub, pri);
+
+        		sig = type.get();
+        		sig.initSign(keys.getPrivate());
+        		sig.initVerify(keys.getPublic());
+        	}
         }  catch (Exception e) {
             throw new FSParseException(e);
         }
