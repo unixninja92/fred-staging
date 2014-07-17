@@ -12,13 +12,9 @@ import freenet.support.HexUtil;
 
 /**
  * The Hash class will generate the hash value of a given set of bytes and also verify that
-<<<<<<< HEAD
- * a hash matches a given set of bytes.
-=======
  * a hash matches a given set of bytes. The addBytes methods can be used to pass data into 
  * a buffer that will be used to generate a hash. Once a hash is generated, the buffer is 
  * cleared or reset. 
->>>>>>> HashingAPI
  * @author unixninja92
  *
  */

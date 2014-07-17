@@ -3,11 +3,13 @@ package freenet.crypt;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
+import java.security.Security;
 
 import javax.crypto.spec.IvParameterSpec;
 
 import junit.framework.TestCase;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 
 public class MessageAuthCodeTest extends TestCase {
@@ -26,6 +28,9 @@ public class MessageAuthCodeTest extends TestCase {
 		{ Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7"),
 		Hex.decode("881dc200c9833da726e9376c2e32cff7")};
 
+	static{
+		Security.addProvider(new BouncyCastleProvider());
+	}
 	public void testAddByte() {
 		for(int i = 0; i < types.length; i++){
 			try {
