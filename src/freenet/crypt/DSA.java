@@ -45,7 +45,7 @@ public class DSA {
 			DSAPrivateKey x,
 			BigInteger k, 
 			BigInteger m,
-			SecureRandom random) {
+			Random random) {
 		if(k.signum() == -1) throw new IllegalArgumentException();
 		if(m.signum() == -1) throw new IllegalArgumentException();
 		if(g.getQ().bitLength() == 256)
@@ -59,7 +59,7 @@ public class DSA {
 	} 
 
 	public static DSASignature sign(DSAGroup g, DSAPrivateKey x, BigInteger m,
-			SecureRandom r) {
+			Random r) {
 		BigInteger k = DSA.generateK(g, r);
 		return sign(g, x, k, m, r);
 	}
@@ -71,7 +71,7 @@ public class DSA {
 	 */
 	static DSASignature sign(DSAGroup g, DSAPrivateKey x,
 			BigInteger r, BigInteger kInv, 
-			BigInteger m, SecureRandom random) {
+			BigInteger m, Random random) {
 		BigInteger s1=m.add(x.getX().multiply(r)).mod(g.getQ());
 		BigInteger s=kInv.multiply(s1).mod(g.getQ());
 		if((r.compareTo(BigInteger.ZERO) == 0) || (s.compareTo(BigInteger.ZERO) == 0)) {
