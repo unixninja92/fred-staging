@@ -31,41 +31,7 @@ public final class CryptBitSet {
 	private BlockCipher blockCipher;
 	private PCFBMode pcfb;
 	
-	/**
-	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
-	 * sets of bytes using the algorithm type with the specified key.
-	 * @param type The symmetric algorithm, mode, and key and block size to use
-	 * @param key The key that will be used for encryption
-	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key){
-		this.type = type;
-		this.key = key;
-		try {
-			 if(type.cipherName == "Rijndael"){
-				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
-				blockCipher.initialize(key.getEncoded());
-				if(type == CryptBitSetType.RijndaelPCFB){
-					pcfb = PCFBMode.create(blockCipher, genIV());
-				}
-			 } 
-			 else {
-				 cipher = Cipher.getInstance(type.algName);
-				 genIV();
-			 }
-		}  catch (GeneralSecurityException e) {
-			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
-		} catch (UnsupportedCipherException e) {
-			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
-		} 
-	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key){
-		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
-	}
-	
-	public CryptBitSet(CryptBitSetType type){
-		this(type, KeyGenUtils.genSecretKey(type.keyType));
-	}
 	
 	
 	/**
@@ -78,17 +44,25 @@ public final class CryptBitSet {
 	 * @throws UnsupportedTypeException 
 	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv){
-		if(type.equals(CryptBitSetType.RijndaelECB)|| type.equals(CryptBitSetType.RijndaelECB128)){
-			throw new UnsupportedTypeException(type, "Rijndael in ECB mode does not take an IV.");
+		if(iv != null && type.ivSize == -1){
+			throw new UnsupportedTypeException(type, "This type does not take an IV.");
 		}
+		else if(iv != null){
+				this.iv = iv;
+		}
+		else if(type.ivSize != -1){
+			genIV();
+		}
+		
 		this.type = type;
 		this.key = key;
-		this.iv = iv;
 		try{
-			if(type == CryptBitSetType.RijndaelPCFB){
+			if(type.cipherName == "RIJNDAEL"){
 				blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
 				blockCipher.initialize(key.getEncoded());
-				pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
+				if(type == CryptBitSetType.RijndaelPCFB){
+					pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
+				}
 			} else{
 				cipher = Cipher.getInstance(type.algName);
 			}
@@ -99,8 +73,26 @@ public final class CryptBitSet {
 		}
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the algorithm type with the specified key.
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 */
+	public CryptBitSet(CryptBitSetType type, SecretKey key){
+		this(type, key, (IvParameterSpec)null);
+	}
+	
+	public CryptBitSet(CryptBitSetType type, byte[] key){
+		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
+	}
+	
+	public CryptBitSet(CryptBitSetType type){
+		this(type, KeyGenUtils.genSecretKey(type.keyType));
+	}
+	
 	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset){
-		this(type, key, new IvParameterSpec(iv, offset, type.getIVSize()));
+		this(type, key, new IvParameterSpec(iv, offset, type.ivSize));
 	}
 	
 	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv){
@@ -127,18 +119,18 @@ public final class CryptBitSet {
 			if(type == CryptBitSetType.RijndaelPCFB){
 				return pcfb.blockEncipher(input, offset, len);
 			} 
-			else if(type.cipherName == "Rijndael"){
+			else if(type.cipherName == "RIJNDAEL"){
 				byte[] result = new byte[len];
 				blockCipher.encipher(extractSmallerArray(input, offset, len), result);
 				return result;
 			}
 			else{
-				cipher.init(Cipher.ENCRYPT_MODE, key, iv);
+				cipher.init(Cipher.ENCRYPT_MODE, this.key, this.iv);
 				return cipher.doFinal(input, offset, len);
 			}
 		} catch (GeneralSecurityException e) {
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
-		} 
+		}
 		return null;
 	}
 	
@@ -172,7 +164,7 @@ public final class CryptBitSet {
 			if(type == CryptBitSetType.RijndaelPCFB){
 				return pcfb.blockDecipher(input, offset, len);
 			} 
-			else if(type.cipherName == "Rijndael"){
+			else if(type.cipherName == "RIJNDAEL"){
 				byte[] result = new byte[len];
 				blockCipher.decipher(extractSmallerArray(input, offset, len), result);
 				return result;
@@ -210,7 +202,7 @@ public final class CryptBitSet {
 	}
 	
 	public byte[] genIV(){
-		this.iv = KeyGenUtils.genIV(type.getIVSize());
+		this.iv = KeyGenUtils.genIV(type.ivSize);
 		return iv.getIV();
 	}
 	
