@@ -4,6 +4,8 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.BitSet;
 
 import javax.crypto.Cipher;
@@ -18,21 +20,20 @@ import freenet.support.Logger;
  * algorithm, key, and also an iv if the algorithm requires one. 
  * @author unixninja92
 */
+@SuppressWarnings("deprecation")
 public final class CryptBitSet {
-	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
+//	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
 	private final CryptBitSetType type;
 	private final SecretKey key;
 	private IvParameterSpec iv;
 
 	//Used for AES and ChaCha ciphers
-	private Cipher cipher;
+	private Cipher encryptCipher;
+	private Cipher decryptCipher;
 	
 	//These variables are used with Rijndael ciphers
 	private BlockCipher blockCipher;
 	private PCFBMode pcfb;
-	
-	
-	
 	
 	/**
 	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
@@ -64,11 +65,17 @@ public final class CryptBitSet {
 					pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
 				}
 			} else{
-				cipher = Cipher.getInstance(type.algName);
+				encryptCipher = Cipher.getInstance(type.algName);
+				decryptCipher = Cipher.getInstance(type.algName);
+				
+				encryptCipher.init(Cipher.ENCRYPT_MODE, this.key, this.iv);
+				decryptCipher.init(Cipher.DECRYPT_MODE, this.key, this.iv);
 			}
 		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} catch (UnsupportedCipherException e) {
+			e.printStackTrace();
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		}
 	}
@@ -125,10 +132,10 @@ public final class CryptBitSet {
 				return result;
 			}
 			else{
-				cipher.init(Cipher.ENCRYPT_MODE, this.key, this.iv);
-				return cipher.doFinal(input, offset, len);
+				return encryptCipher.doFinal(input, offset, len);
 			}
 		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		}
 		return null;
@@ -170,10 +177,10 @@ public final class CryptBitSet {
 				return result;
 			}
 			else{
-				cipher.init(Cipher.DECRYPT_MODE, key, iv);
-				return cipher.doFinal(input, offset, len);
+				return decryptCipher.doFinal(input, offset, len);
 			}
 		} catch (GeneralSecurityException e) {
+			e.printStackTrace();
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} 
 		return null;
@@ -197,12 +204,30 @@ public final class CryptBitSet {
 		return BitSet.valueOf(decrypt(input.toByteArray()));
 	}
 	
-	public void setIV(IvParameterSpec iv){
+	public void setIV(IvParameterSpec iv) throws InvalidAlgorithmParameterException{
+		if(type.ivSize == -1){
+			throw new UnsupportedTypeException(type);
+		}
 		this.iv = iv;
+		try {
+			encryptCipher.init(Cipher.ENCRYPT_MODE, this.key, this.iv);
+			decryptCipher.init(Cipher.DECRYPT_MODE, this.key, this.iv);
+		} catch (InvalidKeyException e) {
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
+		} 
 	}
 	
 	public byte[] genIV(){
+		if(type.ivSize == -1){
+			throw new UnsupportedTypeException(type);
+		}
 		this.iv = KeyGenUtils.genIV(type.ivSize);
+		try {
+			encryptCipher.init(Cipher.ENCRYPT_MODE, this.key, this.iv);
+			decryptCipher.init(Cipher.DECRYPT_MODE, this.key, this.iv);
+		} catch (GeneralSecurityException e) {
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
+		} 
 		return iv.getIV();
 	}
 	
