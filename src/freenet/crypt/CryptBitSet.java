@@ -22,7 +22,7 @@ import freenet.support.Logger;
 */
 @SuppressWarnings("deprecation")
 public final class CryptBitSet {
-//	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
+	public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
 	private final CryptBitSetType type;
 	private final SecretKey key;
 	private IvParameterSpec iv;
@@ -106,18 +106,6 @@ public final class CryptBitSet {
 	 */
 	public CryptBitSet(CryptBitSetType type, byte[] key) throws GeneralSecurityException{
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
-	}
-	
-	/**
-	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
-	 * sets of bytes using the specified algorithm type with the randomly generated key. 
-	 * If the algorithm requires an iv, it will generate a random one.
-	 * @param type The symmetric algorithm, mode, and key and block size to use
-	 * @throws InvalidAlgorithmParameterException 
-	 * @throws InvalidKeyException 
-	 */
-	public CryptBitSet(CryptBitSetType type) throws GeneralSecurityException{
-		this(type, KeyGenUtils.genSecretKey(type.keyType));
 	}
 	
 	/**

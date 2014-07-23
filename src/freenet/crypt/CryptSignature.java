@@ -99,7 +99,6 @@ public final class CryptSignature{
 	 * @throws FSParseException
 	 */
 	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{
-		//TODO add DSA support
 		this.type = type;
 		verifyOnly = false;
         try {

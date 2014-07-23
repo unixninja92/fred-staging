@@ -3,7 +3,13 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
-
+/**
+ * Keeps track of properties of different symmetric cipher algorithms
+ * available to Freenet including key type, name of the algorithm, 
+ * block size used, and iv length if required. 
+ * @author unixninja92
+ *
+ */
 public enum CryptBitSetType {
 	@Deprecated
 	RijndaelECB(1, KeyType.Rijndael256),
@@ -15,6 +21,7 @@ public enum CryptBitSetType {
 	ChaCha128(32, 8, "CHACHA", KeyType.ChaCha128),
 	ChaCha256(64, 8, "CHACHA", KeyType.ChaCha256);
 	
+	/** Bitmask for aggregation. */
 	public final int bitmask;
 	public final int blockSize;
 	public final int ivSize;
@@ -22,6 +29,11 @@ public enum CryptBitSetType {
 	public final String cipherName;
 	public final KeyType keyType;
 	
+	/**
+	 * Creates the RijndaelECB enum value. iv is -1. 
+	 * @param bitmask
+	 * @param keyType The type of key the alg requires
+	 */
 	private CryptBitSetType(int bitmask, KeyType keyType){
 		this.bitmask = bitmask;
 		this.keyType = keyType;
@@ -31,6 +43,13 @@ public enum CryptBitSetType {
 		algName = name();
 	}
 	
+	/**
+	 * Creates the RijndaelECB128 enum value. iv is -1. 
+	 * and sets the non-standard blocksize. 
+	 * @param bitmask
+	 * @param keyType The type of key the alg requires
+	 * @param blockSize The blocksize the alg uses
+	 */
 	private CryptBitSetType(int bitmask, KeyType keyType, int blockSize){
 		this.bitmask = bitmask;
 		this.ivSize = -1;
@@ -40,6 +59,12 @@ public enum CryptBitSetType {
 		algName = name();
 	}
 	
+	/**
+	 * Creates the RijndaelPCFB enum value.
+	 * @param bitmask
+	 * @param ivSize Size of the iv
+	 * @param keyType The type of key the alg requires
+	 */
 	private CryptBitSetType(int bitmask, int ivSize, KeyType keyType){
 		this.bitmask = bitmask;
 		this.keyType = keyType;
@@ -49,6 +74,14 @@ public enum CryptBitSetType {
 		algName = name();
 	}
 	
+	/**
+	 * Creates an enum value for the specified algorithm, keytype, and iv size. 
+	 * Also stores the name of the alg that java recognizes 
+	 * @param bitmask
+	 * @param ivSize Size of the iv
+	 * @param algName The name the java provider uses for the alg
+	 * @param keyType The type of key the alg requires
+	 */
 	private CryptBitSetType(int bitmask, int ivSize, String algName, KeyType keyType){
 		this.bitmask = bitmask;
 		this.ivSize = ivSize;
