@@ -39,11 +39,12 @@ public final class CryptBitSet {
 	
 	/**
 	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
-	 * sets of bytes using the algorithm type with the specified key and iv. Should 
-	 * only be used with RijndaelPCFB
-	 * @param type
-	 * @param key
-	 * @param iv
+	 * sets of bytes using the specified algorithm type with the given key. If the 
+	 * algorithm requires an iv, it will either use the one passed in, or if that is
+	 * null, it will generate a random one.
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 * @param iv The iv that will be used for encryption. 
 	 * @throws InvalidAlgorithmParameterException 
 	 * @throws InvalidKeyException 
 	 * @throws UnsupportedTypeException 
@@ -86,21 +87,22 @@ public final class CryptBitSet {
 	
 	/**
 	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
-	 * sets of bytes using the algorithm type with the specified key.
+	 * sets of bytes using the specified algorithm type with the given key. If the 
+	 * algorithm requires an iv, it will generate a random one.
 	 * @param type The symmetric algorithm, mode, and key and block size to use
 	 * @param key The key that will be used for encryption
 	 * @throws InvalidAlgorithmParameterException 
 	 * @throws InvalidKeyException 
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public CryptBitSet(CryptBitSetType type, SecretKey key) throws GeneralSecurityException{
 		this(type, key, (IvParameterSpec)null);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public CryptBitSet(CryptBitSetType type, byte[] key) throws GeneralSecurityException{
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
 	}
 	
-	public CryptBitSet(CryptBitSetType type) throws InvalidKeyException, InvalidAlgorithmParameterException{
+	public CryptBitSet(CryptBitSetType type) throws GeneralSecurityException{
 		this(type, KeyGenUtils.genSecretKey(type.keyType));
 	}
 	
@@ -121,7 +123,8 @@ public final class CryptBitSet {
 	}
 	
 	/**
-	 * Encrypts the specified section of input
+	 * Encrypts the specified section of provided byte[]. If you are using a RijndaelECB
+	 * alg then len must equal the block size. 
 	 * @param input The bytes to be encrypted
 	 * @param offset The position of input to start encrypting at
 	 * @param len The number of bytes after offset to encrypt
@@ -148,7 +151,8 @@ public final class CryptBitSet {
 	}
 	
 	/**
-	 * Encrypts the entire byte[] input
+	 * Encrypts the provided byte[]. If you are using a RijndaelECB
+	 * alg then the length of input must equal the block size. 
 	 * @param input The byte[] to be encrypted
 	 * @return The encrypted byte[]
 	 */
@@ -157,7 +161,8 @@ public final class CryptBitSet {
 	}
 	
 	/**
-	 * Encrypts the BitSet input
+	 * Encrypts the provided BitSet. If you are using a RijndaelECB
+	 * alg then the length of input must equal the block size. 
 	 * @param input The BitSet to encrypt
 	 * @return The encrypted BitSet
 	 */
@@ -166,7 +171,8 @@ public final class CryptBitSet {
 	}
 	
 	/**
-	 * Decrypts the specified section of input
+	 * Decrypts the specified section of provided byte[]. If you are using a RijndaelECB
+	 * alg then len must equal the block size. 
 	 * @param input The bytes to be decrypted
 	 * @param offset The position of input to start decrypting at
 	 * @param len The number of bytes after offset to decrypt
@@ -193,7 +199,8 @@ public final class CryptBitSet {
 	}
 	
 	/**
-	 * Decrypts the entire byte[] input
+	 * Decrypts the provided byte[]. If you are using a RijndaelECB
+	 * alg then the length of input must equal the block size. 
 	 * @param input The byte[] to be decrypted
 	 * @return The decrypted byte[]
 	 */
@@ -202,7 +209,8 @@ public final class CryptBitSet {
 	}
 	
 	/**
-	 * Decrypts the BitSet input
+	 * Decrypts the provided BitSet. If you are using a RijndaelECB
+	 * alg then the length of input must equal the block size.
 	 * @param input The BitSet to decrypt
 	 * @return The decrypted BitSet
 	 */
@@ -210,6 +218,12 @@ public final class CryptBitSet {
 		return BitSet.valueOf(decrypt(input.toByteArray()));
 	}
 	
+	/**
+	 * Changes the current iv to the provided iv and initializes the cipher instances with
+	 * the new iv. Only works with algorithms that support IVs.
+	 * @param iv The new iv to use as IvParameterSpec
+	 * @throws InvalidAlgorithmParameterException
+	 */
 	public void setIV(IvParameterSpec iv) throws InvalidAlgorithmParameterException{
 		if(type.ivSize == -1){
 			throw new UnsupportedTypeException(type);
@@ -223,6 +237,11 @@ public final class CryptBitSet {
 		} 
 	}
 	
+	/**
+	 * Generates a new IV to be used and initializes the cipher instances with
+	 * the new iv. Only works with algorithms that support IVs.
+	 * @return The generated IV
+	 */
 	public byte[] genIV(){
 		if(type.ivSize == -1){
 			throw new UnsupportedTypeException(type);
@@ -237,6 +256,10 @@ public final class CryptBitSet {
 		return iv.getIV();
 	}
 	
+	/**
+	 * Gets the IV being used. Only works with algorithms that support IVs.
+	 * @return Returns the iv as a IvParameterSpec
+	 */
 	public IvParameterSpec getIV(){
 		return iv;
 	}
