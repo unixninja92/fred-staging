@@ -1,6 +1,5 @@
 package freenet.crypt;
 
-import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.MessageDigest;
 import java.security.Security;
