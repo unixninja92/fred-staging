@@ -5,8 +5,11 @@ package freenet.crypt;
 
 
 public enum CryptBitSetType {
+	@Deprecated
 	RijndaelECB(1, KeyType.Rijndael256),
+	@Deprecated
 	RijndaelECB128(2, KeyType.Rijndael256, 128),
+	@Deprecated
 	RijndaelPCFB(8, 32, KeyType.Rijndael256),
 	AESCTR(16, 16, "AES/CTR/NOPADDING", KeyType.AES256),
 	ChaCha128(32, 8, "CHACHA", KeyType.ChaCha128),
