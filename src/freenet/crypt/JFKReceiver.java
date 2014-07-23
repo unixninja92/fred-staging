@@ -4,6 +4,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 
 import net.i2p.util.NativeBigInteger;
@@ -123,7 +124,7 @@ public final class JFKReceiver extends JFKExchange {
 		CryptBitSet cryptBits = null;
 		try {
 			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
-		} catch (UnsupportedTypeException e1) {
+		} catch (UnsupportedTypeException | InvalidKeyException | InvalidAlgorithmParameterException e1) {
 			Logger.error(KeyExchange.class, "Internal error; please report:", e1);
 		}
 		byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);

@@ -4,6 +4,7 @@
 package freenet.crypt;
 
 import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 
 import org.bouncycastle.util.Arrays;
@@ -146,7 +147,7 @@ public final class JFKInitiator extends JFKExchange {
 		CryptBitSet cryptBits = null;
 		try {
 			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
-		} catch (UnsupportedTypeException e) {
+		} catch (UnsupportedTypeException | InvalidKeyException | InvalidAlgorithmParameterException e) {
 			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		}
 		byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
@@ -185,7 +186,7 @@ public final class JFKInitiator extends JFKExchange {
 		CryptBitSet cryptBits = null;
 		try {
 			cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, encypheredPayload, encypheredPayloadOffset);
-		} catch (UnsupportedTypeException e) {
+		} catch (UnsupportedTypeException | InvalidKeyException | InvalidAlgorithmParameterException e) {
 			Logger.error(JFKInitiator.class, "Internal error; please report:", e);
 		}
 		encypheredPayloadOffset += ivLength;

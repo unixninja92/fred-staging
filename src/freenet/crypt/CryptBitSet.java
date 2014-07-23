@@ -6,9 +6,11 @@ package freenet.crypt;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.BitSet;
 
 import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
@@ -42,9 +44,11 @@ public final class CryptBitSet {
 	 * @param type
 	 * @param key
 	 * @param iv
+	 * @throws InvalidAlgorithmParameterException 
+	 * @throws InvalidKeyException 
 	 * @throws UnsupportedTypeException 
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv){
+	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		if(iv != null && type.ivSize == -1){
 			throw new UnsupportedTypeException(type, "This type does not take an IV.");
 		}
@@ -71,13 +75,13 @@ public final class CryptBitSet {
 				encryptCipher.init(Cipher.ENCRYPT_MODE, this.key, this.iv);
 				decryptCipher.init(Cipher.DECRYPT_MODE, this.key, this.iv);
 			}
+		}catch (UnsupportedCipherException e) {
+			e.printStackTrace();
+			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
 		} catch (GeneralSecurityException e) {
 			e.printStackTrace();
 			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
-		} catch (UnsupportedCipherException e) {
-			e.printStackTrace();
-			Logger.error(CryptBitSet.class, "Internal error; please report:", e);
-		}
+		} 
 	}
 	
 	/**
@@ -85,32 +89,34 @@ public final class CryptBitSet {
 	 * sets of bytes using the algorithm type with the specified key.
 	 * @param type The symmetric algorithm, mode, and key and block size to use
 	 * @param key The key that will be used for encryption
+	 * @throws InvalidAlgorithmParameterException 
+	 * @throws InvalidKeyException 
 	 */
-	public CryptBitSet(CryptBitSetType type, SecretKey key){
+	public CryptBitSet(CryptBitSetType type, SecretKey key) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, (IvParameterSpec)null);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key){
+	public CryptBitSet(CryptBitSetType type, byte[] key) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
 	}
 	
-	public CryptBitSet(CryptBitSetType type){
+	public CryptBitSet(CryptBitSetType type) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, KeyGenUtils.genSecretKey(type.keyType));
 	}
 	
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset){
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, new IvParameterSpec(iv, offset, type.ivSize));
 	}
 	
-	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv){
+	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, iv, 0);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset){
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType), iv, offset);
 	}
 	
-	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv){
+	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, iv, 0);
 	}
 	
