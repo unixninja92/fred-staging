@@ -47,7 +47,6 @@ public final class CryptBitSet {
 	 * @param iv The iv that will be used for encryption. 
 	 * @throws InvalidAlgorithmParameterException 
 	 * @throws InvalidKeyException 
-	 * @throws UnsupportedTypeException 
 	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		if(iv != null && type.ivSize == -1){
@@ -98,26 +97,85 @@ public final class CryptBitSet {
 		this(type, key, (IvParameterSpec)null);
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the specified algorithm type with the given key. If the 
+	 * algorithm requires an iv, it will generate a random one.
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 * @throws InvalidAlgorithmParameterException 
+	 * @throws InvalidKeyException 
+	 */
 	public CryptBitSet(CryptBitSetType type, byte[] key) throws GeneralSecurityException{
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the specified algorithm type with the randomly generated key. 
+	 * If the algorithm requires an iv, it will generate a random one.
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @throws InvalidAlgorithmParameterException 
+	 * @throws InvalidKeyException 
+	 */
 	public CryptBitSet(CryptBitSetType type) throws GeneralSecurityException{
 		this(type, KeyGenUtils.genSecretKey(type.keyType));
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the specified algorithm type with the given key and iv. 
+	 * The iv will be extracted from the passed in byte[] starting at the offset
+	 * using the length provided by type.ivSize
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 * @param iv The byte[] containing the iv
+	 * @param offset Where in the byte[] the iv starts
+	 * @throws InvalidKeyException
+	 * @throws InvalidAlgorithmParameterException
+	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, new IvParameterSpec(iv, offset, type.ivSize));
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the specified algorithm type with the given key and iv.
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 * @param iv The iv that will be used for encryption. 
+	 * @throws InvalidAlgorithmParameterException 
+	 * @throws InvalidKeyException 
+	 */
 	public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, iv, 0);
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the specified algorithm type with the given key and iv. 
+	 * The iv will be extracted from the passed in byte[] starting at the offset
+	 * using the length provided by type.ivSize
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 * @param iv The byte[] containing the iv
+	 * @param offset Where in the byte[] the iv starts
+	 * @throws InvalidKeyException
+	 * @throws InvalidAlgorithmParameterException
+	 */
 	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, KeyGenUtils.getSecretKey(key, type.keyType), iv, offset);
 	}
 	
+	/**
+	 * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
+	 * sets of bytes using the specified algorithm type with the given key and iv.
+	 * @param type The symmetric algorithm, mode, and key and block size to use
+	 * @param key The key that will be used for encryption
+	 * @param iv The iv that will be used for encryption. 
+	 * @throws InvalidAlgorithmParameterException 
+	 * @throws InvalidKeyException 
+	 */
 	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
 		this(type, key, iv, 0);
 	}
@@ -264,6 +322,13 @@ public final class CryptBitSet {
 		return iv;
 	}
 	
+	/**
+	 * Extracts a subset of a byte array
+	 * @param input The byte[] to extract from
+	 * @param offset Where to start extracting
+	 * @param len How many bytes to extract after offset
+	 * @return The extracted subset
+	 */
 	private byte[] extractSmallerArray(byte[] input, int offset, int len){
 		if(input.length == len && offset == 0){
 			return input;
