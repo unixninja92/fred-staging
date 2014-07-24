@@ -200,6 +200,18 @@ public final class CryptSignature{
 		}
 	}
 	
+	public byte[] sign(){
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
+		try {
+			return sig.sign();
+		} catch (SignatureException e) {
+			Logger.error(CryptSignature.class, "Internal error; please report:", e);
+		}
+		return null;
+	}
+	
 	/**
 	 * Signs the byte[]s passed in
 	 * @param data byte[]s to be signed
