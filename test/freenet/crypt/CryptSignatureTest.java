@@ -1,57 +1,38 @@
 package freenet.crypt;
 
-import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.Security;
 
-import net.i2p.util.NativeBigInteger;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Hex;
 
+import freenet.node.NodeStarter;
 import junit.framework.TestCase;
 
 public class CryptSignatureTest extends TestCase {
-	private static final SigType[] types = SigType.values();
-	/*-------------FIPS-EXAMPLE-CONSTANTS---------------------------------------
-     * These are the values as they appear in the Appendix 5
-     * "Example of the DSA" of FIPS PUB 186-2.
-     * We can consider them sure examples */
-    private static final BigInteger FIPS_P = new NativeBigInteger(
-                                "8df2a494492276aa3d25759bb06869cbeac0d83afb8d0cf7"+
-                                "cbb8324f0d7882e5d0762fc5b7210eafc2e9adac32ab7aac"+
-                                "49693dfbf83724c2ec0736ee31c80291",16);
-    private static final BigInteger FIPS_Q = new NativeBigInteger(
-                                "c773218c737ec8ee993b4f2ded30f48edace915f",16);
-    private static final BigInteger FIPS_G = new NativeBigInteger(
-                                "626d027839ea0a13413163a55b4cb500299d5522956cefcb"+
-                                "3bff10f399ce2c2e71cb9de5fa24babf58e5b79521925c9c"+
-                                "c42e9f6f464b088cc572af53e6d78802",16);
-    private static final BigInteger FIPS_X = new NativeBigInteger(
-                                "2070b3223dba372fde1c0ffc7b2e3b498b260614",16);
-    private static final BigInteger FIPS_Y = new NativeBigInteger(
-                                "19131871d75b1612a819f29d78d1b0d7346f7aa77bb62a85"+
-                                "9bfd6c5675da9d212d3a36ef1672ef660b8c7c255cc0ec74"+
-                                "858fba33f44c06699630a76b030ee333",16);
-    private static final BigInteger FIPS_K = new NativeBigInteger(
-                                "358dad571462710f50e254cf1a376b2bdeaadfbf",16);
-    private static final BigInteger FIPS_K_INV = new NativeBigInteger(
-                                "0d5167298202e49b4116ac104fc3f415ae52f917",16);
-    private static final BigInteger FIPS_SHA1_M = new NativeBigInteger(
-                                "a9993e364706816aba3e25717850c26c9cd0d89d",16);
-    private static final BigInteger FIPS_R = new NativeBigInteger(
-                                "8bac1ab66410435cb7181f95b16ab97c92b341c0",16);
-    private static final BigInteger FIPS_S = new NativeBigInteger(
-                                "41e2345f1f56df2458f426d155b4ba2db6dcd8c8",16);
-    private static final DSAGroup FIPS_DSA_GROUP = 
-                    new DSAGroup(FIPS_P,FIPS_Q,FIPS_G);
-    private static final DSAPrivateKey FIPS_DSA_PRIVATE_KEY = 
-                    new DSAPrivateKey(FIPS_X, FIPS_DSA_GROUP);
-    private static final DSAPublicKey FIPS_DSA_PUBLIC_KEY =
-                    new DSAPublicKey(FIPS_DSA_GROUP,FIPS_Y);
-    private static final DSASignature FIPS_DSA_SIGNATURE = 
-                    new DSASignature(FIPS_R,FIPS_S);
+	private static final SigType dsaType = SigType.DSA;
+	private static final DSAPrivateKey dsaPrivK = new DSAPrivateKey(Global.DSAgroupBigA, NodeStarter.getGlobalSecureRandom());
+	private static final DSAPublicKey dsaPubK = new DSAPublicKey(Global.DSAgroupBigA, dsaPrivK);
+	
+	private static final SigType[] ecdsaTypes = {SigType.ECDSAP256, SigType.ECDSAP384, SigType.ECDSAP512};
+	private static final byte[][] publicKeys = 
+		{ Hex.decode("3059301306072a8648ce3d020106082a8648ce3d0301070342000489865a155b5c1a73c875274b6b290325fcee9ddbb2db18ddfa3bc3c3c74ad59e2d98017041856f0835338de51bf11c4ec354f05c7ad529c0f86ed0accf5e318f"),
+		  Hex.decode("3076301006072a8648ce3d020106052b8104002203620004ff548eba3d7cb70665adf0ea9eaa91fcd6f18202ee21e3130fab138c02e73f907896f250e3ca6c1f235ba8b5cdea57058958bceb1da141c40e4dd23f466766b5f18c96bafcc10a1eed0818e8e41f2170dbe9600d3634f43f60d16f4bea6c9eb9"),
+		  Hex.decode("30819b301006072a8648ce3d020106052b810400230381860004010a2770d3182a7504fc4f8b9f8a1fe2f8cc093e2590d9eb8321d43063df1590674262c6c9676c462f80ccb48eabf482b935565dd331a4de733b1fd1c2ea32a14f350184d7e868a0b89ee74f9ba55b90bb2de903794dded4b94980cbcab4e66f8d3d3ec90560fb8b93c33e3f78d40f12f362762a7855726a16ff724d18bcb0d469b053e7")
+		};
+	private static final byte[][] privateKeys =
+		{ Hex.decode("3041020100301306072a8648ce3d020106082a8648ce3d030107042730250201010420b37e4c53f2b30dbe20fd1fcf3f4fc6b9f367949bb15ada1901f9d101cbecd91e"),
+		  Hex.decode("304e020100301006072a8648ce3d020106052b81040022043730350201010430f34b6cbcda795a8cd0a488249da35e791dfda41f5ca12ef7dc132cf342dce1fb568d5d1dd8c2c12202d73df213224b03"),
+		  Hex.decode("3060020100301006072a8648ce3d020106052b81040023044930470201010442019c70f4538856a2eb270a6d99cac7dd0e51e0e56b55dde864291009b6219af0a21be42079481f97df412f288a519766ca600377e8be87931e9d9cf763f0ea86ea98")
+		};
+	
+	private static final byte[] message = Hex.decode("6bc1bee22e409f96e93d7e117393172a"
+			+ "ae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52ef"
+			+ "f69f2445df4f9b17ad2b417be66c3710");
+	
 	static{
 		Security.addProvider(new BouncyCastleProvider());
-		
 	}
 	
 	public void testAddByte() {

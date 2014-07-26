@@ -9,6 +9,8 @@ import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -85,11 +87,33 @@ public final class CryptSignature{
 		else{
 			try {
 				keys = KeyGenUtils.getPublicKeyPair(type.keyType, publicKey);
+				sig = type.get();
 				sig.initVerify(keys.getPublic());
 			} catch (UnsupportedTypeException e) {
 				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
 		}
+	}
+	
+	public CryptSignature(SigType type, KeyPair pair) throws InvalidKeyException{
+		if(type == SigType.DSA){
+			throw new UnsupportedTypeException(type);
+		}
+		this.type = type;
+		this.keys = pair;
+		verifyOnly = (pair.getPrivate() == null);
+
+			sig = type.get();
+			if(!verifyOnly){
+				sig.initSign(keys.getPrivate());
+			}
+			sig.initVerify(keys.getPublic());
+		
+			
+	}
+	
+	public CryptSignature(SigType type, PublicKey pub, PrivateKey pri) throws InvalidKeyException{
+		this(type, KeyGenUtils.getKeyPair(pub, pri));
 	}
 	
 	/**
