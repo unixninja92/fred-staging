@@ -2,6 +2,7 @@ package freenet.crypt;
 
 import static org.junit.Assert.*;
 
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.Security;
@@ -13,6 +14,7 @@ import org.junit.Test;
 import freenet.node.NodeStarter;
 
 public class CryptSignatureTest {
+	@SuppressWarnings("deprecation")
 	private static final SigType dsaType = SigType.DSA;
 	private static final DSAPrivateKey dsaPrivateKey = new DSAPrivateKey(Global.DSAgroupBigA, NodeStarter.getGlobalSecureRandom());
 	private static final DSAPublicKey dsaPublicKey = new DSAPublicKey(Global.DSAgroupBigA, dsaPrivateKey);
@@ -74,6 +76,7 @@ public class CryptSignatureTest {
 	}
 	
 	@Test
+	@SuppressWarnings("null")
 	public void testAddByteToSignNullInput() {
 		for(int i = 0; i < ecdsaTypes.length; i++){
 			CryptSignature sig = null;
@@ -221,7 +224,40 @@ public class CryptSignatureTest {
 	
 	@Test
 	public void testAddBytesToSignByteBuffer() {
-		fail("Not yet implemented");
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			try {
+				CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+				ByteBuffer byteBuffer = ByteBuffer.wrap(message);
+
+				sig.addBytesToSign(byteBuffer);
+				assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(sig.sign(), message));
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+		}
+	}
+	
+	@Test
+	public void testAddBytesToSignByteBufferNullInput() {
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			try {
+				CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+				ByteBuffer byteBuffer = null;
+
+				try{
+					sig.addBytesToSign(byteBuffer);
+					fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+				} catch (NullPointerException e) {}
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+		}
+	}
+	
+	@Test (expected = UnsupportedTypeException.class)
+	public void testAddBytesToSignByteBufferUnsupportedType() {
+		CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+		sig.addBytesToSign(ByteBuffer.wrap(message));
 	}
 
 	@Test

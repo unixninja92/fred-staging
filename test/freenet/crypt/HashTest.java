@@ -14,8 +14,6 @@ import net.i2p.util.NativeBigInteger;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
-import junit.framework.TestCase;
-
 public class HashTest {
 	static private byte[] helloWorld = "hello world".getBytes(Charset.forName("UTF-8"));
 	static private byte[] nullArray = null;
