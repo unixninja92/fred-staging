@@ -23,7 +23,7 @@ import freenet.support.Logger;
  *
  */
 public final class MessageAuthCode {
-	public static final MACType preferredMAC = MACType.Poly1305;
+	public static final MACType preferredMAC = MACType.Poly1305AES;
 	private final MACType type;
 	private final Mac mac;
 	private final SecretKey key;
@@ -85,7 +85,7 @@ public final class MessageAuthCode {
 	
 	/**
 	 * Creates an instance of MessageAuthCode that will use the specified algorithm and 
-	 * will generate a key. If the algorithms requires an IV it will generate one. 
+	 * will generate a key. If the algorithm requires an IV it will generate one. 
 	 * @param type The MAC algorithm to 
 	 * @throws InvalidKeyException
 	 */
@@ -114,7 +114,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(MACType type, byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
-		this(type, KeyGenUtils.getSecretKey(key, KeyType.POLY1305AES), iv);
+		this(type, KeyGenUtils.getSecretKey(key, type.keyType), iv);
 	}
 	
 	/**
@@ -122,7 +122,7 @@ public final class MessageAuthCode {
 	 * @param encodedKey Key to check
 	 */
 	private final void checkPoly1305Key(byte[] encodedKey){
-		if(type != MACType.Poly1305){
+		if(type != MACType.Poly1305AES){
 			throw new UnsupportedTypeException(type);
 		}
 		Poly1305KeyGenerator.checkKey(encodedKey);
