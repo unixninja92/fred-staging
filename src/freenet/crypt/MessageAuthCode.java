@@ -114,7 +114,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(MACType type, byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
-		this(type, KeyGenUtils.getSecretKey(key, KeyType.POLY1305), iv);
+		this(type, KeyGenUtils.getSecretKey(key, KeyType.POLY1305AES), iv);
 	}
 	
 	/**
