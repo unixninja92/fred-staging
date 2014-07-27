@@ -81,7 +81,7 @@ public class KeyGenUtilsTest {
 		for(KeyPairType type: trueKeyPairTypes){
 			try {
 				assertNotNull("KeyPairType: "+type.name(), KeyGenUtils.genKeyPair(type));
-				} catch (UnsupportedTypeException e) {
+			} catch (UnsupportedTypeException e) {
 				fail("UnsupportedTypeException thrown");
 			}
 		}

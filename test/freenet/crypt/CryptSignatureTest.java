@@ -1,14 +1,16 @@
 package freenet.crypt;
 
+import static org.junit.Assert.*;
+
 import java.security.Security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Test;
 
 import freenet.node.NodeStarter;
-import junit.framework.TestCase;
 
-public class CryptSignatureTest extends TestCase {
+public class CryptSignatureTest {
 	private static final SigType dsaType = SigType.DSA;
 	private static final DSAPrivateKey dsaPrivK = new DSAPrivateKey(Global.DSAgroupBigA, NodeStarter.getGlobalSecureRandom());
 	private static final DSAPublicKey dsaPubK = new DSAPublicKey(Global.DSAgroupBigA, dsaPrivK);
@@ -33,22 +35,62 @@ public class CryptSignatureTest extends TestCase {
 		Security.addProvider(new BouncyCastleProvider());
 	}
 	
-	public void testAddByte() {
+	@Test
+	public void testCryptSignatureSigTypeKeyPair() {
 		fail("Not yet implemented");
 	}
 
-	public void testAddBytesByteArray() {
+	@Test
+	public void testCryptSignatureSigTypePublicKeyPrivateKey() {
 		fail("Not yet implemented");
 	}
 
-	public void testAddBytesByteArrayIntInt() {
+	@Test
+	public void testCryptSignatureDSAPrivateKeyDSAPublicKey() {
 		fail("Not yet implemented");
 	}
 
-	public void testAddBytesByteBuffer() {
+	@Test
+	public void testAddByteToSign() {
 		fail("Not yet implemented");
 	}
 
+	@Test
+	public void testAddBytesToSignByteArrayArray() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testAddBytesToSignByteArrayIntInt() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testAddBytesToSignByteBuffer() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testAddByteToVerify() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testAddBytesToVerifyByteArrayArray() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testAddBytesToVerifyByteArrayIntInt() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testAddBytesToVerifyByteBuffer() {
+		fail("Not yet implemented");
+	}
+
+	@Test
 	public void testSign() {
 		CryptSignature sign = new CryptSignature(dsaType);
 		assertNotNull("SigType: "+dsaType.name(), sign.sign(message));
@@ -58,6 +100,7 @@ public class CryptSignatureTest extends TestCase {
 		}
 	}
 	
+	@Test
 	public void testSignLength() {
 		for(SigType type: ecdsaTypes){
 			CryptSignature sign = new CryptSignature(type);
@@ -65,46 +108,67 @@ public class CryptSignatureTest extends TestCase {
 		}
 	}
 
+	@Test
+	public void testSignByteArrayArray() {
+		fail("Not yet implemented");
+	}
+
+	@Test
 	public void testSignToDSASignatureByteArrayArray() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testSignToDSASignatureBigInteger() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testSignToNetworkFormat() {
 		fail("Not yet implemented");
 	}
 
+	@Test
+	public void testVerifyByteArrayIntInt() {
+		fail("Not yet implemented");
+	}
+
+	@Test
 	public void testVerifyByteArray() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testVerifyByteArrayByteArrayArray() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testVerifyDSASignatureBigInteger() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testVerifyBigIntegerBigIntegerBigInteger() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testVerifyDSASignatureByteArrayArray() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testVerifyBigIntegerBigIntegerByteArrayArray() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testGetPublicKey() {
 		fail("Not yet implemented");
 	}
 
+	@Test
 	public void testAsFieldSet() {
 		fail("Not yet implemented");
 	}

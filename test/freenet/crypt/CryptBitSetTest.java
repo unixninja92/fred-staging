@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.Security;
 import java.util.BitSet;
@@ -83,7 +84,7 @@ public class CryptBitSetTest {
 				crypt.encrypt(plainText[i]);
 
 				byte[] decipheredtext = crypt.decrypt(ciphertext);
-				assertTrue("CryptBitSetType: "+type.name(), MessageDigest.isEqual(plainText[i], decipheredtext));
+				assertArrayEquals("CryptBitSetType: "+type.name(), plainText[i], decipheredtext);
 			}
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -111,7 +112,7 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 				byte[] decipheredtext = crypt.decrypt(ciphertext);
-				assertTrue("CryptBitSetType: "+type.name(), MessageDigest.isEqual(plainText[i], decipheredtext));
+				assertArrayEquals("CryptBitSetType: "+type.name(), plainText[i], decipheredtext);
 			}
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -153,15 +154,11 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				byte[] nullArray = null;
 				try{
 					crypt.encrypt(nullArray);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(), throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected NullPointerException");
+				}catch(NullPointerException e){}
 			}
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -180,15 +177,11 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				BitSet nullSet = null;
 				try{
 					crypt.encrypt(nullSet);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(), throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected NullPointerException");
+				}catch(NullPointerException e){}
 			}
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -207,15 +200,11 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				byte[] nullArray = null;
 				try{
 					crypt.encrypt(nullArray, 0, plainText[i].length);
-				}catch(NullPointerException | IllegalArgumentException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(),  throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or NullPointerException");
+				}catch(IllegalArgumentException | NullPointerException e){}
 			} 
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -234,14 +223,10 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				try{
 					crypt.encrypt(plainText[i], -3, plainText[i].length-3);
-				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(),  throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
 			} 
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -260,14 +245,10 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				try{
 					crypt.encrypt(plainText[i], 0, plainText[i].length+3);
-				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(),  throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
 			} 
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -286,15 +267,11 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				byte[] nullArray = null;
 				try{
 					crypt.decrypt(nullArray);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(), throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected NullPointerException");
+				}catch(NullPointerException e){}
 			}
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -313,15 +290,11 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				BitSet nullSet = null;
 				try{
 					crypt.decrypt(nullSet);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(), throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected NullPointerException");
+				}catch(NullPointerException e){}
 			}
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -340,15 +313,11 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				byte[] nullArray = null;
 				try{
 					crypt.decrypt(nullArray, 0, plainText[i].length);
-				}catch(NullPointerException | IllegalArgumentException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(),  throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or NullPointerException");
+				}catch(NullPointerException | IllegalArgumentException e){}
 			} 
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -367,14 +336,10 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				try{
 					crypt.decrypt(plainText[i], -3, plainText[i].length-3);
-				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(),  throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
 			} 
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -393,14 +358,10 @@ public class CryptBitSetTest {
 					crypt = new CryptBitSet(type, keys[i], ivs[i]);
 				}
 
-				boolean throwNull = false;
 				try{
 					crypt.decrypt(plainText[i], 0, plainText[i].length+3);
-				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){
-					throwNull = true;
-				}
-
-				assertTrue("CryptBitSetType: "+type.name(),  throwNull);
+					fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+				}catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
 			} 
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
@@ -412,7 +373,7 @@ public class CryptBitSetTest {
 		try{
 			int i = 4;
 			CryptBitSet crypt = new CryptBitSet(cipherTypes[i], keys[i], ivs[i]);
-			assertTrue(MessageDigest.isEqual(crypt.getIV().getIV(), ivs[i]));
+			assertArrayEquals(crypt.getIV().getIV(), ivs[i]);
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
 		}
@@ -425,41 +386,38 @@ public class CryptBitSetTest {
 			CryptBitSet crypt = new CryptBitSet(cipherTypes[i], keys[i], ivs[i]);
 			crypt.genIV();
 			crypt.setIV(new IvParameterSpec(ivs[i]));
-			assertTrue(MessageDigest.isEqual(ivs[i], crypt.getIV().getIV()));
+			assertArrayEquals(ivs[i], crypt.getIV().getIV());
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
 		}
 	}
 
-	@Test
+	@Test 
 	public void testSetIVIvParameterSpecNullInput() {
-		boolean throwNull = false;
 		IvParameterSpec nullInput = null;
-		try{
-			int i = 4;
-			CryptBitSet crypt = new CryptBitSet(cipherTypes[i], keys[i], ivs[i]);
-			crypt.setIV(nullInput);
-		} catch(InvalidAlgorithmParameterException e){
-			throwNull = true;
-		} catch(GeneralSecurityException e){
+		int i = 4;
+		CryptBitSet crypt = null;
+		try {
+			crypt = new CryptBitSet(cipherTypes[i], keys[i], ivs[i]);
+		} catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
 			fail("GeneralSecurityException thrown");
 		}
-		assertTrue(throwNull);
+		try{
+			crypt.setIV(nullInput);
+			fail("Expected InvalidAlgorithmParameterException");
+		} catch (InvalidAlgorithmParameterException e){}
 	}
 
-	@Test
+	@Test (expected = UnsupportedTypeException.class)
 	public void testSetIVIvParameterSpecUnsupportedTypeException() {
-		boolean throwNull = false;
 		try{
 			int i = 0;
 			CryptBitSet crypt = new CryptBitSet(cipherTypes[i], keys[i]);
 			crypt.setIV(new IvParameterSpec(ivs[4]));
-		} catch(UnsupportedTypeException e){
-			throwNull = true;
+			fail("Expected UnsupportedTypeException");
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
 		}
-		assertTrue(throwNull);
 	}
 
 	@Test
@@ -484,19 +442,16 @@ public class CryptBitSetTest {
 		}
 	}
 
-	@Test
+	@Test (expected = UnsupportedTypeException.class)
 	public void testGenIVUnsupportedTypeException() {
-		boolean throwNull = false;
 		try{
 			int i = 1;
 			CryptBitSet crypt = new CryptBitSet(cipherTypes[i], keys[i]);
 			crypt.genIV();
-		} catch(UnsupportedTypeException e){
-			throwNull = true;
+			fail("Expected UnsupportedTypeException");
 		} catch(GeneralSecurityException e){
 			fail("GeneralSecurityException thrown");
 		}
-		assertTrue(throwNull);
 	}
 
 }
