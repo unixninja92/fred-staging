@@ -1,5 +1,7 @@
 package freenet.crypt;
 
+import static org.junit.Assert.*;
+
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.MessageDigest;
@@ -10,10 +12,9 @@ import javax.crypto.spec.IvParameterSpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Test;
 
-import junit.framework.TestCase;
-
-public class CryptBitSetTest extends TestCase {
+public class CryptBitSetTest {
 	private static final CryptBitSetType[] cipherTypes = CryptBitSetType.values();
 
 	private static final byte[] ivPlainText = Hex.decode("6bc1bee22e409f96e93d7e117393172a"
@@ -44,6 +45,7 @@ public class CryptBitSetTest extends TestCase {
 		Security.addProvider(new BouncyCastleProvider());
 	}
 
+	@Test
 	public void testSuccessfulRoundTripByteArray() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -57,7 +59,7 @@ public class CryptBitSetTest extends TestCase {
 				byte[] ciphertext = crypt.encrypt(plainText[i]);
 
 				byte[] decipheredtext = crypt.decrypt(ciphertext);
-				assertTrue("CryptBitSetType: "+type.name(), MessageDigest.isEqual(plainText[i], decipheredtext));
+				assertArrayEquals("CryptBitSetType: "+type.name(), plainText[i], decipheredtext);
 			}
 
 		} catch(GeneralSecurityException e){
@@ -65,6 +67,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testSuccessfulRoundTripByteArrayReset() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -87,6 +90,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testSuccessfulRoundTripByteArrayNewInstance() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -114,6 +118,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testSuccessfulRoundTripBitSet() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -136,6 +141,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testEncryptByteArrayNullInput(){
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -162,6 +168,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testEncryptBitSetNullInput(){
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -188,6 +195,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testEncryptByteArrayIntIntNullInput() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -214,6 +222,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testEncryptByteArrayIntIntOffsetOutOfBounds() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -239,6 +248,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testEncryptByteArrayIntIntLengthOutOfBounds() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -264,6 +274,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDecryptByteArrayNullInput(){
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -290,6 +301,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDecryptBitSetNullInput(){
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -316,6 +328,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDecryptByteArrayIntIntNullInput() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -342,6 +355,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDecryptByteArrayIntIntOffsetOutOfBounds() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -367,6 +381,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testDecryptByteArrayIntIntLengthOutOfBounds() {
 		try{
 			for(int i = 0; i < cipherTypes.length; i++){
@@ -392,6 +407,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGetIV() {
 		try{
 			int i = 4;
@@ -402,6 +418,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testSetIVIvParameterSpec() {
 		try {
 			int i = 4;
@@ -414,6 +431,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testSetIVIvParameterSpecNullInput() {
 		boolean throwNull = false;
 		IvParameterSpec nullInput = null;
@@ -429,6 +447,7 @@ public class CryptBitSetTest extends TestCase {
 		assertTrue(throwNull);
 	}
 
+	@Test
 	public void testSetIVIvParameterSpecUnsupportedTypeException() {
 		boolean throwNull = false;
 		try{
@@ -443,6 +462,7 @@ public class CryptBitSetTest extends TestCase {
 		assertTrue(throwNull);
 	}
 
+	@Test
 	public void testGenIV() {
 		try{
 			int i = 4;
@@ -453,6 +473,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGenIVLength() {
 		try{
 			int i = 4;
@@ -463,6 +484,7 @@ public class CryptBitSetTest extends TestCase {
 		}
 	}
 
+	@Test
 	public void testGenIVUnsupportedTypeException() {
 		boolean throwNull = false;
 		try{
