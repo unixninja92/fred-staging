@@ -5,7 +5,6 @@ package freenet.crypt;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -30,7 +29,8 @@ public final class CryptSignature{
 	/* variables for ECDSA signatures */
 	private final SigType type;
 	private KeyPair keys;
-	private Signature sig;
+	private Signature sign;
+	private Signature verify;
 	
 	/* Variables for DSA signatures */
 	/** Length of signature parameters R and S */
@@ -56,12 +56,13 @@ public final class CryptSignature{
 			try {
 				keys = KeyGenUtils.genKeyPair(type.keyType);
 				
-				sig = type.get();
-				sig.initSign(keys.getPrivate());
-				sig.initVerify(keys.getPublic());
-			} catch (GeneralSecurityException e) {
-				Logger.error(CryptSignature.class, "Internal error; please report:", e);
+				sign = type.get();
+				sign.initSign(keys.getPrivate());
+				verify = type.get();
+				verify.initVerify(keys.getPublic());
 			} catch (UnsupportedTypeException e) {
+				Logger.error(CryptSignature.class, "Internal error; please report:", e);
+			} catch (InvalidKeyException e) {
 				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
 		}
@@ -86,8 +87,8 @@ public final class CryptSignature{
 		else{
 			try {
 				keys = KeyGenUtils.getPublicKeyPair(type.keyType, publicKey);
-				sig = type.get();
-				sig.initVerify(keys.getPublic());
+				verify = type.get();
+				verify.initVerify(keys.getPublic());
 			} catch (UnsupportedTypeException e) {
 				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
@@ -102,15 +103,14 @@ public final class CryptSignature{
 		this.keys = pair;
 		verifyOnly = (pair.getPrivate() == null);
 
-			sig = type.get();
-			if(!verifyOnly){
-				sig.initSign(keys.getPrivate());
-			}
-			sig.initVerify(keys.getPublic());
-		
-			
+		verify = type.get();
+		verify.initVerify(keys.getPublic());
+		if(!verifyOnly){
+			sign = type.get();
+			sign.initSign(keys.getPrivate());
+		}
 	}
-	
+
 	public CryptSignature(SigType type, PublicKey pub, PrivateKey pri) throws InvalidKeyException{
 		this(type, KeyGenUtils.getKeyPair(pub, pri));
 	}
@@ -137,9 +137,10 @@ public final class CryptSignature{
 
         		keys = KeyGenUtils.getKeyPair(type.keyType, pub, pri);
 
-        		sig = type.get();
-        		sig.initSign(keys.getPrivate());
-        		sig.initVerify(keys.getPublic());
+        		sign = type.get();
+				sign.initSign(keys.getPrivate());
+				verify = type.get();
+				verify.initVerify(keys.getPublic());
         	}
         }  catch (Exception e) {
             throw new FSParseException(e);
@@ -164,7 +165,7 @@ public final class CryptSignature{
 	 * @param input Byte to be signed
 	 * @throws UnsupportedTypeException 
 	 */
-	public void addByte(byte input) {
+	private void addByte(Signature sig, byte input) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -179,12 +180,14 @@ public final class CryptSignature{
 	 * Add the passed in byte[] to the bytes that will be signed.
 	 * @param input Byte[] to be signed
 	 */
-	public void addBytes(byte[] input) {
+	private void addBytes(Signature sig, byte[]... input) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
 		try {
-			sig.update(input);
+			for(byte[] b: input){
+				sig.update(b);
+			}
 		} catch (SignatureException e) {
 			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
@@ -197,7 +200,7 @@ public final class CryptSignature{
 	 * @param offset Where to start reading bytes for signature
 	 * @param length How many bytes after offset to use for signature
 	 */
-	public void addBytes(byte[] data, int offset, int length) {
+	private void addBytes(Signature sig, byte[] data, int offset, int length) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -212,7 +215,7 @@ public final class CryptSignature{
 	 * Adds the ByteBuffer to the bytes that will be signed.
 	 * @param input ByteBuffer to be signed
 	 */
-	public void addBytes(ByteBuffer input) {
+	private void addBytes(Signature sig, ByteBuffer input) {
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
@@ -223,16 +226,56 @@ public final class CryptSignature{
 		}
 	}
 	
+	public void addByteToSign(byte input) {
+		addByte(sign, input);
+	}
+	
+	public void addBytesToSign(byte[]... input) {
+		addBytes(sign, input);
+	}
+	
+	public void addBytesToSign(byte[] input, int offset, int length) {
+		addBytes(sign, input, offset, length);
+	}
+	
+	public void addBytesToSign(ByteBuffer input) {
+		addBytes(sign, input);
+	}
+	
+	public void addByteToVerify(byte input) {
+		addByte(verify, input);
+	}
+	
+	public void addBytesToVerify(byte[]... input) {
+		addBytes(verify, input);
+	}
+	
+	public void addBytesToVerify(byte[] input, int offset, int length) {
+		addBytes(verify, input, offset, length);
+	}
+	
+	public void addBytesToVerify(ByteBuffer input) {
+		addBytes(verify, input);
+	}
+	
 	public byte[] sign(){
+        byte[] result = null;
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
 		}
 		try {
-			return sig.sign();
+			while(true) {
+				result = sign.sign();
+				if(result.length <= type.maxSigSize)
+					break;
+				else
+					Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
+			}
 		} catch (SignatureException e) {
+			e.printStackTrace();
 			Logger.error(CryptSignature.class, "Internal error; please report:", e);
 		}
-		return null;
+		return result;
 	}
 	
 	/**
@@ -241,44 +284,27 @@ public final class CryptSignature{
 	 * @return The signature of the signed data
 	 */
 	public byte[] sign(byte[]... data) {
-        byte[] result = null;
-        if(!verifyOnly){
-        	if(type == SigType.DSA){
+		byte[] result = null;
+		if(!verifyOnly){
+			if(type == SigType.DSA){
 				try {
-	        		DSASignature sig;
+					DSASignature sig;
 					sig = signToDSASignature(data);
 					result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
-	        		System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
-	        		System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+					System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
+					System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
 				} catch (UnsupportedTypeException e) {
 					Logger.error(CryptSignature.class, "Internal error; please report:", e);
 				}
-        	}
-        	else{
-        		try{
-        			while(true) {
-        				sig.initSign(keys.getPrivate());
-        				for(byte[] b: data){
-        					addBytes(b);
-        				}
-        				result = sig.sign();
-        				// It's a DER encoded signature, most sigs will fit in N bytes
-        				// If it doesn't let's re-sign.
-        				if(result.length <= type.maxSigSize)
-        					break;
-        				else
-        					Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
-        			}
-        		} catch(GeneralSecurityException e){
-        			Logger.error(CryptSignature.class, "Internal error; please report:", e);
-        		} catch (UnsupportedTypeException e) {
-        			Logger.error(CryptSignature.class, "Internal error; please report:", e);
-				}
-        	}
-        }
-        else{
-        	throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
-        }
+			}
+			else{
+				addBytesToSign(data);
+				result = sign();
+			}
+		}
+		else{
+			throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
+		}
         return result;
     }
 	
@@ -350,7 +376,7 @@ public final class CryptSignature{
     		throw new UnsupportedTypeException(type);
     	}
     	try {
-    		return sig.verify(signature, offset, len);
+    		return verify.verify(signature, offset, len);
     	} catch (SignatureException e) {
     		Logger.error(CryptSignature.class, "Internal error; please report:", e);
     	}
@@ -388,9 +414,7 @@ public final class CryptSignature{
 			}
     	}
     	else {
-    		for(byte[] d: data){
-    			addBytes(d);
-    		}
+    		addBytesToVerify(data);
     		return verify(signature);
     	}
     	return false; 

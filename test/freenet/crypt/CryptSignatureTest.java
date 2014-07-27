@@ -52,11 +52,19 @@ public class CryptSignatureTest extends TestCase {
 	}
 
 	public void testSign() {
-		fail("Not yet implemented");
+		CryptSignature sign = new CryptSignature(dsaType);
+		assertNotNull("SigType: "+dsaType.name(), sign.sign(message));
+		for(SigType type: ecdsaTypes){
+			sign = new CryptSignature(type);
+			assertNotNull("SigType: "+type.name(), sign.sign(message));
+		}
 	}
 	
-	public void testSignByteArray() {
-		fail("Not yet implemented");
+	public void testSignLength() {
+		for(SigType type: ecdsaTypes){
+			CryptSignature sign = new CryptSignature(type);
+			assertTrue("SigType: "+type.name(), sign.sign(message).length <= type.maxSigSize);
+		}
 	}
 
 	public void testSignToDSASignatureByteArrayArray() {
