@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -122,7 +121,7 @@ public final class CryptSignature{
 	 * @param type
 	 * @throws FSParseException
 	 */
-	public CryptSignature(SimpleFieldSet sfs, SigType type) throws FSParseException{
+	public CryptSignature(SigType type, SimpleFieldSet sfs) throws FSParseException{
 		this.type = type;
 		verifyOnly = false;
         try {
@@ -346,17 +345,21 @@ public final class CryptSignature{
      * @param signature The signature to verify
      * @return If the signature is valid it returns true, otherwise it returns false.
      */
-	public boolean verify(byte[] signature) {
-		if(type == SigType.DSA){
-			throw new UnsupportedTypeException(type);
-		}
-		try {
-			return sig.verify(signature);
-		} catch (SignatureException e) {
-			Logger.error(CryptSignature.class, "Internal error; please report:", e);
-		}
-		return false;
-	}
+    public boolean verify(byte[] signature, int offset, int len) {
+    	if(type == SigType.DSA){
+    		throw new UnsupportedTypeException(type);
+    	}
+    	try {
+    		return sig.verify(signature, offset, len);
+    	} catch (SignatureException e) {
+    		Logger.error(CryptSignature.class, "Internal error; please report:", e);
+    	}
+    	return false;
+    }
+
+    public boolean verify(byte[] sig) {
+    	return verify(sig, 0, sig.length);
+    }
 	
 	/**
 	 * Verifies that the Signature of the byte[] data matches the signature passed in
@@ -384,10 +387,13 @@ public final class CryptSignature{
 				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
     	}
-    	else if(MessageDigest.isEqual(sign(data), signature)){
-    		return true;
+    	else {
+    		for(byte[] d: data){
+    			addBytes(d);
+    		}
+    		return verify(signature);
     	}
-    	return false;
+    	return false; 
     }
     
     /**
