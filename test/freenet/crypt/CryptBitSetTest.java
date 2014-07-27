@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.Security;
 import java.util.BitSet;
 

@@ -2,6 +2,8 @@ package freenet.crypt;
 
 import static org.junit.Assert.*;
 
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.Security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -12,8 +14,8 @@ import freenet.node.NodeStarter;
 
 public class CryptSignatureTest {
 	private static final SigType dsaType = SigType.DSA;
-	private static final DSAPrivateKey dsaPrivK = new DSAPrivateKey(Global.DSAgroupBigA, NodeStarter.getGlobalSecureRandom());
-	private static final DSAPublicKey dsaPubK = new DSAPublicKey(Global.DSAgroupBigA, dsaPrivK);
+	private static final DSAPrivateKey dsaPrivateKey = new DSAPrivateKey(Global.DSAgroupBigA, NodeStarter.getGlobalSecureRandom());
+	private static final DSAPublicKey dsaPublicKey = new DSAPublicKey(Global.DSAgroupBigA, dsaPrivateKey);
 	
 	private static final SigType[] ecdsaTypes = {SigType.ECDSAP256, SigType.ECDSAP384, SigType.ECDSAP512};
 	private static final byte[][] publicKeys = 
@@ -27,12 +29,17 @@ public class CryptSignatureTest {
 		  Hex.decode("3060020100301006072a8648ce3d020106052b81040023044930470201010442019c70f4538856a2eb270a6d99cac7dd0e51e0e56b55dde864291009b6219af0a21be42079481f97df412f288a519766ca600377e8be87931e9d9cf763f0ea86ea98")
 		};
 	
+	private static KeyPair[] keyPairs = new KeyPair[3];
+	
 	private static final byte[] message = Hex.decode("6bc1bee22e409f96e93d7e117393172a"
 			+ "ae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52ef"
 			+ "f69f2445df4f9b17ad2b417be66c3710");
 	
 	static{
 		Security.addProvider(new BouncyCastleProvider());
+		for(int i = 0; i < keyPairs.length; i++){
+			keyPairs[i] = KeyGenUtils.getKeyPair(ecdsaTypes[i].keyType, publicKeys[i], privateKeys[i]);
+		}
 	}
 	
 	@Test
@@ -52,19 +59,166 @@ public class CryptSignatureTest {
 
 	@Test
 	public void testAddByteToSign() {
-		fail("Not yet implemented");
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			try {
+				CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+
+				for (int j = 0; j < message.length; j++){
+					sig.addByteToSign(message[j]);
+				}
+				assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(sig.sign(), message));
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+		}
+	}
+	
+	@Test
+	public void testAddByteToSignNullInput() {
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			CryptSignature sig = null;
+			try {
+				sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+			Byte b = null;
+			try{
+				sig.addByteToSign(b);
+				fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+			} catch (NullPointerException e) {}
+		}
+	}
+	
+	@Test (expected = UnsupportedTypeException.class)
+	public void testAddByteToSignUnsupportedType() {
+		CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+		sig.addByteToSign(message[0]);
 	}
 
 	@Test
 	public void testAddBytesToSignByteArrayArray() {
-		fail("Not yet implemented");
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			try {
+				CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+
+				sig.addBytesToSign(message);
+				assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(sig.sign(), message));
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+		}
+	}
+	
+	@Test
+	public void testAddBytesToSignByteArrayArrayNullMatrixInput(){
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			CryptSignature sig = null;
+			try {
+				sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+			byte[][] b = null;
+			try{
+				sig.addBytesToSign(b);
+				fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+			} catch (NullPointerException e) {}
+		}
+	}
+	
+	@Test
+	public void testAddBytesToSignByteArrayArrayNullMatrixElement(){
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			CryptSignature sig = null;
+			try {
+				sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+			byte[][] b = {message, null};
+			try{
+				sig.addBytesToSign(b);
+				fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+			} catch (NullPointerException e) {}
+		}
+	}
+	
+	@Test (expected = UnsupportedTypeException.class)
+	public void testAddBytesToSignByteArrayArrayUnsupportedType() {
+		CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+		sig.addBytesToSign(message);
 	}
 
 	@Test
 	public void testAddBytesToSignByteArrayIntInt() {
-		fail("Not yet implemented");
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			try {
+				CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+
+				sig.addBytesToSign(message, 0, message.length);
+				assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(sig.sign(), message));
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+		}
+	}
+	
+	@Test
+	public void testAddBytesToSignByteArrayIntIntNullInput(){
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			CryptSignature sig = null;
+			try {
+				sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+			byte[] b = null;
+			try{
+				sig.addBytesToSign(b, 0, message.length);
+				fail("SigType: "+ecdsaTypes[i].name()+"Expected IllegalArgumentException");
+			} catch (IllegalArgumentException e) {}
+		}
+	}
+	
+	@Test
+	public void testAddBytesToSignByteArrayIntIntOffsetOutOfBounds(){
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			CryptSignature sig = null;
+			try {
+				sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+			try{
+				sig.addBytesToSign(message, -3, message.length);
+				fail("SigType: "+ecdsaTypes[i].name()+"Expected ArrayIndexOutOfBoundsException");
+			} catch (ArrayIndexOutOfBoundsException e) {}
+		}
+	}
+	
+	@Test
+	public void testAddBytesToSignByteArrayIntIntLengthOutOfBounds(){
+		for(int i = 0; i < ecdsaTypes.length; i++){
+			CryptSignature sig = null;
+			try {
+				sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+			} catch (InvalidKeyException e) {
+				fail("InvalidKeyException thrown");
+			}
+			try{
+				sig.addBytesToSign(message, 0, message.length+3);
+				fail("SigType: "+ecdsaTypes[i].name()+"Expected IllegalArgumentException");
+			} catch (IllegalArgumentException e) {}
+		}
 	}
 
+	@Test (expected = UnsupportedTypeException.class)
+	public void testAddBytesToSignByteArrayIntIntUnsupportedType() {
+		CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+		sig.addBytesToSign(message, 0, message.length);
+	}
+	
 	@Test
 	public void testAddBytesToSignByteBuffer() {
 		fail("Not yet implemented");

@@ -153,7 +153,7 @@ public final class CryptSignature{
 	 * @param priv DSA private key
 	 * @param pub DSA public key
 	 */
-	public CryptSignature(DSAPrivateKey priv, DSAPublicKey pub){
+	public CryptSignature(DSAPublicKey pub, DSAPrivateKey priv){
 		type = SigType.DSA;
 		dsaPrivK = priv;
 		dsaPubK = pub;
