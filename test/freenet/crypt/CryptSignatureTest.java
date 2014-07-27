@@ -1,7 +1,5 @@
 package freenet.crypt;
 
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
 import java.security.Security;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
