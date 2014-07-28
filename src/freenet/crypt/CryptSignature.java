@@ -24,6 +24,7 @@ import freenet.support.SimpleFieldSet;
 @SuppressWarnings("deprecation")
 public final class CryptSignature{
 	public static final SigType preferredSignature = SigType.ECDSAP256;
+	private static final String verifyError = "CryptSignature inalized in verify only mode. Can not sign in this mode";
 	private boolean verifyOnly;
 	
 	/* variables for ECDSA signatures */
@@ -160,6 +161,12 @@ public final class CryptSignature{
 		verifyOnly = false;
 	}
 	
+	public CryptSignature(DSAPublicKey pub){
+		type = SigType.DSA;
+		dsaPubK = pub;
+		verifyOnly = true;
+	}
+	
 	/**
 	 * Add the passed in byte to the bytes that will be signed.
 	 * @param input Byte to be signed
@@ -227,18 +234,30 @@ public final class CryptSignature{
 	}
 	
 	public void addByteToSign(byte input) {
+		if(verifyOnly){
+			throw new IllegalStateException(verifyError);
+		}
 		addByte(sign, input);
 	}
 	
 	public void addBytesToSign(byte[]... input) {
+		if(verifyOnly){
+			throw new IllegalStateException(verifyError);
+		}
 		addBytes(sign, input);
 	}
 	
 	public void addBytesToSign(byte[] input, int offset, int length) {
+		if(verifyOnly){
+			throw new IllegalStateException(verifyError);
+		}
 		addBytes(sign, input, offset, length);
 	}
 	
 	public void addBytesToSign(ByteBuffer input) {
+		if(verifyOnly){
+			throw new IllegalStateException(verifyError);
+		}
 		addBytes(sign, input);
 	}
 	
@@ -259,6 +278,9 @@ public final class CryptSignature{
 	}
 	
 	public byte[] sign(){
+		if(verifyOnly){
+			throw new IllegalStateException(verifyError);
+		}
         byte[] result = null;
 		if(type == SigType.DSA){
 			throw new UnsupportedTypeException(type);
@@ -284,26 +306,24 @@ public final class CryptSignature{
 	 * @return The signature of the signed data
 	 */
 	public byte[] sign(byte[]... data) {
+		if(verifyOnly){
+			throw new IllegalStateException(verifyError);
+		}
 		byte[] result = null;
-		if(!verifyOnly){
-			if(type == SigType.DSA){
-				try {
-					DSASignature sig;
-					sig = signToDSASignature(data);
-					result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
-					System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
-					System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
-				} catch (UnsupportedTypeException e) {
-					Logger.error(CryptSignature.class, "Internal error; please report:", e);
-				}
-			}
-			else{
-				addBytesToSign(data);
-				result = sign();
+		if(type == SigType.DSA){
+			try {
+				DSASignature sig;
+				sig = signToDSASignature(data);
+				result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
+				System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
+				System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+			} catch (UnsupportedTypeException e) {
+				Logger.error(CryptSignature.class, "Internal error; please report:", e);
 			}
 		}
 		else{
-			throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
+			addBytesToSign(data);
+			result = sign();
 		}
         return result;
     }
@@ -334,8 +354,10 @@ public final class CryptSignature{
 		DSASignature result = null;
         if(!verifyOnly){
         	result = DSA.sign(dsaGroup, dsaPrivK, m, random);
+
+        	System.out.println("verify "+result);
         } else{
-        	throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
+        	throw new IllegalStateException(verifyError);
         }
         return result;
 	}
@@ -360,7 +382,7 @@ public final class CryptSignature{
         		plainsig = newData;
         	}
         } else{
-        	throw new IllegalArgumentException("Can't sign while in verifyOnly mode.");
+        	throw new IllegalStateException(verifyError);
         }
         return plainsig;
     }
