@@ -15,7 +15,8 @@ import freenet.node.PeerNode;
 import freenet.support.Logger;
 
 public final class JFKReceiver extends JFKExchange {
-    public JFKReceiver(KeyExchType underlying, PeerNode peerNode, int nonceSize, byte[] nonceI, byte[] exponentialI){
+    public JFKReceiver(KeyExchType underlying, PeerNode peerNode, int nonceSize, byte[] nonceI, 
+            byte[] exponentialI){
         super(underlying, nonceSize, peerNode);
         this.processMessage1(nonceSize, nonceI, exponentialI);
     }
@@ -25,7 +26,8 @@ public final class JFKReceiver extends JFKExchange {
         this.exponentialI = exponentialI;
         if(!DiffieHellman.checkDHExponentialValidity(this.getClass(), 
                 new NativeBigInteger(1,exponentialI))){
-            Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
+            Logger.error(this, "We can't accept the exponential "+peer.getPeer()+" sent us!! "
+                    + "REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
         }
 
         this.nonceR = KeyGenUtils.genNonce(nonceSize);
@@ -37,7 +39,8 @@ public final class JFKReceiver extends JFKExchange {
     }
 
     //sent by receiver
-    public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig) throws InvalidKeyException{
+    public final byte[] genMessage2(byte[] transientKey, byte[] replyToAddress, byte[] sig) 
+            throws InvalidKeyException{
         byte[] message2 = new byte[nonceI.length + nonceR.length+modulusLength+
                                    sig.length + hashnR.length];
 
@@ -64,7 +67,8 @@ public final class JFKReceiver extends JFKExchange {
 
 
     //Processed by reciver
-    public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, byte[] identity, byte[] publicKeyI) throws InvalidKeyException{
+    public byte[] processMessage3(byte[] hmac, byte[] cypheredPayload, int decypheredPayloadOffset, 
+            byte[] identity, byte[] publicKeyI) throws InvalidKeyException{
         int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
         int ivSize = blockSize >> 3;
 
@@ -113,7 +117,8 @@ public final class JFKReceiver extends JFKExchange {
         // We compute the HMAC of ("I"+cyphertext) : the cyphertext includes the IV!
         mac = new MessageAuthCode(MACType.HMACSHA256, jfkKa);
         if(!mac.verifyData(hmac, cypheredPayload)) {
-            Logger.error(this, "The inner-HMAC doesn't match; let's discard the packet JFK(3) - "+peer);
+            Logger.error(this, "The inner-HMAC doesn't match; let's discard the packet JFK(3) - "+
+                    peer);
             return null;
         }
 
@@ -124,10 +129,12 @@ public final class JFKReceiver extends JFKExchange {
         CryptBitSet cryptBits = null;
         try {
             cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
-        } catch (UnsupportedTypeException | InvalidKeyException | InvalidAlgorithmParameterException e1) {
+        } catch (UnsupportedTypeException | InvalidKeyException 
+                | InvalidAlgorithmParameterException e1) {
             Logger.error(KeyExchange.class, "Internal error; please report:", e1);
         }
-        byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, cypheredPayload.length-decypheredPayloadOffset);
+        byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, 
+                cypheredPayload.length-decypheredPayloadOffset);
 
 
         int sigLength = underlyingExch.ecdsaSig.length;
@@ -135,14 +142,16 @@ public final class JFKReceiver extends JFKExchange {
         System.arraycopy(cleartext, decypheredPayloadOffset, sigI, 0, sigLength);
         decypheredPayloadOffset += sigLength;
         byte[] data = new byte[cleartext.length - decypheredPayloadOffset];
-        System.arraycopy(cleartext, decypheredPayloadOffset, data, 0, cleartext.length - decypheredPayloadOffset);
+        System.arraycopy(cleartext, decypheredPayloadOffset, data, 0, cleartext.length - 
+                decypheredPayloadOffset);
 
         byte[] toVerify = assembleDHParams(identity, data);
 
         try {
             CryptSignature sig = new CryptSignature(underlyingExch.type.sigType, publicKeyI);
             if(!sig.verify(sigI, toVerify)){
-                Logger.error(this, "The signature verification has failed!! JFK(3) - "+peer.getPeer());
+                Logger.error(this, "The signature verification has failed!! JFK(3) - "+
+                        peer.getPeer());
                 return null;
             }
         } catch (GeneralSecurityException e) {
@@ -157,15 +166,19 @@ public final class JFKReceiver extends JFKExchange {
     }
 
     //sent by reciver
-    public byte[] genMessage4(byte[] identity, byte[] data, byte[] refI, byte[] sig, CryptBitSet cryptBits, byte[] newTrackerID, boolean sameAsOldTrackerID, byte[] outgoingBootID, long bootID, SigType sigType) throws InvalidKeyException{
+    public byte[] genMessage4(byte[] identity, byte[] data, byte[] refI, byte[] sig, 
+            CryptBitSet cryptBits, byte[] newTrackerID, boolean sameAsOldTrackerID, 
+            byte[] outgoingBootID, long bootID, SigType sigType) throws InvalidKeyException{
         byte[] iv = cryptBits.genIV();
         int ivLength = iv.length;
 
         int dataLength = data.length - refI.length;
 
-        byte[] cyphertext = new byte[JFK_PREFIX_RESPONDER.length + ivLength + sig.length + dataLength];
+        byte[] cyphertext = new byte[JFK_PREFIX_RESPONDER.length + ivLength + sig.length + 
+                                     dataLength];
         int cleartextOffset = 0;
-        System.arraycopy(JFK_PREFIX_RESPONDER, 0, cyphertext, cleartextOffset, JFK_PREFIX_RESPONDER.length);
+        System.arraycopy(JFK_PREFIX_RESPONDER, 0, cyphertext, cleartextOffset, 
+                JFK_PREFIX_RESPONDER.length);
         cleartextOffset += JFK_PREFIX_RESPONDER.length;
         System.arraycopy(iv, 0, cyphertext, cleartextOffset, ivLength);
         cleartextOffset += ivLength;
@@ -176,18 +189,21 @@ public final class JFKReceiver extends JFKExchange {
         // Now encrypt the cleartext[Signature]
         int cleartextToEncypherOffset = JFK_PREFIX_RESPONDER.length + ivLength;
 
-        cyphertext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, cyphertext.length - cleartextToEncypherOffset);
+        cyphertext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, 
+                cyphertext.length - cleartextToEncypherOffset);
 
         // We compute the HMAC of (prefix + iv + signature)
         byte[] hmac = mac.genMac(cyphertext);
 
-        byte[] message4 = new byte[hashnI.length + ivLength + (cyphertext.length - cleartextToEncypherOffset)];
+        byte[] message4 = new byte[hashnI.length + ivLength + 
+                                   (cyphertext.length - cleartextToEncypherOffset)];
         int offset = 0;
         System.arraycopy(hmac, 0, message4, offset, hashnI.length);
         offset += hashnI.length;
         System.arraycopy(iv, 0, message4, offset, ivLength);
         offset += ivLength;
-        System.arraycopy(cyphertext, cleartextToEncypherOffset, message4, offset, cyphertext.length - cleartextToEncypherOffset);
+        System.arraycopy(cyphertext, cleartextToEncypherOffset, message4, offset, 
+                cyphertext.length - cleartextToEncypherOffset);
 
         return message4;
     }

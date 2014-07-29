@@ -32,15 +32,18 @@ public final class JFKInitiator extends JFKExchange {
         return message1;
     }
 
-    public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] publicKeyR, byte[] locallyExpectedExponentials, byte[] sigR){
+    public void processMessage2(byte[] nonceR, byte[] exponentialR, byte[] publicKeyR, 
+            byte[] locallyExpectedExponentials, byte[] sigR){
         this.nonceR = nonceR;
         this.exponentialR = exponentialR;
 
         try {
             CryptSignature sig = new CryptSignature(underlyingExch.type.sigType, publicKeyR);
             if(!sig.verify(sigR, locallyExpectedExponentials)){
-                Logger.error(this, "The signature verification has failed in JFK(2)!! "+peer.getPeer());
-                if(logDEBUG) Logger.debug(this, "Expected signature on "+HexUtil.bytesToHex(exponentialR)+
+                Logger.error(this, "The signature verification has failed in JFK(2)!! "+
+                        peer.getPeer());
+                if(logDEBUG) Logger.debug(this, "Expected signature on "+
+                        HexUtil.bytesToHex(exponentialR)+
                         " with "+HexUtil.bytesToHex(publicKeyR)+
                         " signature "+HexUtil.bytesToHex(sigR));
                 return;
@@ -52,7 +55,8 @@ public final class JFKInitiator extends JFKExchange {
         }
     }
 
-    public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, byte[] authenticator){
+    public byte[] genMessage3(byte[] sig, long trackerID, long bootID, byte[] ref, 
+            byte[] authenticator){
         int blockSize = CryptBitSetType.RijndaelPCFB.blockSize;
         int ivSize = blockSize >> 3;
 
@@ -132,8 +136,10 @@ public final class JFKInitiator extends JFKExchange {
         byte[] iv = KeyGenUtils.genNonce(ivSize);
 
         int cleartextOffset = 0;
-        byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivSize + sig.length + data.length];
-        System.arraycopy(JFK_PREFIX_INITIATOR, 0, cleartext, cleartextOffset, JFK_PREFIX_INITIATOR.length);
+        byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivSize + sig.length + 
+                                    data.length];
+        System.arraycopy(JFK_PREFIX_INITIATOR, 0, cleartext, cleartextOffset, 
+                JFK_PREFIX_INITIATOR.length);
         cleartextOffset += JFK_PREFIX_INITIATOR.length;
         System.arraycopy(iv, 0, cleartext, cleartextOffset, ivSize);
         cleartextOffset += ivSize;
@@ -147,10 +153,12 @@ public final class JFKInitiator extends JFKExchange {
         CryptBitSet cryptBits = null;
         try {
             cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, iv);
-        } catch (UnsupportedTypeException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+        } catch (UnsupportedTypeException | InvalidKeyException | 
+                InvalidAlgorithmParameterException e) {
             Logger.error(JFKInitiator.class, "Internal error; please report:", e);
         }
-        byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, cleartext.length-cleartextToEncypherOffset);
+        byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, 
+                cleartext.length-cleartextToEncypherOffset);
 
         // We compute the HMAC of (prefix + cyphertext) Includes the IV!
         try {
@@ -165,7 +173,8 @@ public final class JFKInitiator extends JFKExchange {
         offset += hmac.length;
         System.arraycopy(iv, 0, message3, offset, ivSize);
         offset += ivSize;
-        System.arraycopy(ciphertext, cleartextToEncypherOffset, message3, offset, ciphertext.length-cleartextToEncypherOffset);
+        System.arraycopy(ciphertext, cleartextToEncypherOffset, message3, offset, 
+                ciphertext.length-cleartextToEncypherOffset);
 
         return message3;
     }
@@ -174,24 +183,31 @@ public final class JFKInitiator extends JFKExchange {
         int ivLength = CryptBitSetType.RijndaelPCFB.blockSize >>3;
                 int encypheredPayloadOffset = 0;
                 // We compute the HMAC of ("R"+cyphertext) : the cyphertext includes the IV!
-                byte[] encypheredPayload = Arrays.copyOf(JFK_PREFIX_RESPONDER, JFK_PREFIX_RESPONDER.length + payload.length - inputOffset);
+                byte[] encypheredPayload = Arrays.copyOf(JFK_PREFIX_RESPONDER, 
+                        JFK_PREFIX_RESPONDER.length + payload.length - inputOffset);
                 encypheredPayloadOffset += JFK_PREFIX_RESPONDER.length;
-                System.arraycopy(payload, inputOffset, encypheredPayload, encypheredPayloadOffset, payload.length-inputOffset);
+                System.arraycopy(payload, inputOffset, encypheredPayload, encypheredPayloadOffset, 
+                        payload.length-inputOffset);
 
                 if(!mac.verifyData(hmac, encypheredPayload)) {
-                    Logger.normal(this, "The digest-HMAC doesn't match; let's discard the packet - "+peer.getPeer());
+                    Logger.normal(this, "The digest-HMAC doesn't match; let's discard the packet - "
+                            +peer.getPeer());
                     return null;
                 }
 
                 CryptBitSet cryptBits = null;
                 try {
-                    cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, encypheredPayload, encypheredPayloadOffset);
-                } catch (UnsupportedTypeException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+                    cryptBits = new CryptBitSet(CryptBitSetType.RijndaelPCFB, jfkKe, 
+                            encypheredPayload, encypheredPayloadOffset);
+                } catch (UnsupportedTypeException | InvalidKeyException | 
+                        InvalidAlgorithmParameterException e) {
                     Logger.error(JFKInitiator.class, "Internal error; please report:", e);
                 }
                 encypheredPayloadOffset += ivLength;
 
-                byte[] decypheredPayload = cryptBits.decrypt(encypheredPayload, encypheredPayloadOffset, encypheredPayload.length - encypheredPayloadOffset);
+                byte[] decypheredPayload = cryptBits.decrypt(encypheredPayload, 
+                        encypheredPayloadOffset, 
+                        encypheredPayload.length - encypheredPayloadOffset);
                 int decypheredPayloadOffset = 0;
 
                 return decypheredPayload;

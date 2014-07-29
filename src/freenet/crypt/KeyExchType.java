@@ -27,7 +27,8 @@ public enum KeyExchType {
     public final SigType sigType;
 
 
-    private KeyExchType(int bitmask, String algName, String specName, int modulusSize, int maxSigSize, SigType sigType){
+    private KeyExchType(int bitmask, String algName, String specName, int modulusSize, 
+            int maxSigSize, SigType sigType){
         this.bitmask = bitmask;
         this.algName = algName;
         this.specName = specName;

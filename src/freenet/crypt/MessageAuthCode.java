@@ -38,7 +38,8 @@ public final class MessageAuthCode {
      * @param iv The iv to be used. Can be null if none provided or required. 
      * @throws InvalidKeyException
      */
-    private MessageAuthCode(MACType type, SecretKey key, boolean genIv, IvParameterSpec iv) throws InvalidKeyException{
+    private MessageAuthCode(MACType type, SecretKey key, boolean genIv, IvParameterSpec iv) 
+            throws InvalidKeyException{
         this.type = type;
         mac = type.get();
         this.key = key;
@@ -101,7 +102,8 @@ public final class MessageAuthCode {
      * @throws InvalidKeyException
      * @throws InvalidAlgorithmParameterException
      */
-    public MessageAuthCode(MACType type, SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public MessageAuthCode(MACType type, SecretKey key, IvParameterSpec iv) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         this(type, key, false, iv);
     }
 
@@ -113,7 +115,8 @@ public final class MessageAuthCode {
      * @throws InvalidKeyException
      * @throws InvalidAlgorithmParameterException
      */
-    public MessageAuthCode(MACType type, byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public MessageAuthCode(MACType type, byte[] key, IvParameterSpec iv) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         this(type, KeyGenUtils.getSecretKey(type.keyType, key), iv);
     }
 

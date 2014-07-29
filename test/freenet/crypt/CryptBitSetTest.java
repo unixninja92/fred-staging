@@ -202,7 +202,8 @@ public class CryptBitSetTest {
                 byte[] nullArray = null;
                 try{
                     crypt.encrypt(nullArray, 0, plainText[i].length);
-                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or NullPointerException");
+                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
+                            + "NullPointerException");
                 }catch(IllegalArgumentException | NullPointerException e){}
             } 
         } catch(GeneralSecurityException e){
@@ -224,7 +225,8 @@ public class CryptBitSetTest {
 
                 try{
                     crypt.encrypt(plainText[i], -3, plainText[i].length-3);
-                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
+                            + "ArrayIndexOutOfBoundsException");
                 }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
             } 
         } catch(GeneralSecurityException e){
@@ -246,7 +248,8 @@ public class CryptBitSetTest {
 
                 try{
                     crypt.encrypt(plainText[i], 0, plainText[i].length+3);
-                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
+                            + "ArrayIndexOutOfBoundsException");
                 }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
             } 
         } catch(GeneralSecurityException e){
@@ -315,7 +318,8 @@ public class CryptBitSetTest {
                 byte[] nullArray = null;
                 try{
                     crypt.decrypt(nullArray, 0, plainText[i].length);
-                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or NullPointerException");
+                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
+                            + "NullPointerException");
                 }catch(NullPointerException | IllegalArgumentException e){}
             } 
         } catch(GeneralSecurityException e){
@@ -337,7 +341,8 @@ public class CryptBitSetTest {
 
                 try{
                     crypt.decrypt(plainText[i], -3, plainText[i].length-3);
-                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
+                            + "ArrayIndexOutOfBoundsException");
                 }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
             } 
         } catch(GeneralSecurityException e){
@@ -359,7 +364,8 @@ public class CryptBitSetTest {
 
                 try{
                     crypt.decrypt(plainText[i], 0, plainText[i].length+3);
-                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or ArrayIndexOutOfBoundsException");
+                    fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
+                            + "ArrayIndexOutOfBoundsException");
                 }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
             } 
         } catch(GeneralSecurityException e){

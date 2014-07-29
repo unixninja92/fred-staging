@@ -24,7 +24,8 @@ import freenet.support.SimpleFieldSet;
 @SuppressWarnings("deprecation")
 public final class CryptSignature{
     public static final SigType preferredSignature = SigType.ECDSAP256;
-    private static final String verifyError = "CryptSignature inalized in verify only mode. Can not sign in this mode";
+    private static final String verifyError = "CryptSignature inalized in verify only mode. "
+            + "Can not sign in this mode";
     private boolean verifyOnly;
 
     /* variables for ECDSA signatures */
@@ -78,7 +79,8 @@ public final class CryptSignature{
      * @throws CryptFormatException
      * @throws InvalidKeyException
      */
-    public CryptSignature(SigType type, byte[] publicKey) throws CryptFormatException, InvalidKeyException{
+    public CryptSignature(SigType type, byte[] publicKey) throws CryptFormatException, 
+    InvalidKeyException{
         this.type = type;
         verifyOnly = true;
         if(type.name()=="DSA"){
@@ -291,7 +293,8 @@ public final class CryptSignature{
                 if(result.length <= type.maxSigSize)
                     break;
                 else
-                    Logger.error(this, "DER encoded signature used "+result.length+" bytes, more than expected "+type.maxSigSize+" - re-signing...");
+                    Logger.error(this, "DER encoded signature used "+result.length+" bytes, more "
+                            + "than expected "+type.maxSigSize+" - re-signing...");
             }
         } catch (SignatureException e) {
             e.printStackTrace();
@@ -315,8 +318,10 @@ public final class CryptSignature{
                 DSASignature sig;
                 sig = signToDSASignature(data);
                 result = new byte[SIGNATURE_PARAMETER_LENGTH*2];
-                System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, SIGNATURE_PARAMETER_LENGTH);
-                System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
+                System.arraycopy(sig.getRBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 0, 
+                        SIGNATURE_PARAMETER_LENGTH);
+                System.arraycopy(sig.getSBytes(SIGNATURE_PARAMETER_LENGTH), 0, result, 
+                        SIGNATURE_PARAMETER_LENGTH, SIGNATURE_PARAMETER_LENGTH);
             } catch (UnsupportedTypeException e) {
                 Logger.error(CryptSignature.class, "Internal error; please report:", e);
             }

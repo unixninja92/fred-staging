@@ -46,7 +46,8 @@ public final class CryptBitSet {
      * @throws InvalidAlgorithmParameterException 
      * @throws InvalidKeyException 
      */
-    public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public CryptBitSet(CryptBitSetType type, SecretKey key, IvParameterSpec iv) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         if(iv != null && type.ivSize == -1){
             throw new UnsupportedTypeException(type, "This type does not take an IV.");
         }
@@ -120,7 +121,8 @@ public final class CryptBitSet {
      * @throws InvalidKeyException
      * @throws InvalidAlgorithmParameterException
      */
-    public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv, int offset) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         this(type, key, new IvParameterSpec(iv, offset, type.ivSize));
     }
 
@@ -133,7 +135,8 @@ public final class CryptBitSet {
      * @throws InvalidAlgorithmParameterException 
      * @throws InvalidKeyException 
      */
-    public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public CryptBitSet(CryptBitSetType type, SecretKey key, byte[] iv) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         this(type, key, iv, 0);
     }
 
@@ -149,7 +152,8 @@ public final class CryptBitSet {
      * @throws InvalidKeyException
      * @throws InvalidAlgorithmParameterException
      */
-    public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         this(type, KeyGenUtils.getSecretKey(type.keyType, key), iv, offset);
     }
 
@@ -162,7 +166,8 @@ public final class CryptBitSet {
      * @throws InvalidAlgorithmParameterException 
      * @throws InvalidKeyException 
      */
-    public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
+    public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv) 
+            throws InvalidKeyException, InvalidAlgorithmParameterException{
         this(type, key, iv, 0);
     }
 

@@ -25,7 +25,8 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private SkippingStreamCipher cipherWrite;
     private ParametersWithIV cipherParams;
 
-    public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, RandomAccessThing underlyingThing, SecretKey key, IvParameterSpec iv){
+    public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, 
+            RandomAccessThing underlyingThing, SecretKey key, IvParameterSpec iv){
         this.type = type;
         this.underlyingThing = underlyingThing;
         this.cipherRead = this.type.get();

@@ -86,7 +86,8 @@ public class KeyExchange extends KeyAgreementSchemeContext{
         if(ret.length == type.modulusSize) {
             return ret;
         } else if(ret.length > type.modulusSize) {
-            throw new IllegalStateException("Encoded public key too long: should be "+type.modulusSize+" bytes but is "+ret.length);
+            throw new IllegalStateException("Encoded public key too long: should be "+
+                    type.modulusSize+" bytes but is "+ret.length);
         } else {
             Logger.warning(this, "Padding public key from "+ret.length+" to "+type.modulusSize+" bytes");
             byte[] out = new byte[type.modulusSize];

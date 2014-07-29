@@ -126,7 +126,8 @@ public class MessageAuthCodeTest{
                     mac = new MessageAuthCode(types[i], keys[i]);
                 }
                 mac.addBytes(messages[i], 0, messages[i].length/2);
-                mac.addBytes(messages[i], messages[i].length/2, messages[i].length-messages[i].length/2);
+                mac.addBytes(messages[i], messages[i].length/2, 
+                        messages[i].length-messages[i].length/2);
 
                 assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
             } catch (GeneralSecurityException e) {
@@ -224,7 +225,8 @@ public class MessageAuthCodeTest{
                     mac = new MessageAuthCode(types[i], keys[i]);
                 }
                 byte[] result = mac.genMac(messages[i]);
-                assertTrue("MACType: "+types[i].name(), MessageAuthCode.verify(result, trueMacs[i]));
+                assertTrue("MACType: "+types[i].name(), 
+                        MessageAuthCode.verify(result, trueMacs[i]));
             } catch (GeneralSecurityException e) {
                 fail("GeneralSecurityException thrown");
             }

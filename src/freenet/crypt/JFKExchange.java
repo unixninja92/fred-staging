@@ -100,7 +100,8 @@ public abstract class JFKExchange {
 
     public byte[] getSharedSecrect(byte[] peerExponential) throws InvalidKeyException{
         try{
-            return underlyingExch.getSharedSecrect(KeyGenUtils.getPublicKey(KeyPairType.ECP256, peerExponential));
+            return underlyingExch.getSharedSecrect(KeyGenUtils.getPublicKey(KeyPairType.ECP256, 
+                    peerExponential));
         } catch(UnsupportedTypeException e){
             Logger.error(JFKExchange.class, "Internal error; please report:", e);
         }
@@ -146,7 +147,8 @@ public abstract class JFKExchange {
     //	}
 
     protected byte[] assembleDHParams(byte[] id, byte[] sa) {
-        byte[] result = new byte[nonceI.length + nonceR.length + exponentialI.length + exponentialR.length + id.length + sa.length];
+        byte[] result = new byte[nonceI.length + nonceR.length + exponentialI.length + 
+                                 exponentialR.length + id.length + sa.length];
         int offset = 0;
 
         System.arraycopy(nonceI, 0,result,offset,nonceI.length);
