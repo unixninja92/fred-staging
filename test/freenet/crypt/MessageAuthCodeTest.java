@@ -14,488 +14,488 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 public class MessageAuthCodeTest{
-	static private final MACType[] types = 
-		{ MACType.HMACSHA256, MACType.Poly1305AES};
-	static private final byte[][] keys = 
-		{ Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"), 
-		Hex.decode("95cc0e44d0b79a8856afcae1bec4fe3c01bcb20bfc8b6e03609ddd09f44b060f")};
-	static private final byte[][] messages = { "Hi There".getBytes(), new byte[128]};
-	static private final IvParameterSpec[] IVs = 
-		{ null, new IvParameterSpec(new byte[16])};
-	static private final byte[][] trueMacs = 
-		{ Hex.decode("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"),
-		Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854")};
-	static private final byte[][] falseMacs = 
-		{ Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7"),
-		Hex.decode("881dc200c9833da726e9376c2e32cff7")};
+    static private final MACType[] types = 
+        { MACType.HMACSHA256, MACType.Poly1305AES};
+    static private final byte[][] keys = 
+        { Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"), 
+        Hex.decode("95cc0e44d0b79a8856afcae1bec4fe3c01bcb20bfc8b6e03609ddd09f44b060f")};
+    static private final byte[][] messages = { "Hi There".getBytes(), new byte[128]};
+    static private final IvParameterSpec[] IVs = 
+        { null, new IvParameterSpec(new byte[16])};
+    static private final byte[][] trueMacs = 
+        { Hex.decode("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"),
+        Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854")};
+    static private final byte[][] falseMacs = 
+        { Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7"),
+        Hex.decode("881dc200c9833da726e9376c2e32cff7")};
 
-	static{
-		Security.addProvider(new BouncyCastleProvider());
-	}
-	
-	@Test
-	public void testAddByte() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				
-				for (int j = 0; j < messages[i].length; j++){
-					mac.addByte(messages[i][j]);
-				}
-				assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    static{
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
-	@Test
-	@SuppressWarnings("null")
-	public void testAddByteNullInput() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				
-				boolean throwNull = false;
-				Byte nullByte = null;
-				try{
-					mac.addByte(nullByte);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-				
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test
+    public void testAddByte() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
 
-	@Test
-	public void testAddBytesByteBuffer() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				ByteBuffer byteBuffer = ByteBuffer.wrap(messages[i]);
-				
-				mac.addBytes(byteBuffer);
-				assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+                for (int j = 0; j < messages[i].length; j++){
+                    mac.addByte(messages[i][j]);
+                }
+                assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test (expected = IllegalArgumentException.class)
-	public void testAddBytesByteBufferNullInput() {
-		try {
-			int i = 0;
-			MessageAuthCode mac;
-			mac = new MessageAuthCode(types[i], keys[i]);
+    @Test
+    @SuppressWarnings("null")
+    public void testAddByteNullInput() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
 
-			ByteBuffer byteBuffer = null;
-			mac.addBytes(byteBuffer);
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+                boolean throwNull = false;
+                Byte nullByte = null;
+                try{
+                    mac.addByte(nullByte);
+                }catch(NullPointerException e){
+                    throwNull = true;
+                }
 
-	@Test
-	public void testAddBytesByteArrayIntInt() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				mac.addBytes(messages[i], 0, messages[i].length/2);
-				mac.addBytes(messages[i], messages[i].length/2, messages[i].length-messages[i].length/2);
-				
-				assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testAddBytesByteArrayIntIntNullInput() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				
-				boolean throwNull = false;
-				byte[] nullArray = null;
-				try{
-					mac.addBytes(nullArray, 0, messages[i].length);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-				
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test
+    public void testAddBytesByteBuffer() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                ByteBuffer byteBuffer = ByteBuffer.wrap(messages[i]);
 
-	@Test
-	public void testAddBytesByteArrayIntIntOffsetOutOfBounds() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				
-				boolean throwNull = false;
-				try{
-					mac.addBytes(messages[i], -3, messages[i].length-3);
-				}catch(IllegalArgumentException e){
-					throwNull = true;
-				}
-				
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+                mac.addBytes(byteBuffer);
+                assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testAddBytesByteArrayIntIntLengthOutOfBounds() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				} else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				
-				boolean throwNull = false;
-				try{
-					mac.addBytes(messages[i], 0, messages[i].length+3);
-				}catch(IllegalArgumentException e){
-					throwNull = true;
-				}
-				
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test (expected = IllegalArgumentException.class)
+    public void testAddBytesByteBufferNullInput() {
+        try {
+            int i = 0;
+            MessageAuthCode mac;
+            mac = new MessageAuthCode(types[i], keys[i]);
 
-	@Test
-	//tests .genMac() and .addBytes(byte[]...] as well
-	public void testGetMacByteArrayArray() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				byte[] result = mac.genMac(messages[i]);
-				assertTrue("MACType: "+types[i].name(), MessageAuthCode.verify(result, trueMacs[i]));
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+            ByteBuffer byteBuffer = null;
+            mac.addBytes(byteBuffer);
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
 
-	@Test
-	public void testGetMacByteArrayArrayReset() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				mac.addBytes(messages[i]);
-				byte[] result = mac.genMac(messages[i]);
-				assertArrayEquals("MACType: "+types[i].name(), result, trueMacs[i]);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test
+    public void testAddBytesByteArrayIntInt() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                mac.addBytes(messages[i], 0, messages[i].length/2);
+                mac.addBytes(messages[i], messages[i].length/2, messages[i].length-messages[i].length/2);
 
-	@Test
-	public void testGetMacByteArrayArrayNullInput() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
+                assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-				boolean throwNull = false;
-				byte[] nullArray = null;
-				try{
-					mac.genMac(nullArray);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
+    @Test
+    public void testAddBytesByteArrayIntIntNullInput() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
 
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+                boolean throwNull = false;
+                byte[] nullArray = null;
+                try{
+                    mac.addBytes(nullArray, 0, messages[i].length);
+                }catch(NullPointerException e){
+                    throwNull = true;
+                }
 
-	@Test (expected = NullPointerException.class)
-	public void testGetMacByteArrayArrayNullMatrixElementInput() {
-		try {
-			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-			byte[][] nullMatrix = {messages[1], null};
-			mac.genMac(nullMatrix);
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testVerify() {
-		assertTrue(MessageAuthCode.verify(trueMacs[1], trueMacs[1]));
-	}
+    @Test
+    public void testAddBytesByteArrayIntIntOffsetOutOfBounds() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
 
-	@Test
-	public void testVerifyFalse() {
-		assertFalse(MessageAuthCode.verify(trueMacs[1], falseMacs[1]));
-	}
+                boolean throwNull = false;
+                try{
+                    mac.addBytes(messages[i], -3, messages[i].length-3);
+                }catch(IllegalArgumentException e){
+                    throwNull = true;
+                }
 
-	@Test (expected = NullPointerException.class)
-	public void testVerifyNullInput1() {
-		byte[] nullArray = null;
-		MessageAuthCode.verify(nullArray, trueMacs[1]);
-	}
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test (expected = NullPointerException.class)
-	public void testVerifyNullInput2() {
-		byte[] nullArray = null;
-		MessageAuthCode.verify(trueMacs[1], nullArray);
-	}
+    @Test
+    public void testAddBytesByteArrayIntIntLengthOutOfBounds() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                } else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
 
-	@Test
-	public void testVerifyData() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				assertTrue("MACType: "+types[i].name(), mac.verifyData(trueMacs[i], messages[i]));
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+                boolean throwNull = false;
+                try{
+                    mac.addBytes(messages[i], 0, messages[i].length+3);
+                }catch(IllegalArgumentException e){
+                    throwNull = true;
+                }
 
-	@Test
-	public void testVerifyDataFalse() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				assertFalse("MACType: "+types[i].name(), mac.verifyData(falseMacs[i], messages[i]));
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testVerifyDataNullInput1() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				boolean throwNull = false;
-				byte[] nullArray = null;
-				try{
-					mac.verifyData(nullArray, messages[i]);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test
+    //tests .genMac() and .addBytes(byte[]...] as well
+    public void testGetMacByteArrayArray() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                byte[] result = mac.genMac(messages[i]);
+                assertTrue("MACType: "+types[i].name(), MessageAuthCode.verify(result, trueMacs[i]));
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testVerifyDataNullInput2() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				boolean throwNull = false;
-				byte[] nullArray = null;
-				try{
-					mac.verifyData(trueMacs[i], nullArray);
-				}catch(NullPointerException e){
-					throwNull = true;
-				}
-				assertTrue("MACType: "+types[i].name(), throwNull);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test
+    public void testGetMacByteArrayArrayReset() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                mac.addBytes(messages[i]);
+                byte[] result = mac.genMac(messages[i]);
+                assertArrayEquals("MACType: "+types[i].name(), result, trueMacs[i]);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testGetKey() {
-		for(int i = 0; i < types.length; i++){
-			try {
-				MessageAuthCode mac;
-				if(types[i].ivlen != -1){
-					mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
-				}
-				else{
-					mac = new MessageAuthCode(types[i], keys[i]);
-				}
-				assertArrayEquals("MACType: "+types[i].name(), mac.getKey().getEncoded(), keys[i]);
-			} catch (GeneralSecurityException e) {
-				fail("GeneralSecurityException thrown");
-			}
-		}
-	}
+    @Test
+    public void testGetMacByteArrayArrayNullInput() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
 
-	@Test
-	public void testGetIV() {
-		try {
-			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-			assertArrayEquals(mac.getIv().getIV(), IVs[1].getIV());
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+                boolean throwNull = false;
+                byte[] nullArray = null;
+                try{
+                    mac.genMac(nullArray);
+                }catch(NullPointerException e){
+                    throwNull = true;
+                }
 
-	@Test (expected = UnsupportedTypeException.class)
-	public void testGetIVUnsupportedTypeException() {
-		try{
-			MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
-			mac.getIv();
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
 
-	@Test
-	public void testSetIVIvParameterSpec() {
-		try {
-			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-			mac.genIv();
-			mac.setIv(IVs[1]);
-			assertArrayEquals(IVs[1].getIV(), mac.getIv().getIV());
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+    @Test (expected = NullPointerException.class)
+    public void testGetMacByteArrayArrayNullMatrixElementInput() {
+        try {
+            MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+            byte[][] nullMatrix = {messages[1], null};
+            mac.genMac(nullMatrix);
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
 
-	@Test (expected = IllegalArgumentException.class)
-	public void testSetIVIvParameterSpecNullInput() {
-		IvParameterSpec nullInput = null;
-		try{
-			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-			mac.setIv(nullInput);
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+    @Test
+    public void testVerify() {
+        assertTrue(MessageAuthCode.verify(trueMacs[1], trueMacs[1]));
+    }
 
-	@Test (expected = UnsupportedTypeException.class)
-	public void testSetIVIvParameterSpecUnsupportedTypeException() {
-		try{
-			MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
-			mac.setIv(IVs[1]);
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+    @Test
+    public void testVerifyFalse() {
+        assertFalse(MessageAuthCode.verify(trueMacs[1], falseMacs[1]));
+    }
 
-	@Test
-	public void testGenIV() {
-		try {
-			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-			assertNotNull(mac.genIv());
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+    @Test (expected = NullPointerException.class)
+    public void testVerifyNullInput1() {
+        byte[] nullArray = null;
+        MessageAuthCode.verify(nullArray, trueMacs[1]);
+    }
 
-	@Test
-	public void testGenIVLength() {
-		try {
-			MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-			assertEquals(mac.genIv().getIV().length, types[1].ivlen);
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+    @Test (expected = NullPointerException.class)
+    public void testVerifyNullInput2() {
+        byte[] nullArray = null;
+        MessageAuthCode.verify(trueMacs[1], nullArray);
+    }
 
-	@Test (expected = UnsupportedTypeException.class)
-	public void testGenIVUnsupportedTypeException() {
-		try{
-			MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
-			mac.genIv();
-		} catch (GeneralSecurityException e) {
-			fail("GeneralSecurityException thrown");
-		}
-	}
+    @Test
+    public void testVerifyData() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                assertTrue("MACType: "+types[i].name(), mac.verifyData(trueMacs[i], messages[i]));
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
+
+    @Test
+    public void testVerifyDataFalse() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                assertFalse("MACType: "+types[i].name(), mac.verifyData(falseMacs[i], messages[i]));
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
+
+    @Test
+    public void testVerifyDataNullInput1() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                boolean throwNull = false;
+                byte[] nullArray = null;
+                try{
+                    mac.verifyData(nullArray, messages[i]);
+                }catch(NullPointerException e){
+                    throwNull = true;
+                }
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
+
+    @Test
+    public void testVerifyDataNullInput2() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                boolean throwNull = false;
+                byte[] nullArray = null;
+                try{
+                    mac.verifyData(trueMacs[i], nullArray);
+                }catch(NullPointerException e){
+                    throwNull = true;
+                }
+                assertTrue("MACType: "+types[i].name(), throwNull);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
+
+    @Test
+    public void testGetKey() {
+        for(int i = 0; i < types.length; i++){
+            try {
+                MessageAuthCode mac;
+                if(types[i].ivlen != -1){
+                    mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
+                }
+                else{
+                    mac = new MessageAuthCode(types[i], keys[i]);
+                }
+                assertArrayEquals("MACType: "+types[i].name(), mac.getKey().getEncoded(), keys[i]);
+            } catch (GeneralSecurityException e) {
+                fail("GeneralSecurityException thrown");
+            }
+        }
+    }
+
+    @Test
+    public void testGetIV() {
+        try {
+            MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+            assertArrayEquals(mac.getIv().getIV(), IVs[1].getIV());
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test (expected = UnsupportedTypeException.class)
+    public void testGetIVUnsupportedTypeException() {
+        try{
+            MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
+            mac.getIv();
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test
+    public void testSetIVIvParameterSpec() {
+        try {
+            MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+            mac.genIv();
+            mac.setIv(IVs[1]);
+            assertArrayEquals(IVs[1].getIV(), mac.getIv().getIV());
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void testSetIVIvParameterSpecNullInput() {
+        IvParameterSpec nullInput = null;
+        try{
+            MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+            mac.setIv(nullInput);
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test (expected = UnsupportedTypeException.class)
+    public void testSetIVIvParameterSpecUnsupportedTypeException() {
+        try{
+            MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
+            mac.setIv(IVs[1]);
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test
+    public void testGenIV() {
+        try {
+            MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+            assertNotNull(mac.genIv());
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test
+    public void testGenIVLength() {
+        try {
+            MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+            assertEquals(mac.genIv().getIV().length, types[1].ivlen);
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
+
+    @Test (expected = UnsupportedTypeException.class)
+    public void testGenIVUnsupportedTypeException() {
+        try{
+            MessageAuthCode mac = new MessageAuthCode(types[0], keys[0]);
+            mac.genIv();
+        } catch (GeneralSecurityException e) {
+            fail("GeneralSecurityException thrown");
+        }
+    }
 
 }

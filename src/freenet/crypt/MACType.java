@@ -17,53 +17,53 @@ import freenet.support.Logger;
  *
  */
 public enum MACType {
-	HMACSHA256(1, "HmacSHA256", KeyType.HMACSHA256),
-	Poly1305AES(2, "POLY1305-AES", 16, KeyType.POLY1305AES);
-	
-	/** Bitmask for aggregation. */
-	public final int bitmask;
-	public final String mac;
-	public final int ivlen;
-	public final KeyType keyType;
-	
-	/**
-	 * Creates the HMACSHA256 enum. Sets the ivlen as -1.
-	 * @param bitmask
-	 * @param mac Name of the algorithm that java uses. 
-	 * @param type The type of key the alg requires
-	 */
-	private MACType(int bitmask, String mac, KeyType type){
-		this.bitmask = bitmask;
-		this.mac = mac;
-		ivlen = -1;
-		keyType = type;
-	}
-	
-	/**
-	 * Creates the Poly1305 enum.
-	 * @param bitmask
-	 * @param mac Name of the algorithm that java uses. 
-	 * @param ivlen Length of the IV
-	 * @param type The type of key the alg requires
-	 */
-	private MACType(int bitmask, String mac, int ivlen, KeyType type){
-		this.bitmask = bitmask;
-		this.mac = mac;
-		this.ivlen = ivlen;
-		keyType = type;
-	}
-	
-	/**
-	 * Gets an instance of Mac using the specified algorithm. 
-	 * @return Returns an instance of Mac
-	 */
-	public final Mac get(){
-		try {
-			return Mac.getInstance(mac);
-		} catch (NoSuchAlgorithmException e) {
-			Logger.error(MACType.class, "Internal error; please report:", e);
-		}
-		return null;
-	}
-	
+    HMACSHA256(1, "HmacSHA256", KeyType.HMACSHA256),
+    Poly1305AES(2, "POLY1305-AES", 16, KeyType.POLY1305AES);
+
+    /** Bitmask for aggregation. */
+    public final int bitmask;
+    public final String mac;
+    public final int ivlen;
+    public final KeyType keyType;
+
+    /**
+     * Creates the HMACSHA256 enum. Sets the ivlen as -1.
+     * @param bitmask
+     * @param mac Name of the algorithm that java uses. 
+     * @param type The type of key the alg requires
+     */
+    private MACType(int bitmask, String mac, KeyType type){
+        this.bitmask = bitmask;
+        this.mac = mac;
+        ivlen = -1;
+        keyType = type;
+    }
+
+    /**
+     * Creates the Poly1305 enum.
+     * @param bitmask
+     * @param mac Name of the algorithm that java uses. 
+     * @param ivlen Length of the IV
+     * @param type The type of key the alg requires
+     */
+    private MACType(int bitmask, String mac, int ivlen, KeyType type){
+        this.bitmask = bitmask;
+        this.mac = mac;
+        this.ivlen = ivlen;
+        keyType = type;
+    }
+
+    /**
+     * Gets an instance of Mac using the specified algorithm. 
+     * @return Returns an instance of Mac
+     */
+    public final Mac get(){
+        try {
+            return Mac.getInstance(mac);
+        } catch (NoSuchAlgorithmException e) {
+            Logger.error(MACType.class, "Internal error; please report:", e);
+        }
+        return null;
+    }
+
 }
