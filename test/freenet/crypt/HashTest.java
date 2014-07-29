@@ -19,15 +19,18 @@ import junit.framework.TestCase;
 public class HashTest {
 	static private byte[] helloWorld = "hello world".getBytes(Charset.forName("UTF-8"));
 	static private byte[] nullArray = null;
-	static private final HashType[] types = {HashType.MD5, HashType.ED2K, HashType.SHA1, HashType.TTH, HashType.SHA256, HashType.SHA384, HashType.SHA512};
+	static private final HashType[] types = {HashType.MD5, HashType.ED2K, HashType.SHA1, 
+	    HashType.TTH, HashType.SHA256, HashType.SHA384, HashType.SHA512};
 	static private final String[] trueHashes = {
 		"5eb63bbbe01eeed093cb22bb8f5acdc3",
 		"aa010fbc1d14c795d86ef98c95479d17",
 		"2aae6c35c94fcfb415dbe95f408b9ce91ee846ed",
 		"ca1158e471d147bb714a6b1b8a537ff756f7abe1b63dc11d",
 		"b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
-		"fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c088de1bd",
-		"309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f"
+		"fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3"
+		+ "e417cb71ce646efd0819dd8c088de1bd",
+		"309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee511a7c7a9bcd3ca86d4cd86f"
+		+ "989dd35bc5ff499670da34255b45b0cfd830e81f605dcf7dc5542e93ae9cd76f"
 	};
 	static private final String[] falseHashes = {
 		"aa010fbc1d14c795d86ef98c95479d17",
@@ -35,8 +38,10 @@ public class HashTest {
 		"309ecc489c12d6eb4cc40f50c902f2b4d0ed77ee",
 		"2aae6c35c94fcfb415dbe95f408b9ce91ee846edb63dc11d",
 		"ca1158e471d147bb714a6b1b8a537ff756f7abe1b63dc11d9088f7ace2efcde9",
-		"b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9e417cb71ce646efd0819dd8c088de1bd",
-		"fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c088de1bdd830e81f605dcf7dc5542e93ae9cd76f"
+		"b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9e417cb71ce646efd0819dd8c08"
+		+ "8de1bd",
+		"fdbd8e75a67f29f701a4e040385e2e23986303ea10239211af907fcbb83578b3e417cb71ce646efd0819dd8c08"
+		+ "8de1bdd830e81f605dcf7dc5542e93ae9cd76f"
 	};
 	
 	@Test
@@ -153,7 +158,8 @@ public class HashTest {
 				hash.addByte(helloWorld[j]);
 			}
 			
-			assertArrayEquals("HashType: "+types[i].name(), Hex.decode(trueHashes[i]), hash.genHash());	
+			assertArrayEquals("HashType: "+types[i].name(), 
+			        Hex.decode(trueHashes[i]), hash.genHash());	
 		}
 	}
 
@@ -181,7 +187,8 @@ public class HashTest {
 			Hash hash = new Hash(types[i]); 
 			
 			hash.addBytes(byteBuffer);
-			assertArrayEquals("HashType: "+types[i].name(), Hex.decode(trueHashes[i]), hash.genHash());
+			assertArrayEquals("HashType: "+types[i].name(), 
+			        Hex.decode(trueHashes[i]), hash.genHash());
 		}
 	}
 
@@ -209,7 +216,8 @@ public class HashTest {
 
 			hash.addBytes(helloWorld, 0, helloWorld.length/2);
 			hash.addBytes(helloWorld, helloWorld.length/2, helloWorld.length-helloWorld.length/2);
-			assertArrayEquals("HashType: "+types[i].name(), Hex.decode(trueHashes[i]), hash.genHash());	
+			assertArrayEquals("HashType: "+types[i].name(), 
+			        Hex.decode(trueHashes[i]), hash.genHash());	
 		}
 	}
 
