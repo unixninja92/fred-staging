@@ -135,7 +135,7 @@ public class HashTest {
 	}
 
 	@Test
-	public void testGetNativeBIgIntegerHashByteArrayArray(){
+	public void testGetNativeBigIntegerHashByteArrayArray(){
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
 			NativeBigInteger abcVector = new NativeBigInteger(1, Hex.decode(trueHashes[i]));
