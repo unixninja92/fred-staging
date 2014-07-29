@@ -152,27 +152,26 @@ public class HashResult implements Comparable<HashResult>, Cloneable {
 	
 	@Override
 	public boolean equals(Object otherObject){
-		//check instance of HashResult
-		if(!(otherObject instanceof HashResult)){
-			return false;
-		}
-		HashResult otherHash = (HashResult) otherObject;
-		//check type
-		if(type != otherHash.type){
-			return false;
-		}
-		//check hash
-		return MessageDigest.isEqual(result, otherHash.result);
+	    if(!(otherObject instanceof HashResult)){
+	        return false;
+	    }
+
+	    HashResult otherHash = (HashResult) otherObject;
+	    if(type != otherHash.type){
+	        return false;
+	    }
+
+	    return MessageDigest.isEqual(result, otherHash.result);
 	}
-	
+
 	@Override
 	public int hashCode(){
-		int hash = 1;
-		
-		hash = hash * 31 + type.hashCode();
-		hash = hash * 31 + result.hashCode();
-		
-		return hash;
+	    int hash = 1;
+
+	    hash = hash * 31 + type.hashCode();
+	    hash = hash * 31 + result.hashCode();
+
+	    return hash;
 	}
 
 }

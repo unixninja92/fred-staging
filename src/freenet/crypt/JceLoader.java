@@ -39,16 +39,19 @@ public class JceLoader {
 			try {
 				p = (new NSSLoader()).load(checkUse("prefer.NSS"));
 				try{
-					KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunPKCS11-NSS");
-					kgen.init(256);
+				    KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunPKCS11-NSS");
+				    kgen.init(256);
 				} catch (GeneralSecurityException e) {
-					final String msg = "Error with SunPKCS11-NSS. Unlimited policy file not installed.";
-					Logger.warning(NSSLoader.class, msg, e);
-					System.out.println(msg);
+				    final String msg = "Error with SunPKCS11-NSS. "
+				            + "Unlimited policy file not installed.";
+				    Logger.warning(NSSLoader.class, msg, e);
+				    System.out.println(msg);
 				}
 			} catch(Throwable e) {
 				// FIXME what about Windows/MacOSX/etc?
-				final String msg = "Unable to load SunPKCS11-NSScrypto provider. This is NOT fatal error, Freenet will work, but some performance degradation possible. Consider installing libnss3 package.";
+				final String msg = "Unable to load SunPKCS11-NSScrypto provider. "
+				        + "This is NOT fatal error, Freenet will work, but some performance "
+				        + "degradation possible. Consider installing libnss3 package.";
 				Logger.warning(NSSLoader.class, msg, e);
 			}
 		}
@@ -67,15 +70,15 @@ public class JceLoader {
 		BouncyCastle = p;
 		// optional
 		if (checkUse("use.SunJCE")) {
-			try{
-				KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunJCE");
-				kgen.init(256);
-			}
-			catch(Throwable e) {
-				final String msg = "Error with SunJCE. Unlimited policy file not installed.";
-				Logger.warning(NSSLoader.class, msg, e);
-			}
-			SunJCE = Security.getProvider("SunJCE");
+		    try{
+		        KeyGenerator kgen = KeyGenerator.getInstance("AES", "SunJCE");
+		        kgen.init(256);
+		    }
+		    catch(Throwable e) {
+		        final String msg = "Error with SunJCE. Unlimited policy file not installed.";
+		        Logger.warning(NSSLoader.class, msg, e);
+		    }
+		    SunJCE = Security.getProvider("SunJCE");
 		}
 		else SunJCE = null;
 
@@ -87,7 +90,8 @@ public class JceLoader {
 			Provider p = Security.getProvider("BC");
 			if (p == null) {
 				try {
-					Class<?> c = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
+					Class<?> c = 
+					        Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
 					p = (Provider)c.newInstance();
 					Security.addProvider(p);
 				} catch(Throwable e) {
