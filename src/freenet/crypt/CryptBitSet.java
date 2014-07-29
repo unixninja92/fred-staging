@@ -105,7 +105,7 @@ public final class CryptBitSet {
 	 * @throws InvalidKeyException 
 	 */
 	public CryptBitSet(CryptBitSetType type, byte[] key) throws GeneralSecurityException{
-		this(type, KeyGenUtils.getSecretKey(key, type.keyType));
+		this(type, KeyGenUtils.getSecretKey(type.keyType, key));
 	}
 	
 	/**
@@ -150,7 +150,7 @@ public final class CryptBitSet {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public CryptBitSet(CryptBitSetType type, byte[] key, byte[] iv, int offset) throws InvalidKeyException, InvalidAlgorithmParameterException{
-		this(type, KeyGenUtils.getSecretKey(key, type.keyType), iv, offset);
+		this(type, KeyGenUtils.getSecretKey(type.keyType, key), iv, offset);
 	}
 	
 	/**

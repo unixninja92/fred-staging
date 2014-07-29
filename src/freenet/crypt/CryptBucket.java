@@ -56,7 +56,7 @@ public final class CryptBucket implements Bucket {
      * @param key The key that will be used for encryption
      */
     public CryptBucket(CryptBucketType type, Bucket underlying, byte[] key){
-    	this(type, underlying, KeyGenUtils.getSecretKey(key, type.keyType));
+    	this(type, underlying, KeyGenUtils.getSecretKey(type.keyType, key));
     }
     
     /**

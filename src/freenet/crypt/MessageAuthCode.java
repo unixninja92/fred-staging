@@ -80,7 +80,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidKeyException
 	 */
 	public MessageAuthCode(MACType type, byte[] cryptoKey) throws InvalidKeyException {
-		this(type, KeyGenUtils.getSecretKey(cryptoKey, type.keyType));	
+		this(type, KeyGenUtils.getSecretKey(type.keyType, cryptoKey));	
 	}
 	
 	/**
@@ -114,7 +114,7 @@ public final class MessageAuthCode {
 	 * @throws InvalidAlgorithmParameterException
 	 */
 	public MessageAuthCode(MACType type, byte[] key, IvParameterSpec iv) throws InvalidKeyException, InvalidAlgorithmParameterException{
-		this(type, KeyGenUtils.getSecretKey(key, type.keyType), iv);
+		this(type, KeyGenUtils.getSecretKey(type.keyType, key), iv);
 	}
 	
 	/**
