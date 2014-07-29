@@ -40,11 +40,10 @@ public class HashTest {
 	};
 	
 	@Test
-	//This also tests addBytes(byte[]...) and getHash()
+	// This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArray() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test that output is same as expected
 			byte[] abcResult = hash.genHash(helloWorld);
 			byte[] expectedABCResult = Hex.decode(trueHashes[i]);
 
@@ -53,11 +52,10 @@ public class HashTest {
 	}
 
 	@Test
-	//This also tests addBytes(byte[]...) and getHash()
+	// This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArrayReset() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test that output is same as expected
 			byte[] abcResult = hash.genHash(helloWorld);
 			byte[] abcResult2 = hash.genHash(helloWorld);
 
@@ -67,11 +65,10 @@ public class HashTest {
 
 
 	@Test
-	//This also tests addBytes(byte[]...) and getHash()
+	// This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArraySameAsMessageDigest() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test that output is same as MessageDigest
 			MessageDigest md = types[i].get();
 			byte[] mdResult = md.digest(helloWorld);
 			byte[] hashResult = hash.genHash(helloWorld);
@@ -80,12 +77,11 @@ public class HashTest {
 	}
 
 	@Test
-	//This also tests addBytes(byte[]...) and getHash()
+	// This also tests addBytes(byte[]...) and getHash()
 	public void testGetHashByteArrayArrayNullInput() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
 			
-			//test for null input
 			boolean throwNull = false;
 			try{
 				hash.genHash(nullArray);
@@ -98,11 +94,10 @@ public class HashTest {
 	}
 
 	@Test
-	//This also tests addBytes(byte[]...)
+	// This also tests addBytes(byte[]...)
 	public void testGetHashByteArrayArrayNullMatrixElementInput() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for null input from a matrix
 			boolean throwNulls = false;
 			byte[][] nullMatrix = {helloWorld, null};
 			try{
@@ -116,7 +111,7 @@ public class HashTest {
 	}
 
 	@Test
-	//tests getHashResult() as well
+	// tests getHashResult() as well
 	public void testGetHashResultHashResultByteArray() {
 		for(int i = 0; i < types.length; i++){
 			HashResult hash2 = new HashResult(types[i], Hex.decode(trueHashes[i]));
@@ -167,7 +162,6 @@ public class HashTest {
 	public void testAddByteByteNullInput(){
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for null input
 			boolean throwNull = false;
 			Byte nullByte = null;
 			try{
@@ -223,7 +217,6 @@ public class HashTest {
 	public void testAddByteByteArrayIntIntNullInput(){
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for null input
 			boolean throwNull = false;
 			byte[] nullArray = null;
 			try{
@@ -240,7 +233,6 @@ public class HashTest {
 	public void testAddByteByteArrayIntIntOffsetOutOfBounds(){
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for offset out of bounds
 			boolean throwOutOfBounds = false;
 			try{
 				hash.addBytes(helloWorld, -3, helloWorld.length-3);
@@ -256,7 +248,6 @@ public class HashTest {
 	public void testAddByteByteArrayIntIntLengthOutOfBounds(){
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for length out of bounds
 			boolean throwOutOfBounds = false;
 			try{
 				hash.addBytes(helloWorld, 0, helloWorld.length+3);
@@ -302,7 +293,6 @@ public class HashTest {
 	public void testVerifyByteArrayByteArrayNullInputPos1() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for null input1
 			boolean throwResult = false;
 			try{
 				hash.verify(nullArray, helloWorld);
@@ -317,7 +307,6 @@ public class HashTest {
 	public void testVerifyByteArrayByteArrayNullInputPos2() {
 		for(int i = 0; i < types.length; i++){
 			Hash hash = new Hash(types[i]);
-			//test for null input2
 			boolean throwResult = false;
 			try{
 				hash.verify(helloWorld, nullArray);
@@ -362,7 +351,6 @@ public class HashTest {
 	public void testVerifyHashResultByteArrayNullInputPos1() {
 		for(int i = 0; i < types.length; i++){
 			byte[] hashResult = Hex.decode(trueHashes[i]);
-			//test for null input1
 			boolean throwResult = false;
 			HashResult nullResult = null;
 			try{
@@ -378,7 +366,6 @@ public class HashTest {
 	public void testVerifyHashResultByteArrayNullInputPos2() {
 		for(int i = 0; i < types.length; i++){
 			HashResult hash1 = new HashResult(types[i], Hex.decode(trueHashes[i]));
-			//test for null input2
 			boolean throwResult = false;
 			try{
 				Hash.verify(hash1, nullArray);
@@ -412,7 +399,6 @@ public class HashTest {
 	public void testVerifyHashResultHashResultNullInputPos1() {
 		for(int i = 0; i < types.length; i++){
 			HashResult hash = new HashResult(types[i], Hex.decode(trueHashes[i]));
-			//test for null input1
 			boolean throwResult = false;
 			HashResult nullResult = null;
 			try{
@@ -428,7 +414,6 @@ public class HashTest {
 	public void testVerifyHashResultHashResultNullInputPos2() {
 		for(int i = 0; i < types.length; i++){
 			HashResult hash = new HashResult(types[i], Hex.decode(trueHashes[i]));
-			//test for null input2
 			HashResult nullResult = null;
 
 			assertFalse("HashType: "+types[i].name(), Hash.verify(hash, nullResult));
