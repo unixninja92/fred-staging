@@ -24,7 +24,7 @@ public enum CryptBitSetType {
     /** Bitmask for aggregation. */
     public final int bitmask;
     public final int blockSize;
-    public final int ivSize;
+    public final int ivSize; // in bytes
     public final String algName;
     public final String cipherName;
     public final KeyType keyType;

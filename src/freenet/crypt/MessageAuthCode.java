@@ -185,7 +185,25 @@ public final class MessageAuthCode {
      * @return The Message Authentication Code
      */
     public final byte[] genMac(){
-        return mac.doFinal();
+        return genMac(mac.getMacLength());
+    }
+    
+    /**
+     * Generates the MAC of all the bytes in the buffer added with the
+     * addBytes methods. The buffer is then cleared after the MAC has been
+     * generated. Will only return the specified number of bytes of the MAC
+     * @return The Message Authentication Code
+     */
+    public final byte[] genMac(int outLength){
+        byte[] result = mac.doFinal();
+        if(outLength >= mac.getMacLength()){
+            return result;
+        }
+        else {
+            byte[] newResult = new byte[outLength];
+            System.arraycopy(result,  0,  newResult, 0, outLength);
+            return newResult;
+        }
     }
 
     /**
@@ -198,6 +216,18 @@ public final class MessageAuthCode {
         mac.reset();
         addBytes(input);
         return genMac();
+    }
+    
+    /**
+     * Generates the MAC of only the specified bytes. The buffer is cleared before 
+     * processing the input to ensure that no extra data is included. Once the MAC
+     * has been generated, the buffer is cleared again. 
+     * @return The Message Authentication Code
+     */
+    public final byte[] genMac(int outLength, byte[]... input){
+        mac.reset();
+        addBytes(input);
+        return genMac(outLength);
     }
 
     /**
