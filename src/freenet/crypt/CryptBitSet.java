@@ -35,7 +35,8 @@ public final class CryptBitSet {
 
     //These variables are used with Rijndael ciphers
     private BlockCipher blockCipher;
-    private PCFBMode pcfb;
+    private PCFBMode encryptPCFB;
+    private PCFBMode decryptPCFB;
 
     /**
      * Creates an instance of CryptBitSet that will be able to encrypt and decrypt 
@@ -67,7 +68,8 @@ public final class CryptBitSet {
                 blockCipher = new Rijndael(type.keyType.keySize, type.blockSize);
                 blockCipher.initialize(key.getEncoded());
                 if(type == CryptBitSetType.RijndaelPCFB){
-                    pcfb = PCFBMode.create(blockCipher, this.iv.getIV());
+                    encryptPCFB = PCFBMode.create(blockCipher, this.iv.getIV());
+                    decryptPCFB = PCFBMode.create(blockCipher, this.iv.getIV());
                 }
             } else{
                 encryptCipher = Cipher.getInstance(type.algName);
@@ -184,7 +186,7 @@ public final class CryptBitSet {
     public byte[] encrypt(byte[] input, int offset, int len){
         try{
             if(type == CryptBitSetType.RijndaelPCFB){
-                return pcfb.blockEncipher(input, offset, len);
+                return encryptPCFB.blockEncipher(input, offset, len);
             } 
             else if(type.cipherName == "RIJNDAEL"){
                 byte[] result = new byte[len];
@@ -232,8 +234,7 @@ public final class CryptBitSet {
     public byte[] decrypt(byte[] input, int offset, int len){
         try{
             if(type == CryptBitSetType.RijndaelPCFB){
-                pcfb.reset(iv.getIV());
-                return pcfb.blockDecipher(input, offset, len);
+                return decryptPCFB.blockDecipher(input, offset, len);
             } 
             else if(type.cipherName == "RIJNDAEL"){
                 byte[] result = new byte[len];

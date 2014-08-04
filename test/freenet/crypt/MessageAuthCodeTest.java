@@ -3,10 +3,8 @@ package freenet.crypt;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
-import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.MessageDigest;
 import java.security.Security;
 
 import javax.crypto.spec.IvParameterSpec;
@@ -17,7 +15,7 @@ import org.junit.Test;
 
 public class MessageAuthCodeTest{
     static private final MACType[] types = 
-        { MACType.HMACSHA256, MACType.Poly1305AES};
+        { MACType.HMACSHA256, MACType.HMACSHA512, MACType.Poly1305AES};
     static private final byte[][] keys = 
         { Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"), 
         Hex.decode("95cc0e44d0b79a8856afcae1bec4fe3c01bcb20bfc8b6e03609ddd09f44b060f")};
