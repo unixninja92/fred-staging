@@ -11,15 +11,11 @@ import javax.crypto.spec.IvParameterSpec;
 
 public final class MasterSecret implements Serializable{
     private static final long serialVersionUID = -8411217325990445764L;
-    private CryptBitSetType masterKeyType;
-    private SecretKey masterSecret;
     private CryptBitSet kdfKeyCrypt;
     
     public MasterSecret(CryptBitSetType type){
-        this.masterKeyType = type;
-        masterSecret = KeyGenUtils.genSecretKey(type.keyType);
         try {
-            kdfKeyCrypt = new CryptBitSet(type, masterSecret);
+            kdfKeyCrypt = new CryptBitSet(type, KeyGenUtils.genSecretKey(type.keyType));
         } catch (GeneralSecurityException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
