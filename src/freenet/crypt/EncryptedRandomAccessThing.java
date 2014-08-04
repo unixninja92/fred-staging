@@ -228,7 +228,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         public final String input;
         
         private kdfInput(){
-            this.input = "EncryptedRandomAccessThing"+name();
+            this.input = this.getClass().getName()+name();
         }
         
     }
