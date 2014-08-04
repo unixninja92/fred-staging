@@ -3,6 +3,8 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.io.Serializable;
+
 /**
  * Keeps track of properties of different symmetric cipher algorithms
  * available to Freenet including key type, name of the algorithm, 
@@ -10,7 +12,7 @@ package freenet.crypt;
  * @author unixninja92
  *
  */
-public enum CryptBitSetType {
+public enum CryptBitSetType implements Serializable{
     @Deprecated
     RijndaelECB(1, KeyType.Rijndael256),
     @Deprecated

@@ -3,6 +3,7 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.io.Serializable;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -23,7 +24,8 @@ import freenet.support.Logger;
  * @author unixninja92
  */
 @SuppressWarnings("deprecation")
-public final class CryptBitSet {
+public final class CryptBitSet implements Serializable{
+    private static final long serialVersionUID = 6143338995971755362L;
     public static final CryptBitSetType preferredCryptBitAlg = CryptBitSetType.ChaCha128;
     private final CryptBitSetType type;
     private final SecretKey key;
