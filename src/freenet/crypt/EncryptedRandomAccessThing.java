@@ -33,6 +33,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private ParametersWithIV cipherParams;//includes key
     
     private SecretKey macKey;
+    private IvParameterSpec macIV;
     
     private boolean isClosed = false;
     
@@ -46,7 +47,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private static final int IV_LEN = 8;
     private static final int KEY_LEN = 16;
     private static final int MAC_LEN = 16;
-    private static final long END_MAGIC = 0x28b32d99416eb6efL;//should use a different value
+    private static final long END_MAGIC = 0x2c158a6c7772acd3L;
     private static final int FOOTER_LENGTH = 52;// in bytes
     
     public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, 
@@ -116,7 +117,14 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         System.arraycopy(masterIV, 0, footer, offset, ivLen);
         offset += ivLen;
         
-        byte[] encryptedKey = encryptBaseKey();
+        byte[] encryptedKey = null;
+        try {
+            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
+            encryptedKey = crypt.encrypt(unencryptedBaseKey.getEncoded());
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         System.arraycopy(encryptedKey, 0, footer, offset, encryptedKey.length);
         offset += encryptedKey.length;
 
@@ -173,9 +181,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try{
-            MessageAuthCode authcode = new MessageAuthCode(MACType.HMACSHA256, masterKey);
+            MessageAuthCode authcode = new MessageAuthCode(MACType.Poly1305AES, macKey, macIV);
             return authcode.verifyData(mac, masterIV, encryptedKey, ver);
         } catch (InvalidKeyException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -213,6 +224,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         underlyingIV(),
         macKey(),
         macIV();
+        
+        public final String input;
+        
+        private kdfInput(){
+            this.input = "EncryptedRandomAccessThing"+name();
+        }
         
     }
 

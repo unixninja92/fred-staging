@@ -12,6 +12,8 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import org.bouncycastle.util.encoders.Hex;
+
 import freenet.crypt.ciphers.Rijndael;
 import freenet.support.Logger;
 
@@ -230,6 +232,7 @@ public final class CryptBitSet {
     public byte[] decrypt(byte[] input, int offset, int len){
         try{
             if(type == CryptBitSetType.RijndaelPCFB){
+                pcfb.reset(iv.getIV());
                 return pcfb.blockDecipher(input, offset, len);
             } 
             else if(type.cipherName == "RIJNDAEL"){

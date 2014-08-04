@@ -373,6 +373,9 @@ public final class CryptSignature{
      * @return A zero padded DER signature (maxSigSize). Space Inefficient but constant-size.
      */
     public byte[] signToNetworkFormat(byte[]... data) {
+        if(type == SigType.DSA){
+            throw new UnsupportedTypeException(type);
+        }
         byte[] plainsig = sign(data);
         if(!verifyOnly){
             int targetLength = type.maxSigSize;
@@ -421,7 +424,7 @@ public final class CryptSignature{
      * @return True if the signature matches the signature generated for the passed in 
      * data, otherwise false
      */
-    public boolean verify(byte[] signature, byte[]... data){
+    public boolean verifyData(byte[] signature, byte[]... data){
         if(type == SigType.DSA) {
             //FIXME needs to be tested to make sure that it splits the array correctly.
             int x = 0;
@@ -435,7 +438,7 @@ public final class CryptSignature{
             NativeBigInteger r = new NativeBigInteger(1, bufR);
             NativeBigInteger s = new NativeBigInteger(1, bufS);
             try {
-                return verify(r, s, data);
+                return verifyData(r, s, data);
             } catch (UnsupportedTypeException e) {
                 Logger.error(CryptSignature.class, "Internal error; please report:", e);
             }
@@ -454,26 +457,23 @@ public final class CryptSignature{
      * @return True if the signature matches the signature generated for the passed in 
      * data, otherwise false
      */
-    public boolean verify(DSASignature sig, BigInteger m) {
+    public boolean verifyData(DSASignature sig, BigInteger m) {
         if(type != SigType.DSA){
             throw new UnsupportedTypeException(type);
         }
         return DSA.verify(dsaPubK, sig, m, false);
     }
 
-    public boolean verify(BigInteger r, BigInteger s, BigInteger m) {
-        if(type != SigType.DSA){
-            throw new UnsupportedTypeException(type);
-        }
-        return DSA.verify(dsaPubK, new DSASignature(r, s), m, false);
+    public boolean verifyData(BigInteger r, BigInteger s, BigInteger m) {
+        return verifyData(new DSASignature(r, s), m);
     }
 
-    public boolean verify(DSASignature sig, byte[]... data) {
-        return verify(sig, new NativeBigInteger(1, sha256.genHash(data)));
+    public boolean verifyData(DSASignature sig, byte[]... data) {
+        return verifyData(sig, new NativeBigInteger(1, sha256.genHash(data)));
     }
 
-    public boolean verify(BigInteger r, BigInteger s, byte[]... data) {
-        return verify(r, s, new NativeBigInteger(1, sha256.genHash(data)));
+    public boolean verifyData(BigInteger r, BigInteger s, byte[]... data) {
+        return verifyData(r, s, new NativeBigInteger(1, sha256.genHash(data)));
     }
 
     public ECPublicKey getPublicKey() throws UnsupportedTypeException{

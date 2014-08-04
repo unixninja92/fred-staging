@@ -149,7 +149,7 @@ public final class JFKReceiver extends JFKExchange {
 
         try {
             CryptSignature sig = new CryptSignature(underlyingExch.type.sigType, publicKeyI);
-            if(!sig.verify(sigI, toVerify)){
+            if(!sig.verifyData(sigI, toVerify)){
                 Logger.error(this, "The signature verification has failed!! JFK(3) - "+
                         peer.getPeer());
                 return null;

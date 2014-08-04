@@ -39,7 +39,7 @@ public final class JFKInitiator extends JFKExchange {
 
         try {
             CryptSignature sig = new CryptSignature(underlyingExch.type.sigType, publicKeyR);
-            if(!sig.verify(sigR, locallyExpectedExponentials)){
+            if(!sig.verifyData(sigR, locallyExpectedExponentials)){
                 Logger.error(this, "The signature verification has failed in JFK(2)!! "+
                         peer.getPeer());
                 if(logDEBUG) Logger.debug(this, "Expected signature on "+

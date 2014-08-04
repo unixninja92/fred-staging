@@ -169,7 +169,7 @@ public final class KeyGenUtils {
 
     /**
      * Generates a random iv of a specified length
-     * @param length How long the iv should be
+     * @param length How long the iv should be in bytes
      * @return The randomly generated iv
      */
     public static IvParameterSpec genIV(int length){
