@@ -18,6 +18,7 @@ import freenet.support.Logger;
  */
 public enum MACType {
     HMACSHA256(1, "HmacSHA256", KeyType.HMACSHA256),
+    HMACSHA384(2, "HmacSHA384", KeyType.HMACSHA384),
     HMACSHA512(2, "HmacSHA512", KeyType.HMACSHA512),
     Poly1305AES(2, "POLY1305-AES", 16, KeyType.POLY1305AES);
 
