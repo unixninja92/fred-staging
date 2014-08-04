@@ -30,7 +30,7 @@ public final class JFKReceiver extends JFKExchange {
                     + "REDFLAG: IT CAN'T HAPPEN UNLESS AGAINST AN ACTIVE ATTACKER!!");
         }
 
-        this.nonceR = KeyGenUtils.genNonce(nonceSize);
+        this.nonceR = KeyGenUtils.genNonce(nonceSize).array();
 
         Hash hash = new Hash(HashType.SHA256);
         hashnR = hash.genHash(nonceR);

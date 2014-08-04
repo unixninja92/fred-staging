@@ -57,7 +57,7 @@ public abstract class JFKExchange {
         this.modulusLength = underlyingExch.type.modulusSize;
         this.peer = pn;
 
-        nonceI = KeyGenUtils.genNonce(nonceSize);
+        nonceI = KeyGenUtils.genNonce(nonceSize).array();
 
         Hash hash = new Hash(HashType.SHA256);
         hashnI = hash.genHash(nonceI);

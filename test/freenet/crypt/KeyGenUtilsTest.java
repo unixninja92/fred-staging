@@ -2,7 +2,9 @@ package freenet.crypt;
 
 import static org.junit.Assert.*;
 
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -68,6 +70,8 @@ public class KeyGenUtilsTest {
     private static PrivateKey[] privateKeys = new PrivateKey[truePublicKeys.length];
 
     private static final byte[] trueIV = new byte[16];
+    
+    private static final String kdfInput = "testKey";
 
     static{
         Security.addProvider(new BouncyCastleProvider());
@@ -308,6 +312,19 @@ public class KeyGenUtilsTest {
     @Test (expected = IllegalArgumentException.class)
     public void testGetIvParameterSpecLengthOutOfBounds() {
         KeyGenUtils.getIvParameterSpec(trueIV, 0, trueIV.length+20);
+    }
+    
+    @Test
+    public void testDeriveKey() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        ByteBuffer buf1 = KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, kdfInput);
+        ByteBuffer buf2 = KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, kdfInput);
+        assertTrue(buf1.equals(buf2));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testDeriveKeyNullInput1() throws InvalidKeyException{
+        
     }
 
 }

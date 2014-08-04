@@ -3,8 +3,10 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -18,7 +20,6 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
 
 import freenet.node.NodeStarter;
 import freenet.support.Logger;
@@ -186,5 +187,38 @@ public final class KeyGenUtils {
      */
     public static IvParameterSpec getIvParameterSpec(byte[] iv, int offset, int length){
         return new IvParameterSpec(iv, offset, length);
+    }
+    
+    /**
+     * 
+     * @param kdfKey
+     * @param c
+     * @param kdfString
+     * @param len
+     * @return
+     * @throws InvalidKeyException
+     */
+    public static ByteBuffer deriveKeyTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
+            int len) throws InvalidKeyException{
+        MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, kdfKey);
+        try {
+            return ByteBuffer.wrap(kdf.genMac((c.getName()+kdfString).getBytes("UTF-8")), 0, len);
+        } catch (UnsupportedEncodingException e) {
+            Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
+        }
+        return null;
+    }
+    
+    /**
+     * 
+     * @param kdfKey
+     * @param c
+     * @param kdfString
+     * @return
+     * @throws InvalidKeyException
+     */
+    public static ByteBuffer deriveKey(SecretKey kdfKey, Class<?> c, String kdfString) 
+            throws InvalidKeyException{
+        return deriveKeyTruncated(kdfKey, c, kdfString, MACType.HMACSHA512.keyType.keySize);
     }
 }

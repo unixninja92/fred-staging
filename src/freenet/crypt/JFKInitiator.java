@@ -133,7 +133,7 @@ public final class JFKInitiator extends JFKExchange {
                 | ((sharedData[14] & 0xFF) << 8)
                 | (sharedData[15] & 0xFF);
 
-        byte[] iv = KeyGenUtils.genNonce(ivSize);
+        byte[] iv = KeyGenUtils.genIV(ivSize).getIV();
 
         int cleartextOffset = 0;
         byte[] cleartext = new byte[JFK_PREFIX_INITIATOR.length + ivSize + sig.length + 

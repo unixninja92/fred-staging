@@ -182,7 +182,7 @@ public final class CryptBucket implements Bucket {
      * @throws IOException
      */
     private final FilterOutputStream genOutputStream() throws IOException {
-        byte[] nonce = KeyGenUtils.genNonce(type.nonceSize);
+        byte[] nonce = KeyGenUtils.genNonce(type.nonceSize).array();
         nonce[0] &= 0x7F;
 
         return new AEADOutputStream(underlying.getOutputStream(), 
