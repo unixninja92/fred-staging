@@ -5,12 +5,9 @@ import java.security.InvalidKeyException;
 
 import javax.crypto.SecretKey;
 
-import freenet.node.NodeStarter;
-
 public final class MasterSecret implements Serializable{
     private static final long serialVersionUID = -8411217325990445764L;
     private final SecretKey masterKey;
-    private final int MASTER_KEY_LENGTH = 512 >> 3;//in bytes
     
     public MasterSecret(){
         masterKey = KeyGenUtils.genSecretKey(KeyType.HMACSHA512);
