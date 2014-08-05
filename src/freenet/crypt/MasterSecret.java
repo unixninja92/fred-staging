@@ -8,20 +8,22 @@ import javax.crypto.SecretKey;
 public final class MasterSecret implements Serializable{
     private static final long serialVersionUID = -8411217325990445764L;
     private final SecretKey masterKey;
+    private final MessageAuthCode kdf;
     
     public MasterSecret(){
         masterKey = KeyGenUtils.genSecretKey(KeyType.HMACSHA512);
-    }
-    
-    public SecretKey deriveKey(KeyType type){
+        MessageAuthCode temp = null;
         try {
-            MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, masterKey);
-            return KeyGenUtils.getSecretKey(type, kdf.genMac(type.name().getBytes()).array());
+            temp = new MessageAuthCode(MACType.HMACSHA512, masterKey);
         } catch (InvalidKeyException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return null;
+        kdf = temp;
+    }
+    
+    public SecretKey deriveKey(KeyType type){
+        return KeyGenUtils.getSecretKey(type, kdf.genMac(type.name().getBytes()).array());
     }
     
 //    public static void save(){
