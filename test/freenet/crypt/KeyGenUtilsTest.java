@@ -40,16 +40,16 @@ public class KeyGenUtilsTest {
         HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
     };
     
-    private static final byte[][] trueSizeSecretKeys = {
+    private static final byte[][] trueLengthSecretKeys = {
         HexUtil.hexToBytes("20e86dc31ebf2c0e37670e30f8f45c57"),
         HexUtil.hexToBytes("8c6c2e0a60b3b73e9dbef076b68b686bacc9d20081e8822725d14b10b5034f48"),
         HexUtil.hexToBytes("33a4a38b71c8e350d3a98357d1bc9ecd"),
         HexUtil.hexToBytes("be56dbec20bff9f6f343800367287b48c0c28bf47f14b46aad3a32e4f24f0f5e"),
-        HexUtil.hexToBytes("120751cae69aad6c513c9b062ecb8a797c1630cdfe611b090907d35446d7fc81"),
-        HexUtil.hexToBytes("7b3af4c5eaae8f002f108269cfad04ac4023efc0cbc0d853fc1d6b583a9c51ab"
-                + "6a22fa55b47d9de6d6e92e0b50fd1807"),
-        HexUtil.hexToBytes("2d899b05f89e97cac8f9d4e6492a42f43eb379e7a9e7f8b666c82e3db9976e1b"
-                + "aa6ef483b2ce041b2a427aff7f844a9ba7cb64c497f8d6042636e6217a853b67"),
+        HexUtil.hexToBytes("2e3e4a8f7c896ebf95fc3a59f283ca1e2808d984ad9043e710f74c4a8f4c8372"),
+        HexUtil.hexToBytes("c9f1731f7e996603c6e1f8f72da8a66e51dd8bbc2465f1a9f4d32f800c41ac28"
+                + "f99fe0c1d811678f91300cf33e527436"),
+        HexUtil.hexToBytes("2ada39975c02c442e5ebc34832cde05e718acb28e15cdf80c8ab1da9c05bb53c"
+                + "0b026c88a32aee65a924c9ea0b4e6cf5d2d434489d8bb82dfe7876919f690a56"),
         HexUtil.hexToBytes("a92e3fa63e8cbe50869fb352d883911271bf2b0e9048ad04c013b20e901f5806"),
         HexUtil.hexToBytes("45d6c9656b3b115263ba12739e90dcc1"),
         HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
@@ -281,12 +281,12 @@ public class KeyGenUtilsTest {
     public void testGetSecretKey() {
         for(int i = 0; i < keyTypes.length; i++){
             KeyType type = keyTypes[i];
-            SecretKey newKey = KeyGenUtils.getSecretKey(type, trueSizeSecretKeys[i]);
-            assertArrayEquals("KeyType: "+type.name(), trueSizeSecretKeys[i], newKey.getEncoded());
+            SecretKey newKey = KeyGenUtils.getSecretKey(type, trueLengthSecretKeys[i]);
+            assertArrayEquals("KeyType: "+type.name(), trueLengthSecretKeys[i], newKey.getEncoded());
         }
     }
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test (expected = NullPointerException.class)
     public void testGetSecretKeyNullInput1() {
         byte[] nullArray = null;
         KeyGenUtils.getSecretKey(keyTypes[1], nullArray);
