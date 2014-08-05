@@ -158,7 +158,7 @@ public final class JFKInitiator extends JFKExchange {
             Logger.error(JFKInitiator.class, "Internal error; please report:", e);
         }
         byte[] ciphertext = cryptBits.encrypt(cleartext, cleartextToEncypherOffset, 
-                cleartext.length-cleartextToEncypherOffset);
+                cleartext.length-cleartextToEncypherOffset).array();
 
         // We compute the HMAC of (prefix + cyphertext) Includes the IV!
         try {
@@ -166,7 +166,7 @@ public final class JFKInitiator extends JFKExchange {
         } catch (InvalidKeyException e) {
             Logger.error(JFKInitiator.class, "Internal error; please report:", e);
         }
-        byte[] hmac = mac.genMac(ciphertext);
+        byte[] hmac = mac.genMac(ciphertext).array();
 
         // copy stuffs back to the message
         System.arraycopy(hmac, 0, message3, offset, hmac.length);
@@ -207,7 +207,7 @@ public final class JFKInitiator extends JFKExchange {
 
                 byte[] decypheredPayload = cryptBits.decrypt(encypheredPayload, 
                         encypheredPayloadOffset, 
-                        encypheredPayload.length - encypheredPayloadOffset);
+                        encypheredPayload.length - encypheredPayloadOffset).array();
                 int decypheredPayloadOffset = 0;
 
                 return decypheredPayload;

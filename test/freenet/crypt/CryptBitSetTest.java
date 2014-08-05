@@ -2,6 +2,7 @@ package freenet.crypt;
 
 import static org.junit.Assert.*;
 
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -56,9 +57,9 @@ public class CryptBitSetTest {
             } else {
                 crypt = new CryptBitSet(type, keys[i], ivs[i]);
             }
-            byte[] ciphertext = crypt.encrypt(Hex.decode(plainText[i]));
+            ByteBuffer ciphertext = crypt.encrypt(Hex.decode(plainText[i]));
 
-            byte[] decipheredtext = crypt.decrypt(ciphertext);
+            byte[] decipheredtext = crypt.decrypt(ciphertext).array();
             assertArrayEquals("CryptBitSetType: "+type.name(), 
                     Hex.decode(plainText[i]), decipheredtext);
         }
@@ -69,22 +70,22 @@ public class CryptBitSetTest {
             for(int i = 0; i < cipherTypes.length; i++){
                 CryptBitSetType type = cipherTypes[i];
                 CryptBitSet crypt;
-                byte[] plain = Hex.decode(plainText[i]);
+                ByteBuffer plain = ByteBuffer.wrap(Hex.decode(plainText[i]));
                 if(ivs[i] == null){
                     crypt = new CryptBitSet(type, keys[i]);
                 } else {
                     crypt = new CryptBitSet(type, keys[i], ivs[i]);
                 }
-                byte[] ciphertext1 = crypt.encrypt(plain);
-                byte[] ciphertext2 = crypt.encrypt(plain);
-                byte[] ciphertext3 = crypt.encrypt(plain);
+                ByteBuffer ciphertext1 = crypt.encrypt(plain);
+                ByteBuffer ciphertext2 = crypt.encrypt(plain);
+                ByteBuffer ciphertext3 = crypt.encrypt(plain);
 
-                byte[] decipheredtext2 = crypt.decrypt(ciphertext2);
-                byte[] decipheredtext1 = crypt.decrypt(ciphertext1);
-                byte[] decipheredtext3 = crypt.decrypt(ciphertext3);
-                assertArrayEquals("CryptBitSetType: "+type.name(), plain, decipheredtext1);
-                assertArrayEquals("CryptBitSetType: "+type.name(), plain, decipheredtext2);
-                assertArrayEquals("CryptBitSetType: "+type.name(), plain, decipheredtext3);
+                ByteBuffer decipheredtext2 = crypt.decrypt(ciphertext2);
+                ByteBuffer decipheredtext1 = crypt.decrypt(ciphertext1);
+                ByteBuffer decipheredtext3 = crypt.decrypt(ciphertext3);
+                assertTrue("CryptBitSetType: "+type.name(), plain.equals(decipheredtext1));
+                assertTrue("CryptBitSetType: "+type.name(), plain.equals(decipheredtext2));
+                assertTrue("CryptBitSetType: "+type.name(), plain.equals(decipheredtext3));
             }
     }
 
@@ -100,7 +101,7 @@ public class CryptBitSetTest {
                 crypt = new CryptBitSet(type, keys[i], ivs[i]);
             }
             crypt.encrypt(plain);
-            byte[] ciphertext = crypt.encrypt(plain);
+            ByteBuffer ciphertext = crypt.encrypt(plain);
             crypt.encrypt(plain);
 
             if(ivs[i] == null){
@@ -108,7 +109,7 @@ public class CryptBitSetTest {
             } else {
                 crypt = new CryptBitSet(type, keys[i], ivs[i]);
             }
-            byte[] decipheredtext = crypt.decrypt(ciphertext);
+            byte[] decipheredtext = crypt.decrypt(ciphertext).array();
             assertArrayEquals("CryptBitSetType: "+type.name(), plain, decipheredtext);
         }
     }
@@ -204,7 +205,7 @@ public class CryptBitSetTest {
                 crypt.encrypt(Hex.decode(plainText[i]), -3, plainText[i].length()-3);
                 fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
                         + "ArrayIndexOutOfBoundsException");
-            }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
+            }catch(IllegalArgumentException | IndexOutOfBoundsException e){}
         } 
     }
 
@@ -223,7 +224,7 @@ public class CryptBitSetTest {
                 crypt.encrypt(Hex.decode(plainText[i]), 0, plainText[i].length()+3);
                 fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
                         + "ArrayIndexOutOfBoundsException");
-            }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
+            }catch(IllegalArgumentException | IndexOutOfBoundsException e){}
         } 
     }
 
@@ -300,7 +301,7 @@ public class CryptBitSetTest {
                 crypt.decrypt(Hex.decode(plainText[i]), -3, plainText[i].length()-3);
                 fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
                         + "ArrayIndexOutOfBoundsException");
-            }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
+            }catch(IllegalArgumentException | IndexOutOfBoundsException e){}
         } 
     }
 
@@ -319,7 +320,7 @@ public class CryptBitSetTest {
                 crypt.decrypt(Hex.decode(plainText[i]), 0, plainText[i].length()+3);
                 fail("CryptBitSetType: "+type.name()+": Expected IllegalArgumentException or "
                         + "ArrayIndexOutOfBoundsException");
-            }catch(IllegalArgumentException | ArrayIndexOutOfBoundsException e){}
+            }catch(IllegalArgumentException | IndexOutOfBoundsException e){}
         } 
     }
 
@@ -371,7 +372,7 @@ public class CryptBitSetTest {
     public void testGenIVLength() throws InvalidKeyException, InvalidAlgorithmParameterException {
         int i = 4;
         CryptBitSet crypt = new CryptBitSet(cipherTypes[i], keys[i], ivs[i]);
-        assertEquals(crypt.genIV().length, cipherTypes[i].ivSize);
+        assertEquals(crypt.genIV().getIV().length, cipherTypes[i].ivSize);
     }
 
     @Test (expected = UnsupportedTypeException.class)

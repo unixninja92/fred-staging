@@ -200,9 +200,12 @@ public final class KeyGenUtils {
      */
     public static ByteBuffer deriveKeyTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
             int len) throws InvalidKeyException{
+        if(kdfString == null){
+            throw new NullPointerException();
+        }
         MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, kdfKey);
         try {
-            return ByteBuffer.wrap(kdf.genMac((c.getName()+kdfString).getBytes("UTF-8")), 0, len);
+            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
         }
@@ -219,6 +222,6 @@ public final class KeyGenUtils {
      */
     public static ByteBuffer deriveKey(SecretKey kdfKey, Class<?> c, String kdfString) 
             throws InvalidKeyException{
-        return deriveKeyTruncated(kdfKey, c, kdfString, MACType.HMACSHA512.keyType.keySize);
+        return deriveKeyTruncated(kdfKey, c, kdfString, MACType.HMACSHA512.keyType.keySize >>3);
     }
 }

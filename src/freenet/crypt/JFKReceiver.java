@@ -57,7 +57,7 @@ public final class JFKReceiver extends JFKExchange {
 
         mac = new MessageAuthCode(MACType.HMACSHA256, transientKey);
 
-        byte[] authenticator = mac.genMac(assembleJFKAuthenticator(replyToAddress));
+        byte[] authenticator = mac.genMac(assembleJFKAuthenticator(replyToAddress)).array();
 
         System.arraycopy(authenticator, 0, message2, offset, hashnR.length);
 
@@ -134,7 +134,7 @@ public final class JFKReceiver extends JFKExchange {
             Logger.error(KeyExchange.class, "Internal error; please report:", e1);
         }
         byte[] cleartext = cryptBits.decrypt(cypheredPayload, decypheredPayloadOffset, 
-                cypheredPayload.length-decypheredPayloadOffset);
+                cypheredPayload.length-decypheredPayloadOffset).array();
 
 
         int sigLength = underlyingExch.ecdsaSig.length;
@@ -169,7 +169,7 @@ public final class JFKReceiver extends JFKExchange {
     public byte[] genMessage4(byte[] identity, byte[] data, byte[] refI, byte[] sig, 
             CryptBitSet cryptBits, byte[] newTrackerID, boolean sameAsOldTrackerID, 
             byte[] outgoingBootID, long bootID, SigType sigType) throws InvalidKeyException{
-        byte[] iv = cryptBits.genIV();
+        byte[] iv = cryptBits.genIV().getIV();
         int ivLength = iv.length;
 
         int dataLength = data.length - refI.length;
@@ -190,10 +190,10 @@ public final class JFKReceiver extends JFKExchange {
         int cleartextToEncypherOffset = JFK_PREFIX_RESPONDER.length + ivLength;
 
         cyphertext = cryptBits.decrypt(cyphertext, cleartextToEncypherOffset, 
-                cyphertext.length - cleartextToEncypherOffset);
+                cyphertext.length - cleartextToEncypherOffset).array();
 
         // We compute the HMAC of (prefix + iv + signature)
-        byte[] hmac = mac.genMac(cyphertext);
+        byte[] hmac = mac.genMac(cyphertext).array();
 
         byte[] message4 = new byte[hashnI.length + ivLength + 
                                    (cyphertext.length - cleartextToEncypherOffset)];

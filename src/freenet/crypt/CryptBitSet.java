@@ -4,6 +4,7 @@
 package freenet.crypt;
 
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -12,8 +13,6 @@ import java.util.BitSet;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-
-import org.bouncycastle.util.encoders.Hex;
 
 import freenet.crypt.ciphers.Rijndael;
 import freenet.support.Logger;
@@ -183,20 +182,20 @@ public final class CryptBitSet implements Serializable{
      * @param input The bytes to be encrypted
      * @param offset The position of input to start encrypting at
      * @param len The number of bytes after offset to encrypt
-     * @return Returns byte[] input with the specified section encrypted
+     * @return Returns ByteBuffer input with the specified section encrypted
      */
-    public byte[] encrypt(byte[] input, int offset, int len){
+    public ByteBuffer encrypt(byte[] input, int offset, int len){
         try{
             if(type == CryptBitSetType.RijndaelPCFB){
-                return encryptPCFB.blockEncipher(input, offset, len);
+                return ByteBuffer.wrap(encryptPCFB.blockEncipher(input, offset, len));
             } 
             else if(type.cipherName == "RIJNDAEL"){
                 byte[] result = new byte[len];
                 blockCipher.encipher(extractSmallerArray(input, offset, len), result);
-                return result;
+                return ByteBuffer.wrap(result);
             }
             else{
-                return encryptCipher.doFinal(input, offset, len);
+                return ByteBuffer.wrap(encryptCipher.doFinal(input, offset, len));
             }
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
@@ -209,10 +208,20 @@ public final class CryptBitSet implements Serializable{
      * Encrypts the provided byte[]. If you are using a RijndaelECB
      * alg then the length of input must equal the block size. 
      * @param input The byte[] to be encrypted
-     * @return The encrypted byte[]
+     * @return The encrypted ByteBuffer
      */
-    public byte[] encrypt(byte[] input){
+    public ByteBuffer encrypt(byte[] input){
         return encrypt(input, 0, input.length);
+    }
+    
+    /**
+     * Encrypts the provided ByteBuffer. If you are using a RijndaelECB
+     * alg then the length of input must equal the block size. 
+     * @param input The byte[] to be encrypted
+     * @return The encrypted ByteBuffer
+     */
+    public ByteBuffer encrypt(ByteBuffer input){
+        return encrypt(input.array());
     }
 
     /**
@@ -231,20 +240,20 @@ public final class CryptBitSet implements Serializable{
      * @param input The bytes to be decrypted
      * @param offset The position of input to start decrypting at
      * @param len The number of bytes after offset to decrypt
-     * @return Returns byte[] input with the specified section decrypted
+     * @return Returns ByteBuffer input with the specified section decrypted
      */
-    public byte[] decrypt(byte[] input, int offset, int len){
+    public ByteBuffer decrypt(byte[] input, int offset, int len){
         try{
             if(type == CryptBitSetType.RijndaelPCFB){
-                return decryptPCFB.blockDecipher(input, offset, len);
+                return ByteBuffer.wrap(decryptPCFB.blockDecipher(input, offset, len));
             } 
             else if(type.cipherName == "RIJNDAEL"){
                 byte[] result = new byte[len];
                 blockCipher.decipher(extractSmallerArray(input, offset, len), result);
-                return result;
+                return ByteBuffer.wrap(result);
             }
             else{
-                return decryptCipher.doFinal(input, offset, len);
+                return ByteBuffer.wrap(decryptCipher.doFinal(input, offset, len));
             }
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
@@ -257,10 +266,20 @@ public final class CryptBitSet implements Serializable{
      * Decrypts the provided byte[]. If you are using a RijndaelECB
      * alg then the length of input must equal the block size. 
      * @param input The byte[] to be decrypted
-     * @return The decrypted byte[]
+     * @return The decrypted ByteBuffer
      */
-    public byte[] decrypt(byte[] input){
+    public ByteBuffer decrypt(byte[] input){
         return decrypt(input, 0, input.length);
+    }
+    
+    /**
+     * Decrypts the provided ByteBuffer. If you are using a RijndaelECB
+     * alg then the length of input must equal the block size. 
+     * @param input The ByteBuffer to be decrypted
+     * @return The decrypted ByteBuffer
+     */
+    public ByteBuffer decrypt(ByteBuffer input){
+        return decrypt(input.array());
     }
 
     /**
@@ -297,7 +316,7 @@ public final class CryptBitSet implements Serializable{
      * the new iv. Only works with algorithms that support IVs.
      * @return The generated IV
      */
-    public byte[] genIV(){
+    public IvParameterSpec genIV(){
         if(type.ivSize == -1){
             throw new UnsupportedTypeException(type);
         }
@@ -308,7 +327,7 @@ public final class CryptBitSet implements Serializable{
         } catch (GeneralSecurityException e) {
             Logger.error(CryptBitSet.class, "Internal error; please report:", e);
         } 
-        return iv.getIV();
+        return iv;
     }
 
     /**
@@ -331,9 +350,7 @@ public final class CryptBitSet implements Serializable{
             return input;
         }
         else{
-            byte[] result = new byte[len];
-            System.arraycopy(input, offset, result, 0, len);
-            return result;
+            return ByteBuffer.wrap(input, offset, len).array();
         }
     }
 }

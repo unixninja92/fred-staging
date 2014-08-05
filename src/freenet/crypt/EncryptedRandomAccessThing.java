@@ -120,7 +120,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         byte[] encryptedKey = null;
         try {
             CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
-            encryptedKey = crypt.encrypt(unencryptedBaseKey.getEncoded());
+            encryptedKey = crypt.encrypt(unencryptedBaseKey.getEncoded()).array();
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -131,7 +131,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try {
             MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, masterKey);
-            byte[] macResult = mac.genMac(masterIV, encryptedKey, ver);
+            byte[] macResult = mac.genMac(masterIV, encryptedKey, ver).array();
             System.arraycopy(macResult, 0, footer, offset, macResult.length);
             offset += macResult.length;
         } catch (InvalidKeyException e) {
@@ -162,7 +162,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         offset += KEY_LEN;
         try {
             CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
-            encryptedKey = crypt.decrypt(unencryptedBaseKey.getEncoded());
+            encryptedKey = crypt.decrypt(unencryptedBaseKey.getEncoded()).array();
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -196,7 +196,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private byte[] kdf(String keyInfo){
         try {
             MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA256, unencryptedBaseKey);
-            return kdf.genMac(keyInfo.getBytes("UTF-8"));
+            return kdf.genMac(keyInfo.getBytes("UTF-8")).array();
         } catch (InvalidKeyException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -210,7 +210,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private byte[] encryptBaseKey(){
         try {
             CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
-            return crypt.encrypt(unencryptedBaseKey.getEncoded());
+            return crypt.encrypt(unencryptedBaseKey.getEncoded()).array();
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

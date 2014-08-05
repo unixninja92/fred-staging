@@ -1,34 +1,33 @@
 package freenet.crypt;
 
 import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.util.BitSet;
+import java.security.InvalidKeyException;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
 
 public final class MasterSecret implements Serializable{
     private static final long serialVersionUID = -8411217325990445764L;
-    private CryptBitSet kdfKeyCrypt;
+    private KeyType type;
+    private SecretKey masterKey;
     
-    public MasterSecret(CryptBitSetType type){
+    public MasterSecret(KeyType type){
+        this.type = type;
+        masterKey =  KeyGenUtils.genSecretKey(type);
+    }
+    
+    public SecretKey deriveKey(Class<?> c, String kdfInput){
         try {
-            kdfKeyCrypt = new CryptBitSet(type, KeyGenUtils.genSecretKey(type.keyType));
-        } catch (GeneralSecurityException e) {
+            return KeyGenUtils.getSecretKey(type, 
+                    KeyGenUtils.deriveKey(masterKey, c, kdfInput).array());
+        } catch (InvalidKeyException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        return null;
     }
     
-    public BitSet encryptKey(BitSet keyToEncrypt, IvParameterSpec iv) throws InvalidAlgorithmParameterException{
-        kdfKeyCrypt.setIV(iv);
-        return kdfKeyCrypt.encrypt(keyToEncrypt);
-    }
-    
-    public BitSet decryptKey(BitSet keyToDecrypt, IvParameterSpec iv) throws InvalidAlgorithmParameterException{
-        kdfKeyCrypt.setIV(iv);
-        return kdfKeyCrypt.decrypt(keyToDecrypt);
-    }
+//    public static void save(){
+//        MasterSecret key = new MasterSecret(CryptBitSetType.ChaCha256);
+////        key.
+//    }
 }

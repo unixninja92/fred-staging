@@ -2,6 +2,7 @@ package freenet.crypt;
 
 import static org.junit.Assert.*;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -13,24 +14,43 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
+import freenet.support.Logger;
+
 public class MessageAuthCodeTest{
-    static private final MACType[] types = 
-        { MACType.HMACSHA256, MACType.HMACSHA512, MACType.Poly1305AES};
+    static private final MACType[] types = MACType.values();
     static private final byte[][] keys = 
         { Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"), 
+        Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
+        Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
         Hex.decode("95cc0e44d0b79a8856afcae1bec4fe3c01bcb20bfc8b6e03609ddd09f44b060f")};
-    static private final byte[][] messages = { "Hi There".getBytes(), new byte[128]};
+    static private byte[] hmacMessage;
+    private byte[][] messages = { hmacMessage, hmacMessage, hmacMessage, 
+        new byte[128]};
     static private final IvParameterSpec[] IVs = 
-        { null, new IvParameterSpec(new byte[16])};
+        { null, null, null, new IvParameterSpec(new byte[16])};
     static private final byte[][] trueMacs = 
         { Hex.decode("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"),
+        Hex.decode("afd03944d84895626b0825f4ab46907f15f9dadbe4101ec682aa034c7cebc59cfaea9ea9076ede7"
+                + "f4af152e8b2fa9cb6"),
+        Hex.decode("87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cdedaa833b7d6b8a70"
+                + "2038b274eaea3f4e4be9d914eeb61f1702e696c203a126854"),
         Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854")};
     static private final byte[][] falseMacs = 
         { Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7"),
+        Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7faea9ea9076ede7"
+                + "f4af152e8b2fa9cb6"),
+        Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7faea9ea9076ede7"
+                + "2038b274eaea3f4e4be9d914eeb61f1702e696c203a126854"),
         Hex.decode("881dc200c9833da726e9376c2e32cff7")};
 
     static{
         Security.addProvider(new BouncyCastleProvider());
+        try {
+            hmacMessage = "Hi There".getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            Logger.error(CryptSignature.class, "Internal error; please report:", e);
+        }
     }
 
     @Test
@@ -47,7 +67,7 @@ public class MessageAuthCodeTest{
             for (int j = 0; j < messages[i].length; j++){
                 mac.addByte(messages[i][j]);
             }
-            assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
+            assertArrayEquals("MACType: "+types[i].name(), mac.genMac().array(), trueMacs[i]);
         }
     }
 
@@ -88,7 +108,7 @@ public class MessageAuthCodeTest{
             ByteBuffer byteBuffer = ByteBuffer.wrap(messages[i]);
 
             mac.addBytes(byteBuffer);
-            assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
+            assertArrayEquals("MACType: "+types[i].name(), mac.genMac().array(), trueMacs[i]);
         }
     }
 
@@ -116,7 +136,7 @@ public class MessageAuthCodeTest{
             mac.addBytes(messages[i], messages[i].length/2, 
                     messages[i].length-messages[i].length/2);
 
-            assertArrayEquals("MACType: "+types[i].name(), mac.genMac(), trueMacs[i]);
+            assertArrayEquals("MACType: "+types[i].name(), mac.genMac().array(), trueMacs[i]);
         }
     }
 
@@ -199,7 +219,7 @@ public class MessageAuthCodeTest{
             else{
                 mac = new MessageAuthCode(types[i], keys[i]);
             }
-            byte[] result = mac.genMac(messages[i]);
+            byte[] result = mac.genMac(messages[i]).array();
             assertTrue("MACType: "+types[i].name(), MessageAuthCode.verify(result, trueMacs[i]));
         }
     }
@@ -216,7 +236,7 @@ public class MessageAuthCodeTest{
                 mac = new MessageAuthCode(types[i], keys[i]);
             }
             mac.addBytes(messages[i]);
-            byte[] result = mac.genMac(messages[i]);
+            byte[] result = mac.genMac(messages[i]).array();
             assertArrayEquals("MACType: "+types[i].name(), result, trueMacs[i]);
         }
     }
@@ -248,25 +268,25 @@ public class MessageAuthCodeTest{
     @Test (expected = NullPointerException.class)
     public void testGetMacByteArrayArrayNullMatrixElementInput() 
             throws InvalidKeyException, InvalidAlgorithmParameterException {
-        MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-        byte[][] nullMatrix = {messages[1], null};
+        MessageAuthCode mac = new MessageAuthCode(types[3], keys[3], IVs[3]);
+        byte[][] nullMatrix = {messages[3], null};
         mac.genMac(nullMatrix);
     }
 
     @Test
     public void testVerify() {
-        assertTrue(MessageAuthCode.verify(trueMacs[1], trueMacs[1]));
+        assertTrue(MessageAuthCode.verify(trueMacs[3], trueMacs[3]));
     }
 
     @Test
     public void testVerifyFalse() {
-        assertFalse(MessageAuthCode.verify(trueMacs[1], falseMacs[1]));
+        assertFalse(MessageAuthCode.verify(trueMacs[3], falseMacs[3]));
     }
 
     @Test (expected = NullPointerException.class)
     public void testVerifyNullInput1() {
         byte[] nullArray = null;
-        MessageAuthCode.verify(nullArray, trueMacs[1]);
+        MessageAuthCode.verify(nullArray, trueMacs[3]);
     }
 
     @Test (expected = NullPointerException.class)
@@ -364,8 +384,8 @@ public class MessageAuthCodeTest{
 
     @Test
     public void testGetIV() throws InvalidKeyException, InvalidAlgorithmParameterException {
-        MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-        assertArrayEquals(mac.getIv().getIV(), IVs[1].getIV());
+        MessageAuthCode mac = new MessageAuthCode(types[3], keys[3], IVs[3]);
+        assertArrayEquals(mac.getIv().getIV(), IVs[3].getIV());
     }
 
     @Test (expected = UnsupportedTypeException.class)
@@ -377,17 +397,17 @@ public class MessageAuthCodeTest{
     @Test
     public void testSetIVIvParameterSpec() 
             throws InvalidKeyException, InvalidAlgorithmParameterException {
-        MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+        MessageAuthCode mac = new MessageAuthCode(types[3], keys[3], IVs[3]);
         mac.genIv();
-        mac.setIv(IVs[1]);
-        assertArrayEquals(IVs[1].getIV(), mac.getIv().getIV());
+        mac.setIv(IVs[3]);
+        assertArrayEquals(IVs[3].getIV(), mac.getIv().getIV());
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void testSetIVIvParameterSpecNullInput() 
             throws InvalidKeyException, InvalidAlgorithmParameterException {
         IvParameterSpec nullInput = null;
-        MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+        MessageAuthCode mac = new MessageAuthCode(types[3], keys[3], IVs[3]);
         mac.setIv(nullInput);
     }
 
@@ -400,14 +420,14 @@ public class MessageAuthCodeTest{
 
     @Test
     public void testGenIV() throws InvalidKeyException, InvalidAlgorithmParameterException {
-        MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
+        MessageAuthCode mac = new MessageAuthCode(types[3], keys[3], IVs[3]);
         assertNotNull(mac.genIv());
     }
 
     @Test
     public void testGenIVLength() throws InvalidKeyException, InvalidAlgorithmParameterException {
-        MessageAuthCode mac = new MessageAuthCode(types[1], keys[1], IVs[1]);
-        assertEquals(mac.genIv().getIV().length, types[1].ivlen);
+        MessageAuthCode mac = new MessageAuthCode(types[3], keys[3], IVs[3]);
+        assertEquals(mac.genIv().getIV().length, types[3].ivlen);
     }
 
     @Test (expected = UnsupportedTypeException.class)

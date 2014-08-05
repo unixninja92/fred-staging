@@ -184,8 +184,8 @@ public final class MessageAuthCode {
      * generated.
      * @return The Message Authentication Code
      */
-    public final byte[] genMac(){
-        return mac.doFinal();
+    public final ByteBuffer genMac(){
+        return ByteBuffer.wrap(mac.doFinal());
     }
     
 
@@ -193,9 +193,23 @@ public final class MessageAuthCode {
      * Generates the MAC of only the specified bytes. The buffer is cleared before 
      * processing the input to ensure that no extra data is included. Once the MAC
      * has been generated, the buffer is cleared again. 
+     * @param input
      * @return The Message Authentication Code
      */
-    public final byte[] genMac(byte[]... input){
+    public final ByteBuffer genMac(byte[]... input){
+        mac.reset();
+        addBytes(input);
+        return genMac();
+    }
+    
+    /**
+     * Generates the MAC of only the specified bytes. The buffer is cleared before 
+     * processing the input to ensure that no extra data is included. Once the MAC
+     * has been generated, the buffer is cleared again. 
+     * @param input
+     * @return The Message Authentication Code
+     */
+    public final ByteBuffer genMac(ByteBuffer input){
         mac.reset();
         addBytes(input);
         return genMac();
@@ -210,6 +224,16 @@ public final class MessageAuthCode {
     public final static boolean verify(byte[] mac1, byte[] mac2){
         return MessageDigest.isEqual(mac1, mac2);
     }
+    
+    /**
+     * Verifies that the two MAC addresses passed are equivalent.
+     * @param mac1 First MAC to be verified
+     * @param mac2 Second MAC to be verified
+     * @return Returns true if the MACs match, otherwise false.
+     */
+    public final static boolean verify(ByteBuffer mac1, ByteBuffer mac2){
+        return mac1.equals(mac2);
+    }
 
     /**
      * Generates the MAC of the byte arrays provided and checks to see if that MAC
@@ -221,6 +245,19 @@ public final class MessageAuthCode {
      * @return Returns true if it is a match, otherwise false.
      */
     public final boolean verifyData(byte[] otherMac, byte[]... data){
+        return verify(genMac(data).array(), otherMac);
+    }
+    
+    /**
+     * Generates the MAC of the byte arrays provided and checks to see if that MAC
+     * is the same as the one passed in. The buffer is cleared before processing the 
+     * input to ensure that no extra data is included. Once the MAC has been 
+     * generated, the buffer is cleared again. 
+     * @param otherMac The MAC to check
+     * @param data The data to check the MAC against
+     * @return Returns true if it is a match, otherwise false.
+     */
+    public final boolean verifyData(ByteBuffer otherMac, ByteBuffer data){
         return verify(genMac(data), otherMac);
     }
 

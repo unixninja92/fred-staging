@@ -47,12 +47,46 @@ public class CryptSignatureTest {
                 + "2eb270a6d99cac7dd0e51e0e56b55dde864291009b6219af0a21be42079481f97df412f288a51976"
                 + "6ca600377e8be87931e9d9cf763f0ea86ea98")
         };
+    
+    private static final byte[] trueDSASig = Hex.decode("3b715e0ff93e6690bbbbbac69cd11d178390f52805"
+            + "209dbbada458f2aa6813257a0c3d99fca812adbbfc2891ff9d7ca4c84a0228a2cd6abe430f6a7d9a585b"
+            + "77");
+    
+    private static final byte[][] trueSigs = 
+        { Hex.decode("304502201083cce131fb0ef1a0b70b01133a466ca6923aeaaa07bd666a04c843057d18f30"
+                + "22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d2"),
+        Hex.decode("30640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771c27a"
+                + "51c1e2eef5028708ec2a3261f0230230d702e0e1110c990cd6b58ee3bf32831b0b2c2651d2e34e3f"
+                + "a8077720553fc71cd0594861bfa5808509815c0886d60"),
+        Hex.decode("3081880242011f0c29428f3e3fbe86f98fa9170c0e9655a91839037005f935ebf4eaba76b9af729"
+                + "3923091f1f73147c7c76d385de36bac7e9f7a9dd3b211e8a916ecad42bda6770242018eb818d47f0"
+                + "b4bfa47baee04141528257b09fecc53542fad2ab6669449cb25c59d33d7e4fde6ba66243f6d59614"
+                + "ce6f3941bfb113eac3606d8802446644fb3e854")
+        };
+    
+    private static final byte[] falseDSASig = Hex.decode("b6669449cb25c59d33d7e4fde6ba66243f6d59614"
+            + "209d3923091f1f73147c7c76d385de36bac7e9f7a9dd3b211e8a916ecad42bda6770242018eb818d47f0"
+            + "774");
+    
+    private static final byte[][] flaseSigs = 
+        { Hex.decode("640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771"
+                    + "a8077720553fc71cd0594861bfa5808509815c0886d6091b24103b6b8d785d9e0b2d2"),
+        Hex.decode("22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d28f3071c27a"
+                + "530640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771c27a"
+                + "a8077720553fc71cd0594861bfa5808509815c0886d60"),
+        Hex.decode("3081880242011f0c29428f3e3fbe86f98fa9170c0e9655a91839037005f935ebf4eaba76b9af729"
+                + "530640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771c27a"
+                + "b22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d28f3071c27a"
+                + "a8077720553fc71cd0594861bfa5808509815c0")
+        
+         };
 
     private static KeyPair[] keyPairs = new KeyPair[3];
 
     private static final byte[] message = Hex.decode("6bc1bee22e409f96e93d7e117393172a"
             + "ae2d8a571e03ac9c9eb76fac45af8e5130c81c46a35ce411e5fbc1191a0a52ef"
             + "f69f2445df4f9b17ad2b417be66c3710");
+    private static final ByteBuffer bufMessage = ByteBuffer.wrap(message);
     private static final BigInteger messageBigInteger = new BigInteger(1, message);
 
     private static final SigType[] types = {dsaType, ecdsaTypes[0], ecdsaTypes[1], ecdsaTypes[2]};
@@ -73,7 +107,7 @@ public class CryptSignatureTest {
             for (int j = 0; j < message.length; j++){
                 sig.addByteToSign(message[j]);
             }
-            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), message));
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), bufMessage));
         }
     }
 
@@ -113,7 +147,7 @@ public class CryptSignatureTest {
             CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
 
             sig.addBytesToSign(message);
-            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), message));
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), bufMessage));
         }
     }
 
@@ -165,7 +199,7 @@ public class CryptSignatureTest {
             CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
 
             sig.addBytesToSign(message, 0, message.length);
-            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), message));
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), bufMessage));
         }
     }
 
@@ -225,10 +259,8 @@ public class CryptSignatureTest {
     public void testAddBytesToSignByteBuffer() throws InvalidKeyException {
         for(int i = 0; i < ecdsaTypes.length; i++){
             CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
-            ByteBuffer byteBuffer = ByteBuffer.wrap(message);
-
-            sig.addBytesToSign(byteBuffer);
-            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), message));
+            sig.addBytesToSign(bufMessage);
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verifyData(sig.sign(), bufMessage));
         }
     }
 
@@ -426,6 +458,7 @@ public class CryptSignatureTest {
     public void testSignByteArrayArrayLength() {
         for(SigType type: ecdsaTypes){
             CryptSignature sign = new CryptSignature(type);
+            System.out.println(Hex.toHexString(sign.sign(message)));
             assertTrue("SigType: "+type.name(), sign.sign(message).length <= type.maxSigSize);
         }
     }
@@ -561,14 +594,53 @@ public class CryptSignatureTest {
         CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
         sig.signToNetworkFormat(message);
     }
-
+    
     @Test
-    public void testVerifyByteArrayIntInt() {
-        fail("Not yet implemented");
+    public void testSignToNetworkFormatNullMatrixInput() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[][] b = null;
+            try{
+                sig.signToNetworkFormat(b);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
     }
 
     @Test
-    public void testVerifyByteArray() {
+    public void testSignToNetworkFormatNullMatrixElement() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[][] b = {message, null};
+            try{
+                sig.signToNetworkFormat(b);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+
+    @Test
+    public void testVerifyByteArray() throws InvalidKeyException {
+        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        assertTrue("SigType: "+dsaType.name(), sig.verify(trueDSASig));
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(trueSigs[i]));
+        }
+    }
+
+    @Test
+    public void testVerifyByteBuffer() throws InvalidKeyException {
+        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        assertTrue("SigType: "+dsaType.name(), sig.verify(ByteBuffer.wrap(trueDSASig)));
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(ByteBuffer.wrap(trueSigs[i])));
+        }
+    }
+
+    @Test
+    public void testVerifyByteArrayIntInt() {
         fail("Not yet implemented");
     }
 

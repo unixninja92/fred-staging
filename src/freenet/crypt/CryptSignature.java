@@ -279,7 +279,7 @@ public final class CryptSignature{
         addBytes(verify, input);
     }
 
-    public byte[] sign(){
+    public ByteBuffer sign(){
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
         }
@@ -300,7 +300,7 @@ public final class CryptSignature{
             e.printStackTrace();
             Logger.error(CryptSignature.class, "Internal error; please report:", e);
         }
-        return result;
+        return ByteBuffer.wrap(result);
     }
 
     /**
@@ -328,7 +328,7 @@ public final class CryptSignature{
         }
         else{
             addBytesToSign(data);
-            result = sign();
+            result = sign().array();
         }
         return result;
     }
@@ -416,6 +416,10 @@ public final class CryptSignature{
     public boolean verify(byte[] sig) {
         return verify(sig, 0, sig.length);
     }
+    
+    public boolean verify(ByteBuffer sig) {
+        return verify(sig.array());
+    }
 
     /**
      * Verifies that the Signature of the byte[] data matches the signature passed in
@@ -448,6 +452,10 @@ public final class CryptSignature{
             return verify(signature);
         }
         return false; 
+    }
+    
+    public boolean verifyData(ByteBuffer signature, ByteBuffer data){
+        return verifyData(signature.array(), data.array());
     }
 
     /**

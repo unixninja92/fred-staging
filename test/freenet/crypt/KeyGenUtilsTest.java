@@ -322,9 +322,27 @@ public class KeyGenUtilsTest {
         assertTrue(buf1.equals(buf2));
     }
     
-    @Test (expected = NullPointerException.class)
-    public void testDeriveKeyNullInput1() throws InvalidKeyException{
-        
+    @Test (expected = InvalidKeyException.class)
+    public void testDeriveKeyNullInput1() throws InvalidKeyException {
+        SecretKey kdfKey = null;
+        KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, kdfInput);
     }
 
+    @Test (expected = NullPointerException.class)
+    public void testDeriveKeyNullInput2() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        KeyGenUtils.deriveKey(kdfKey, null, kdfInput);
+    }
+
+    @Test (expected = NullPointerException.class)
+    public void testDeriveKeyNullInput3() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, null);
+    }
+    
+    @Test (expected = IndexOutOfBoundsException.class)
+    public void testDeriveKeyTruncatedLenOutOfBounds() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        KeyGenUtils.deriveKeyTruncated(kdfKey, KeyGenUtils.class, kdfInput, -1);
+    }
 }
