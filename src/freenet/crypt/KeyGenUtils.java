@@ -189,52 +189,28 @@ public final class KeyGenUtils {
         return new IvParameterSpec(iv, offset, length);
     }
     
-    
     private static ByteBuffer deriveBytes(SecretKey kdfKey, Class<?> c, String kdfString) throws InvalidKeyException{
         if(kdfString == null){
             throw new NullPointerException();
         }
         MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, kdfKey);
         try {
-            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
-        }
-        return null;
-    }
-    /**
-     * 
-     * @param kdfKey
-     * @param c
-     * @param kdfString
-     * @param len
-     * @return
-     * @throws InvalidKeyException
-     */
-    public static ByteBuffer deriveKeyTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
-            int len) throws InvalidKeyException{
-        if(kdfString == null){
-            throw new NullPointerException();
-        }
-        MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, kdfKey);
-        try {
-            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8"));
+            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8")).;
         } catch (UnsupportedEncodingException e) {
             Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
         }
         return null;
     }
     
-    /**
-     * 
-     * @param kdfKey
-     * @param c
-     * @param kdfString
-     * @return
-     * @throws InvalidKeyException
-     */
-    public static ByteBuffer deriveKey(SecretKey kdfKey, Class<?> c, String kdfString) 
-            throws InvalidKeyException{
-        return deriveKeyTruncated(kdfKey, c, kdfString, MACType.HMACSHA512.keyType.keySize >>3);
+    private static ByteBuffer deriveBytesTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
+            int len) throws InvalidKeyException{
+        byte[] key = new byte[len];
+        deriveBytes(kdfKey, c, kdfString).get(key);
+        return ByteBuffer.wrap(key);
+    }
+    
+    public static SecretKey deriveSecretKey(SecretKey kdfKey, Class<?> c, String kdfString, 
+            KeyType type) throws InvalidKeyException{
+        return getSecretKey(type, deriveBytesTruncated(kdfKey, c, kdfString, type.keySize));
     }
 }
