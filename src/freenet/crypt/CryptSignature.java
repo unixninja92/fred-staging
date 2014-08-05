@@ -97,6 +97,19 @@ public final class CryptSignature{
             }
         }
     }
+    
+    /**
+     * Will initialize CryptSignature to be able to verify a message was signed with 
+     * the public key.
+     * @param type Type of Signature algorithm used
+     * @param publicKey The public key that can be used to verify signatures
+     * @throws CryptFormatException
+     * @throws InvalidKeyException
+     */
+    public CryptSignature(SigType type, ByteBuffer publicKey) throws CryptFormatException, 
+    InvalidKeyException{
+        this(type, publicKey.array());
+    }
 
     public CryptSignature(SigType type, KeyPair pair) throws InvalidKeyException{
         if(type == SigType.DSA){
@@ -308,7 +321,7 @@ public final class CryptSignature{
      * @param data byte[]s to be signed
      * @return The signature of the signed data
      */
-    public byte[] sign(byte[]... data) {
+    public ByteBuffer sign(byte[]... data) {
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
         }
@@ -330,7 +343,16 @@ public final class CryptSignature{
             addBytesToSign(data);
             result = sign().array();
         }
-        return result;
+        return ByteBuffer.wrap(result);
+    }
+    
+    /**
+     * Signs the ByteBuffer passed in
+     * @param data ByteBuffer to be signed
+     * @return The signature of the signed data
+     */
+    public ByteBuffer sign(ByteBuffer data) {
+        return sign(data.array());
     }
 
     /**
@@ -344,6 +366,16 @@ public final class CryptSignature{
             throw new UnsupportedTypeException(type);
         }
         return signToDSASignature(new NativeBigInteger(1, sha256.genHash(data)));
+    }
+    
+    /**
+     * Signs ByteBuffer to DSASignature
+     * @param data ByteBuffer to sign
+     * @return Returns the DSASignature of the data
+     * @throws UnsupportedTypeException 
+     */
+    public DSASignature signToDSASignature(ByteBuffer data) {
+        return signToDSASignature(data.array());
     }
 
     /**
@@ -376,7 +408,7 @@ public final class CryptSignature{
         if(type == SigType.DSA){
             throw new UnsupportedTypeException(type);
         }
-        byte[] plainsig = sign(data);
+        byte[] plainsig = sign(data).array();
         if(!verifyOnly){
             int targetLength = type.maxSigSize;
 
@@ -393,6 +425,15 @@ public final class CryptSignature{
             throw new IllegalStateException(verifyError);
         }
         return plainsig;
+    }
+    
+    /**
+     * Sign data and return a fixed size signature. The data does not need to be hashed, the 
+     * signing code will handle that for us, using an algorithm appropriate for the keysize.
+     * @return A zero padded DER signature (maxSigSize). Space Inefficient but constant-size.
+     */
+    public byte[] signToNetworkFormat(ByteBuffer data) {
+        return signToNetworkFormat(data.array());
     }
 
     /**
@@ -479,9 +520,17 @@ public final class CryptSignature{
     public boolean verifyData(DSASignature sig, byte[]... data) {
         return verifyData(sig, new NativeBigInteger(1, sha256.genHash(data)));
     }
+    
+    public boolean verifyData(DSASignature sig, ByteBuffer data) {
+        return verifyData(sig, data.array());
+    }
 
     public boolean verifyData(BigInteger r, BigInteger s, byte[]... data) {
         return verifyData(r, s, new NativeBigInteger(1, sha256.genHash(data)));
+    }
+    
+    public boolean verifyData(BigInteger r, BigInteger s, ByteBuffer data) {
+        return verifyData(r, s, data.array());
     }
 
     public ECPublicKey getPublicKey() throws UnsupportedTypeException{

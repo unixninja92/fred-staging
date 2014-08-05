@@ -3,6 +3,7 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
+import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
@@ -49,7 +50,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * @throws InvalidKeyException 
      * @throws UnsupportedTypeException **
      */
-    public byte[] getSharedSecrect(PublicKey publicKey) throws InvalidKeyException{
+    public ByteBuffer getSharedSecrect(PublicKey publicKey) throws InvalidKeyException{
         byte[] sharedKey = null;
         synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
@@ -69,12 +70,12 @@ public class KeyExchange extends KeyAgreementSchemeContext{
             }
         }
 
-        return sharedKey;
+        return ByteBuffer.wrap(sharedKey);
     }
 
     @Deprecated
     public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException{
-        return getSharedSecrect(peerExponential);
+        return getSharedSecrect(peerExponential).array();
     }
 
     public PublicKey getPublicKey() {

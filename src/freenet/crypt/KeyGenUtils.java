@@ -257,7 +257,7 @@ public final class KeyGenUtils {
         return null;
     }
     
-    private static ByteBuffer deriveBytesTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
+    static ByteBuffer deriveBytesTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
             int len) throws InvalidKeyException{
         byte[] key = new byte[len];
         deriveBytes(kdfKey, c, kdfString).get(key);

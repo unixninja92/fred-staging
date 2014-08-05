@@ -83,6 +83,18 @@ public final class MessageAuthCode {
     public MessageAuthCode(MACType type, byte[] cryptoKey) throws InvalidKeyException {
         this(type, KeyGenUtils.getSecretKey(type.keyType, cryptoKey));	
     }
+    
+    /**
+     * Creates an instance of MessageAuthCode that will use the specified algorithm and 
+     * key which is converted from a ByteBuffer to a SecretKey. If that algorithms requires 
+     * an IV it will generate one. 
+     * @param type The MAC algorithm to use
+     * @param cryptoKey The key to use
+     * @throws InvalidKeyException
+     */
+    public MessageAuthCode(MACType type, ByteBuffer cryptoKey) throws InvalidKeyException {
+        this(type, cryptoKey.array());  
+    }
 
     /**
      * Creates an instance of MessageAuthCode that will use the specified algorithm and 

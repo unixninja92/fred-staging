@@ -38,9 +38,9 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private boolean isClosed = false;
     
     private SecretKey unencryptedBaseKey;
-    private IvParameterSpec baseIV;
     
-    private SecretKey masterKey;
+    private MasterSecret masterKey;
+    private SecretKey derivedMasterKey;
     private byte[] masterIV;
     private int version; 
     
@@ -51,12 +51,13 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private static final int FOOTER_LENGTH = 52;// in bytes
     
     public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, 
-            RandomAccessThing underlyingThing, SecretKey masterKey){
+            RandomAccessThing underlyingThing, MasterSecret masterKey){
         this.type = type;
         this.underlyingThing = underlyingThing;
         this.cipherRead = this.type.get();
         this.cipherWrite = this.type.get();
         this.masterKey = masterKey;
+        this.derivedMasterKey = this.masterKey.deriveKey(KeyType.ChaCha256);
 //        this.cipherParams = new ParametersWithIV(new KeyParameter(key.getEncoded()), iv.getIV());
 
         cipherRead.init(false, cipherParams);
@@ -119,7 +120,8 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         
         byte[] encryptedKey = null;
         try {
-            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
+            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, derivedMasterKey, 
+                    masterIV);
             encryptedKey = crypt.encrypt(unencryptedBaseKey.getEncoded()).array();
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
@@ -130,11 +132,11 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try {
-            MessageAuthCode mac = new MessageAuthCode(MACType.HMACSHA256, masterKey);
-            byte[] macResult = mac.genMac(masterIV, encryptedKey, ver).array();
+            MessageAuthCode mac = new MessageAuthCode(MACType.Poly1305AES, macKey, macIV);
+            byte[] macResult = mac.genMac(masterIV, unencryptedBaseKey.getEncoded(), ver).array();
             System.arraycopy(macResult, 0, footer, offset, macResult.length);
             offset += macResult.length;
-        } catch (InvalidKeyException e) {
+        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -148,10 +150,25 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         pwrite(size()-FOOTER_LENGTH, footer, 0, FOOTER_LENGTH);
     }
     
-    private boolean readFooter() throws IOException {
-        byte[] footer = new byte[FOOTER_LENGTH];
+    private boolean getVersionCheckMagic() throws IOException{
+        int len = 12;
+        byte[] footer = new byte[len];
         int offset = 0;
-        pread(size()-FOOTER_LENGTH, footer, offset, FOOTER_LENGTH);
+        pread(size()-len, footer, offset, len);
+        
+        version = ByteBuffer.wrap(footer, offset, 4).getInt();
+        offset += 4;
+        
+        if(END_MAGIC != ByteBuffer.wrap(footer, offset, 8).getLong()){
+            return false;
+        }
+        return true;
+    }
+    
+    private boolean readFooter() throws IOException {
+        byte[] footer = new byte[FOOTER_LENGTH-12];
+        int offset = 0;
+        pread(size()-FOOTER_LENGTH, footer, offset, FOOTER_LENGTH-12);
         
         masterIV = new byte[CryptBitSetType.ChaCha128.ivSize];
         System.arraycopy(footer, offset, masterIV, 0, masterIV.length);
@@ -161,61 +178,33 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         System.arraycopy(footer, offset, encryptedKey, 0, KEY_LEN);
         offset += KEY_LEN;
         try {
-            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
-            encryptedKey = crypt.decrypt(unencryptedBaseKey.getEncoded()).array();
+            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, derivedMasterKey, 
+                    masterIV);
+            unencryptedBaseKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, 
+                    crypt.decrypt(unencryptedBaseKey.getEncoded()));
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new IOException();
+        }
+        
+        try {
+            macKey = KeyGenUtils.deriveSecretKey(unencryptedBaseKey, this.getClass(), 
+                    kdfInput.macKey.input, MACType.Poly1305AES.keyType);
+            macIV = KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
+                    kdfInput.macIV.input, MACType.Poly1305AES.ivlen);
+        } catch (InvalidKeyException e1) {
+            throw new IOException();
         }
         
         byte[] mac = new byte[MAC_LEN];
         System.arraycopy(footer, offset, mac, 0, MAC_LEN);
-        offset += MAC_LEN;
-        
-        version = ByteBuffer.wrap(footer, offset, 4).getInt();
-        offset += 4;
-        
-        if(END_MAGIC != ByteBuffer.wrap(footer, offset, 8).getLong()){
-            return false;
-        }
         
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try{
             MessageAuthCode authcode = new MessageAuthCode(MACType.Poly1305AES, macKey, macIV);
-            return authcode.verifyData(mac, masterIV, encryptedKey, ver);
-        } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return false;
-    }
-    
-    private byte[] kdf(String keyInfo){
-        try {
-            MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA256, unencryptedBaseKey);
-            return kdf.genMac(keyInfo.getBytes("UTF-8")).array();
-        } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return null;
-    }
-    
-    private byte[] encryptBaseKey(){
-        try {
-            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, masterKey, baseIV);
-            return crypt.encrypt(unencryptedBaseKey.getEncoded()).array();
+            return authcode.verifyData(mac, masterIV, unencryptedBaseKey.getEncoded(), ver);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new IOException();
         }
-        return null;
     }
     
     private enum kdfInput {
