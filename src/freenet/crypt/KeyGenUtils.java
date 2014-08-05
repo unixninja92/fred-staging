@@ -241,7 +241,7 @@ public final class KeyGenUtils {
         }
         MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, kdfKey);
         try {
-            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8")).;
+            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
         }
@@ -258,5 +258,10 @@ public final class KeyGenUtils {
     public static SecretKey deriveSecretKey(SecretKey kdfKey, Class<?> c, String kdfString, 
             KeyType type) throws InvalidKeyException{
         return getSecretKey(type, deriveBytesTruncated(kdfKey, c, kdfString, type.keySize));
+    }
+    
+    public static IvParameterSpec deriveIvParameterSpec(SecretKey kdfKey, Class<?> c, String kdfString, 
+            int ivLen) throws InvalidKeyException{
+        return getIv( deriveBytesTruncated(kdfKey, c, kdfString, ivLen));
     }
 }
