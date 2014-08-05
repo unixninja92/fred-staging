@@ -189,6 +189,19 @@ public final class KeyGenUtils {
         return new IvParameterSpec(iv, offset, length);
     }
     
+    
+    private static ByteBuffer deriveBytes(SecretKey kdfKey, Class<?> c, String kdfString) throws InvalidKeyException{
+        if(kdfString == null){
+            throw new NullPointerException();
+        }
+        MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, kdfKey);
+        try {
+            return kdf.genMac((c.getName()+kdfString).getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            Logger.error(KeyGenUtils.class, "Internal error; please report:", e);
+        }
+        return null;
+    }
     /**
      * 
      * @param kdfKey
