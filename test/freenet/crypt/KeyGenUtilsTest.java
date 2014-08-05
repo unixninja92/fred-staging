@@ -14,8 +14,10 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
 import freenet.support.HexUtil;
@@ -33,6 +35,21 @@ public class KeyGenUtilsTest {
         HexUtil.hexToBytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
         HexUtil.hexToBytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
         HexUtil.hexToBytes("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
+        HexUtil.hexToBytes("a92e3fa63e8cbe50869fb352d883911271bf2b0e9048ad04c013b20e901f5806"),
+        HexUtil.hexToBytes("45d6c9656b3b115263ba12739e90dcc1"),
+        HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
+    };
+    
+    private static final byte[][] trueSizeSecretKeys = {
+        HexUtil.hexToBytes("20e86dc31ebf2c0e37670e30f8f45c57"),
+        HexUtil.hexToBytes("8c6c2e0a60b3b73e9dbef076b68b686bacc9d20081e8822725d14b10b5034f48"),
+        HexUtil.hexToBytes("33a4a38b71c8e350d3a98357d1bc9ecd"),
+        HexUtil.hexToBytes("be56dbec20bff9f6f343800367287b48c0c28bf47f14b46aad3a32e4f24f0f5e"),
+        HexUtil.hexToBytes("120751cae69aad6c513c9b062ecb8a797c1630cdfe611b090907d35446d7fc81"),
+        HexUtil.hexToBytes("7b3af4c5eaae8f002f108269cfad04ac4023efc0cbc0d853fc1d6b583a9c51ab"
+                + "6a22fa55b47d9de6d6e92e0b50fd1807"),
+        HexUtil.hexToBytes("2d899b05f89e97cac8f9d4e6492a42f43eb379e7a9e7f8b666c82e3db9976e1b"
+                + "aa6ef483b2ce041b2a427aff7f844a9ba7cb64c497f8d6042636e6217a853b67"),
         HexUtil.hexToBytes("a92e3fa63e8cbe50869fb352d883911271bf2b0e9048ad04c013b20e901f5806"),
         HexUtil.hexToBytes("45d6c9656b3b115263ba12739e90dcc1"),
         HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
@@ -249,6 +266,7 @@ public class KeyGenUtilsTest {
     public void testGenSecretKeyKeySize() {
         for(KeyType type: keyTypes){
             byte[] key = KeyGenUtils.genSecretKey(type).getEncoded();
+            System.out.println(key.length);
             int keySizeBytes = type.keySize >> 3;
             assertEquals("KeyType: "+type.name(), keySizeBytes, key.length);
         }
@@ -263,8 +281,8 @@ public class KeyGenUtilsTest {
     public void testGetSecretKey() {
         for(int i = 0; i < keyTypes.length; i++){
             KeyType type = keyTypes[i];
-            SecretKey newKey = KeyGenUtils.getSecretKey(type, trueSecretKeys[i]);
-            assertArrayEquals("KeyType: "+type.name(), trueSecretKeys[i], newKey.getEncoded());
+            SecretKey newKey = KeyGenUtils.getSecretKey(type, trueSizeSecretKeys[i]);
+            assertArrayEquals("KeyType: "+type.name(), trueSizeSecretKeys[i], newKey.getEncoded());
         }
     }
 
@@ -321,34 +339,37 @@ public class KeyGenUtilsTest {
     }
     
     @Test
-    public void testDeriveKey() throws InvalidKeyException{
+    public void testDeriveIvParameterSpec() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
-        ByteBuffer buf1 = KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, kdfInput);
-        ByteBuffer buf2 = KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, kdfInput);
+        IvParameterSpec buf1 = 
+                KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 512);
+        IvParameterSpec buf2 = 
+                KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 512);
+        assertNotNull(buf1);
         assertTrue(buf1.equals(buf2));
     }
     
     @Test (expected = InvalidKeyException.class)
-    public void testDeriveKeyNullInput1() throws InvalidKeyException {
+    public void testDeriveIvParameterSpecNullInput1() throws InvalidKeyException {
         SecretKey kdfKey = null;
-        KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, kdfInput);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 8);
     }
 
     @Test (expected = NullPointerException.class)
-    public void testDeriveKeyNullInput2() throws InvalidKeyException{
+    public void testDeriveIvParameterSpecNullInput2() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
-        KeyGenUtils.deriveKey(kdfKey, null, kdfInput);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, null, kdfInput, 8);
     }
 
     @Test (expected = NullPointerException.class)
-    public void testDeriveKeyNullInput3() throws InvalidKeyException{
+    public void testDeriveIvParameterSpecNullInput3() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
-        KeyGenUtils.deriveKey(kdfKey, KeyGenUtils.class, null);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, null, 8);
     }
     
     @Test (expected = IndexOutOfBoundsException.class)
-    public void testDeriveKeyTruncatedLenOutOfBounds() throws InvalidKeyException{
+    public void testDeriveIvParameterSpecLenOutOfBounds() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
-        KeyGenUtils.deriveKeyTruncated(kdfKey, KeyGenUtils.class, kdfInput, -1);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, -1);
     }
 }
