@@ -5,20 +5,21 @@ import java.security.InvalidKeyException;
 
 import javax.crypto.SecretKey;
 
+import freenet.node.NodeStarter;
+
 public final class MasterSecret implements Serializable{
     private static final long serialVersionUID = -8411217325990445764L;
-    private KeyType type;
-    private SecretKey masterKey;
+    private final SecretKey masterKey;
+    private final int MASTER_KEY_LENGTH = 512 >> 3;//in bytes
     
-    public MasterSecret(KeyType type){
-        this.type = type;
-        masterKey =  KeyGenUtils.genSecretKey(type);
+    public MasterSecret(){
+        masterKey = KeyGenUtils.genSecretKey(KeyType.HMACSHA512);
     }
     
-    public SecretKey deriveKey(Class<?> c, String kdfInput){
+    public SecretKey deriveKey(KeyType type){
         try {
-            return KeyGenUtils.getSecretKey(type, 
-                    KeyGenUtils.deriveKey(masterKey, c, kdfInput).array());
+            MessageAuthCode kdf = new MessageAuthCode(MACType.HMACSHA512, masterKey);
+            return KeyGenUtils.getSecretKey(type, kdf.genMac(type.name().getBytes()).array());
         } catch (InvalidKeyException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
