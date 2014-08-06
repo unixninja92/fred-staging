@@ -32,15 +32,15 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private KeyParameter cipherKey;
     private ParametersWithIV cipherParams;//includes key
     
-    private SecretKey macKey;
-    private IvParameterSpec macIV;
+    private SecretKey headerMacKey;
+    private IvParameterSpec headerMacIV;
     
     private boolean isClosed = false;
     
     private SecretKey unencryptedBaseKey;
     
-    private MasterSecret masterKey;
-    private SecretKey derivedMasterKey;
+    private MasterSecret masterSecret;
+    private SecretKey headerEncKey;
     private byte[] masterIV;
     private int version; 
     
@@ -56,8 +56,8 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         this.underlyingThing = underlyingThing;
         this.cipherRead = this.type.get();
         this.cipherWrite = this.type.get();
-        this.masterKey = masterKey;
-        this.derivedMasterKey = this.masterKey.deriveKey(KeyType.ChaCha256);
+        this.masterSecret = masterKey;
+        this.headerEncKey = this.masterSecret.deriveKey(KeyType.ChaCha256);
 //        this.cipherParams = new ParametersWithIV(new KeyParameter(key.getEncoded()), iv.getIV());
 
         cipherRead.init(false, cipherParams);
@@ -120,7 +120,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         
         byte[] encryptedKey = null;
         try {
-            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, derivedMasterKey, 
+            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, headerEncKey, 
                     masterIV);
             encryptedKey = crypt.encrypt(unencryptedBaseKey.getEncoded()).array();
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
@@ -132,7 +132,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try {
-            MessageAuthCode mac = new MessageAuthCode(MACType.Poly1305AES, macKey, macIV);
+            MessageAuthCode mac = new MessageAuthCode(MACType.Poly1305AES, headerMacKey, headerMacIV);
             byte[] macResult = mac.genMac(masterIV, unencryptedBaseKey.getEncoded(), ver).array();
             System.arraycopy(macResult, 0, footer, offset, macResult.length);
             offset += macResult.length;
@@ -178,7 +178,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         System.arraycopy(footer, offset, encryptedKey, 0, KEY_LEN);
         offset += KEY_LEN;
         try {
-            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, derivedMasterKey, 
+            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, headerEncKey, 
                     masterIV);
             unencryptedBaseKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, 
                     crypt.decrypt(unencryptedBaseKey.getEncoded()));
@@ -187,9 +187,8 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         }
         
         try {
-            macKey = KeyGenUtils.deriveSecretKey(unencryptedBaseKey, this.getClass(), 
-                    kdfInput.macKey.input, MACType.Poly1305AES.keyType);
-            macIV = KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
+            headerMacKey = masterSecret.deriveKey(MACType.Poly1305AES.keyType);
+            headerMacIV = KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
                     kdfInput.macIV.input, MACType.Poly1305AES.ivlen);
         } catch (InvalidKeyException e1) {
             throw new IOException();
@@ -200,7 +199,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try{
-            MessageAuthCode authcode = new MessageAuthCode(MACType.Poly1305AES, macKey, macIV);
+            MessageAuthCode authcode = new MessageAuthCode(MACType.Poly1305AES, headerMacKey, headerMacIV);
             return authcode.verifyData(mac, masterIV, unencryptedBaseKey.getEncoded(), ver);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             throw new IOException();

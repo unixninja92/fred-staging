@@ -101,7 +101,7 @@ public abstract class JFKExchange {
     public byte[] getSharedSecrect(byte[] peerExponential) throws InvalidKeyException{
         try{
             return underlyingExch.getSharedSecrect(KeyGenUtils.getPublicKey(KeyPairType.ECP256, 
-                    peerExponential));
+                    peerExponential)).array();
         } catch(UnsupportedTypeException e){
             Logger.error(JFKExchange.class, "Internal error; please report:", e);
         }

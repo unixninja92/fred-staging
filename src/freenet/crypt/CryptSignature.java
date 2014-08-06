@@ -391,8 +391,6 @@ public final class CryptSignature{
         DSASignature result = null;
         if(!verifyOnly){
             result = DSA.sign(dsaGroup, dsaPrivK, m, random);
-
-            System.out.println("verify "+result);
         } else{
             throw new IllegalStateException(verifyError);
         }
@@ -471,7 +469,6 @@ public final class CryptSignature{
      */
     public boolean verifyData(byte[] signature, byte[]... data){
         if(type == SigType.DSA) {
-            //FIXME needs to be tested to make sure that it splits the array correctly.
             int x = 0;
             byte[] bufR = new byte[SIGNATURE_PARAMETER_LENGTH];
             byte[] bufS = new byte[SIGNATURE_PARAMETER_LENGTH];

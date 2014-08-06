@@ -52,23 +52,23 @@ public class CryptSignatureTest {
             + "209dbbada458f2aa6813257a0c3d99fca812adbbfc2891ff9d7ca4c84a0228a2cd6abe430f6a7d9a585b"
             + "77");
     
-    private static final byte[][] trueSigs = 
-        { Hex.decode("304502201083cce131fb0ef1a0b70b01133a466ca6923aeaaa07bd666a04c843057d18f30"
-                + "22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d2"),
-        Hex.decode("30640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771c27a"
-                + "51c1e2eef5028708ec2a3261f0230230d702e0e1110c990cd6b58ee3bf32831b0b2c2651d2e34e3f"
-                + "a8077720553fc71cd0594861bfa5808509815c0886d60"),
-        Hex.decode("3081880242011f0c29428f3e3fbe86f98fa9170c0e9655a91839037005f935ebf4eaba76b9af729"
-                + "3923091f1f73147c7c76d385de36bac7e9f7a9dd3b211e8a916ecad42bda6770242018eb818d47f0"
-                + "b4bfa47baee04141528257b09fecc53542fad2ab6669449cb25c59d33d7e4fde6ba66243f6d59614"
-                + "ce6f3941bfb113eac3606d8802446644fb3e854")
-        };
+//    private static final byte[][] trueSigs = 
+//        { Hex.decode("304502201083cce131fb0ef1a0b70b01133a466ca6923aeaaa07bd666a04c843057d18f30"
+//                + "22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d2"),
+//        Hex.decode("30640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771c27a"
+//                + "51c1e2eef5028708ec2a3261f0230230d702e0e1110c990cd6b58ee3bf32831b0b2c2651d2e34e3f"
+//                + "a8077720553fc71cd0594861bfa5808509815c0886d60"),
+//        Hex.decode("3081880242011f0c29428f3e3fbe86f98fa9170c0e9655a91839037005f935ebf4eaba76b9af729"
+//                + "3923091f1f73147c7c76d385de36bac7e9f7a9dd3b211e8a916ecad42bda6770242018eb818d47f0"
+//                + "b4bfa47baee04141528257b09fecc53542fad2ab6669449cb25c59d33d7e4fde6ba66243f6d59614"
+//                + "ce6f3941bfb113eac3606d8802446644fb3e854")
+//        };
     
     private static final byte[] falseDSASig = Hex.decode("b6669449cb25c59d33d7e4fde6ba66243f6d59614"
             + "209d3923091f1f73147c7c76d385de36bac7e9f7a9dd3b211e8a916ecad42bda6770242018eb818d47f0"
             + "774");
     
-    private static final byte[][] flaseSigs = 
+    private static final byte[][] falseECDSASigs = 
         { Hex.decode("640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771"
                     + "a8077720553fc71cd0594861bfa5808509815c0886d6091b24103b6b8d785d9e0b2d2"),
         Hex.decode("22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d28f3071c27a"
@@ -78,8 +78,10 @@ public class CryptSignatureTest {
                 + "530640230249a4eb939fff56d167e5e505951b58edd8cbf139b0798f91984569a2f608f57771c27a"
                 + "b22100c0e7b7665e27a048c046595a7e152de963493cd191b24103b6b8d785d9e0b2d28f3071c27a"
                 + "a8077720553fc71cd0594861bfa5808509815c0")
-        
          };
+    
+    private static final byte[][] falseSigs = {falseDSASig, falseECDSASigs[0], falseECDSASigs[1],
+        falseECDSASigs[2] };
 
     private static KeyPair[] keyPairs = new KeyPair[3];
 
@@ -458,8 +460,7 @@ public class CryptSignatureTest {
     public void testSignByteArrayArrayLength() {
         for(SigType type: ecdsaTypes){
             CryptSignature sign = new CryptSignature(type);
-            System.out.println(Hex.toHexString(sign.sign(message)));
-            assertTrue("SigType: "+type.name(), sign.sign(message).length <= type.maxSigSize);
+            assertTrue("SigType: "+type.name(), sign.sign(message).array().length <= type.maxSigSize);
         }
     }
 
@@ -621,57 +622,592 @@ public class CryptSignatureTest {
 
     @Test
     public void testVerifyByteArray() throws InvalidKeyException {
-        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
-        assertTrue("SigType: "+dsaType.name(), sig.verify(trueDSASig));
         for(int i = 0; i < ecdsaTypes.length; i++){
-            sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
-            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(trueSigs[i]));
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            ByteBuffer signature = sig.sign(message);
+            sig.addBytesToVerify(message);
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(signature.array()));
         }
+    }
+    
+    @Test
+    public void testVerifyByteArrayFalseSig() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            sig.addBytesToVerify(message);
+            assertFalse("SigType: "+ecdsaTypes[i].name(), sig.verify(falseSigs[i]));
+        }
+    }
+
+    @Test
+    public void testVerifyByteArrayNullInput() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[] nullSig = null;
+            sig.addBytesToVerify(message);
+            try{
+                sig.verify(nullSig);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyByteArrayUnsupportedType() {
+        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        sig.verify(trueDSASig);
     }
 
     @Test
     public void testVerifyByteBuffer() throws InvalidKeyException {
-        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
-        assertTrue("SigType: "+dsaType.name(), sig.verify(ByteBuffer.wrap(trueDSASig)));
         for(int i = 0; i < ecdsaTypes.length; i++){
             CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
-            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(ByteBuffer.wrap(trueSigs[i])));
+            ByteBuffer signature = sig.sign(message);
+            sig.addBytesToVerify(message);
+            assertTrue("SigType: "+ecdsaTypes[i].name(), sig.verify(signature));
+        }
+    }
+    
+    @Test
+    public void testVerifyByteBufferFalseSig() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            sig.addBytesToVerify(message);
+            assertFalse("SigType: "+ecdsaTypes[i].name(), 
+                    sig.verify(ByteBuffer.wrap(falseSigs[i])));
+        }
+    }
+    
+    @Test
+    public void testVerifyByteBufferNullInput() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            ByteBuffer nullSig = null;
+            sig.addBytesToVerify(message);
+            try{
+                sig.verify(nullSig);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyByteBufferUnsupportedType() {
+        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        sig.verify(ByteBuffer.wrap(trueDSASig));
+    }
+
+    @Test
+    public void testVerifyByteArrayIntInt() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[] signature = sig.sign(message).array();
+            sig.addBytesToVerify(message);
+            assertTrue("SigType: "+ecdsaTypes[i].name(), 
+                    sig.verify(signature, 0, signature.length));
         }
     }
 
     @Test
-    public void testVerifyByteArrayIntInt() {
-        fail("Not yet implemented");
+    public void testVerifyByteArrayIntIntFalseSig() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[] signature = sig.sign(message).array();
+            sig.addBytesToVerify(message);
+            assertFalse("SigType: "+ecdsaTypes[i].name(), 
+                    sig.verify(signature, 0, signature.length-30));
+        }
+    }
+    
+    @Test
+    public void testVerifyByteArrayIntIntNullInput1() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[] signature = null;
+            sig.addBytesToVerify(message);
+            try{
+                sig.verify(signature, 0, 20);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected IllegalArgumentException");
+            } catch (IllegalArgumentException e) {}
+        }
+    }
+    
+    @Test
+    public void testVerifyByteArrayIntIntOffsetOutOfBounds() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[] signature = sig.sign(message).array();
+            sig.addBytesToVerify(message);
+            try{
+                sig.verify(signature, -1, signature.length);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected IllegalArgumentException");
+            } catch (IllegalArgumentException e) {}
+        }
+    }
+    
+    @Test
+    public void testVerifyByteArrayIntIntLengthOutOfBounds() throws InvalidKeyException {
+        for(int i = 0; i < ecdsaTypes.length; i++){
+            CryptSignature sig = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+            byte[] signature = sig.sign(message).array();
+            sig.addBytesToVerify(message);
+            try{
+                sig.verify(signature, 0, signature.length+6);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected IllegalArgumentException");
+            } catch (IllegalArgumentException e) {}
+        }
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyByteArrayIntIntUnsupportedType() {
+        CryptSignature sig = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        sig.verify(trueDSASig, 0, trueDSASig.length);
     }
 
     @Test
-    public void testVerifyByteArrayByteArrayArray() {
-        fail("Not yet implemented");
+    public void testVerifyByteArrayByteArrayArray() throws InvalidKeyException {
+      for(int i = 0; i < types.length; i++){
+          CryptSignature sign;
+          if(types[i] == dsaType){
+              sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+          }
+          else{
+              sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+          }
+          byte[] sig = sign.sign(message).array();
+          assertTrue("SigType: "+types[i].name(), sign.verifyData(sig, message));
+      }
+    }
+
+    @Test
+    public void testVerifyByteArrayByteArrayArrayFalseSig() throws InvalidKeyException {
+      for(int i = 0; i < types.length; i++){
+          CryptSignature sign;
+          if(types[i] == dsaType){
+              sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+          }
+          else{
+              sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+          }
+          assertFalse("SigType: "+types[i].name(), sign.verifyData(falseSigs[i], message));
+      }
+    }
+    
+    @Test
+    public void testVerifyByteArrayByteArrayArrayNullInput1() throws InvalidKeyException {
+        for(int i = 0; i < types.length; i++){
+            CryptSignature sign;
+            if(types[i] == dsaType){
+                sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+            }
+            else{
+                sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+            }
+            byte[] signature = null;
+            try{
+                sign.verifyData(signature, message);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+    
+    @Test
+    public void testVerifyByteArrayByteArrayArrayNullMatrix() throws InvalidKeyException {
+        for(int i = 0; i < types.length; i++){
+            CryptSignature sign;
+            if(types[i] == dsaType){
+                sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+            }
+            else{
+                sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+            }
+            byte[] sig = sign.sign(message).array();
+            byte[][] nullInput = null;
+            try{
+                sign.verifyData(sig, nullInput);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+    
+    @Test
+    public void testVerifyByteArrayByteArrayArrayNullMatrixElement() throws InvalidKeyException {
+        for(int i = 0; i < types.length; i++){
+            CryptSignature sign;
+            if(types[i] == dsaType){
+                sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+            }
+            else{
+                sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+            }
+            byte[] sig = sign.sign(message).array();
+            byte[][] nullInput = {message, null};
+            try{
+                sign.verifyData(sig, nullInput);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+    
+    @Test
+    public void testVerifyByteBufferByteBuffer() throws InvalidKeyException {
+      for(int i = 0; i < types.length; i++){
+          CryptSignature sign;
+          if(types[i] == dsaType){
+              sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+          }
+          else{
+              sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+          }
+          ByteBuffer sig = sign.sign(message);
+          assertTrue("SigType: "+types[i].name(), sign.verifyData(sig, bufMessage));
+      }
+    }
+
+    @Test
+    public void testVerifyByteBufferByteBufferFalseSig() throws InvalidKeyException {
+      for(int i = 0; i < types.length; i++){
+          CryptSignature sign;
+          if(types[i] == dsaType){
+              sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+          }
+          else{
+              sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+          }
+          assertFalse("SigType: "+types[i].name(), 
+                  sign.verifyData(ByteBuffer.wrap(falseSigs[i]), bufMessage));
+      }
+    }
+    
+    @Test
+    public void testVerifyByteBufferByteBufferNullInput1() throws InvalidKeyException {
+        for(int i = 0; i < types.length; i++){
+            CryptSignature sign;
+            if(types[i] == dsaType){
+                sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+            }
+            else{
+                sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+            }
+            ByteBuffer signature = null;
+            try{
+                sign.verifyData(signature, bufMessage);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
+    }
+    
+    @Test
+    public void testVerifyByteArrayByteArrayArrayNullInput2() throws InvalidKeyException {
+        for(int i = 0; i < types.length; i++){
+            CryptSignature sign;
+            if(types[i] == dsaType){
+                sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+            }
+            else{
+                sign = new CryptSignature(ecdsaTypes[i-1], keyPairs[i-1]);
+            }
+            ByteBuffer sig = sign.sign(message);
+            ByteBuffer nullInput = null;
+            try{
+                sign.verifyData(sig, nullInput);
+                fail("SigType: "+ecdsaTypes[i].name()+"Expected NullPointerException");
+            } catch (NullPointerException e) {}
+        }
     }
 
     @Test
     public void testVerifyDSASignatureBigInteger() {
-        fail("Not yet implemented");
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        assertTrue(sign.verifyData(sig, messageBigInteger));
+    }
+
+    @Test
+    public void testVerifyDSASignatureBigIntegerFalseSig() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        assertFalse(sign.verifyData(sig, messageBigInteger));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureBigIntegerNullInput1() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = null;
+        sign.verifyData(sig, messageBigInteger);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureBigIntegerNullInput2() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        BigInteger nullInput = null;
+        sign.verifyData(sig, nullInput);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyDSASignatureBigIntegerUnsupportedType() throws InvalidKeyException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], keyPairs[1]);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        sign.verifyData(sig, messageBigInteger);
     }
 
     @Test
     public void testVerifyBigIntegerBigIntegerBigInteger() {
-        fail("Not yet implemented");
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        assertTrue(sign.verifyData(r, s, messageBigInteger));
+    }
+
+    @Test
+    public void testVerifyBigIntegerBigIntegerBigIntegerFalseSig() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        assertFalse(sign.verifyData(messageBigInteger, messageBigInteger, messageBigInteger));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerBigIntegerNullInput1() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        BigInteger r = null;
+        BigInteger s = sig.getS();
+        sign.verifyData(r, s, messageBigInteger);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerBigIntegerNullInput2() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        BigInteger r = sig.getR();
+        BigInteger s = null;
+        sign.verifyData(r, s, messageBigInteger);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerBigIntegerNullInput3() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        BigInteger m = null;
+        sign.verifyData(r, s, m);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyBigIntegerBigIntegerBigIntegerUnsupportedType() throws InvalidKeyException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], keyPairs[1]);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        sign.verifyData(r, s, messageBigInteger);
     }
 
     @Test
     public void testVerifyDSASignatureByteArrayArray() {
-        fail("Not yet implemented");
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        assertTrue(sign.verifyData(sig, message));
+    }
+
+    @Test
+    public void testVerifyDSASignatureByteArrayArrayFalseSig() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        assertFalse(sign.verifyData(sig, message));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureByteArrayArrayNullInput1() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = null;
+        sign.verifyData(sig, message);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureByteArrayArrayNullMatrix() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        byte[][] nullInput = null;
+        sign.verifyData(sig, nullInput);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureByteArrayArrayNullMatrixElement() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        byte[][] nullInput = {message, null};
+        sign.verifyData(sig, nullInput);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyDSASignatureByteArrayArrayUnsupportedType() throws InvalidKeyException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], keyPairs[1]);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        sign.verifyData(sig, message);
+    }
+    
+    @Test
+    public void testVerifyDSASignatureByteBuffer() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(bufMessage);
+        assertTrue(sign.verifyData(sig, bufMessage));
+    }
+
+    @Test
+    public void testVerifyDSASignatureByteBufferFalseSig() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        assertFalse(sign.verifyData(sig, bufMessage));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureByteBufferNullInput1() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = null;
+        sign.verifyData(sig, bufMessage);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyDSASignatureByteBufferNullInput2() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        ByteBuffer nullInput = null;
+        sign.verifyData(sig, nullInput);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyDSASignatureByteBufferUnsupportedType() throws InvalidKeyException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], keyPairs[1]);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        sign.verifyData(sig, bufMessage);
     }
 
     @Test
     public void testVerifyBigIntegerBigIntegerByteArrayArray() {
-        fail("Not yet implemented");
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        assertTrue(sign.verifyData(r, s, message));
     }
 
     @Test
-    public void testGetPublicKey() {
-        fail("Not yet implemented");
+    public void testVerifyBigIntegerBigIntegerByteArrayArrayFalseSig() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        assertFalse(sign.verifyData(messageBigInteger, messageBigInteger, message));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteArrayArrayNullInput1() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(messageBigInteger);
+        BigInteger r = null;
+        BigInteger s = sig.getS();
+        sign.verifyData(r, s, message);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteArrayArrayNullInput2() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = null;
+        sign.verifyData(r, s, message);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteArrayArrayNullMatrix() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        byte[][] m = null;
+        sign.verifyData(r, s, m);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteArrayArrayNullMatrixElement() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        byte[][] m = {message, null};
+        sign.verifyData(r, s, m);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyBigIntegerBigIntegerByteArrayArrayUnsupportedType() throws InvalidKeyException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], keyPairs[1]);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        sign.verifyData(r, s, message);
+    }
+
+    @Test
+    public void testVerifyBigIntegerBigIntegerByteBuffer() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        assertTrue(sign.verifyData(r, s, bufMessage));
+    }
+
+    @Test
+    public void testVerifyBigIntegerBigIntegerByteBufferFalseSig() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        assertFalse(sign.verifyData(messageBigInteger, messageBigInteger, bufMessage));
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteBufferNullInput1() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = null;
+        BigInteger s = sig.getS();
+        sign.verifyData(r, s, bufMessage);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteBufferNullInput2() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = null;
+        sign.verifyData(r, s, bufMessage);
+    }
+    
+    @Test (expected = NullPointerException.class)
+    public void testVerifyBigIntegerBigIntegerByteBufferNullInput3() {
+        CryptSignature sign = new CryptSignature(dsaPublicKey, dsaPrivateKey);
+        DSASignature sig = sign.signToDSASignature(message);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        ByteBuffer m = null;
+        sign.verifyData(r, s, m);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testVerifyBigIntegerBigIntegerByteBufferUnsupportedType() throws InvalidKeyException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], keyPairs[1]);
+        DSASignature sig = dsaType.get(messageBigInteger, messageBigInteger);
+        BigInteger r = sig.getR();
+        BigInteger s = sig.getS();
+        sign.verifyData(r, s, bufMessage);
+    }
+
+    @Test
+    public void testGetPublicKey() throws InvalidKeyException, CryptFormatException {
+        CryptSignature sign = new CryptSignature(ecdsaTypes[1], publicKeys[1]);
+        assertArrayEquals(sign.getPublicKey().getEncoded(), publicKeys[1]);
+    }
+    
+    @Test (expected = UnsupportedTypeException.class)
+    public void testGetPublicKeyUnsupportedType() throws InvalidKeyException, CryptFormatException {
+        CryptSignature sign = new CryptSignature(dsaPublicKey);
+        sign.getPublicKey();
     }
 
     @Test

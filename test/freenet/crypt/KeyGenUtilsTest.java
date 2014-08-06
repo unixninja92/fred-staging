@@ -340,7 +340,7 @@ public class KeyGenUtilsTest {
     
     @Test
     public void testDeriveIvParameterSpec() throws InvalidKeyException{
-        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
         IvParameterSpec buf1 = 
                 KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 512);
         IvParameterSpec buf2 = 
@@ -357,19 +357,19 @@ public class KeyGenUtilsTest {
 
     @Test (expected = NullPointerException.class)
     public void testDeriveIvParameterSpecNullInput2() throws InvalidKeyException{
-        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
         KeyGenUtils.deriveIvParameterSpec(kdfKey, null, kdfInput, 8);
     }
 
     @Test (expected = NullPointerException.class)
     public void testDeriveIvParameterSpecNullInput3() throws InvalidKeyException{
-        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
         KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, null, 8);
     }
     
     @Test (expected = IndexOutOfBoundsException.class)
     public void testDeriveIvParameterSpecLenOutOfBounds() throws InvalidKeyException{
-        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueSecretKeys[6]);
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
         KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, -1);
     }
 }
