@@ -22,19 +22,29 @@ public class MessageAuthCodeTest{
         { Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"), 
         Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
         Hex.decode("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
-        Hex.decode("95cc0e44d0b79a8856afcae1bec4fe3c01bcb20bfc8b6e03609ddd09f44b060f")};
-    static private byte[] hmacMessage;
-    private byte[][] messages = { hmacMessage, hmacMessage, hmacMessage, 
-        new byte[128]};
+        Hex.decode("e69dae0aab9f91c03a325dcc9436fa903ef49901c8e11c000430d90ad45e7603")};
+    static private final byte[] hmacMessage;
+    static{
+        byte[] temp = null;
+        try {
+            temp = "Hi There".getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            Logger.error(CryptSignature.class, "Internal error; please report:", e);
+        }
+        hmacMessage = temp;
+    }
+    static private byte[][] messages = { hmacMessage, hmacMessage, hmacMessage, 
+        Hex.decode("66f75c0e0c7a406586")};
     static private final IvParameterSpec[] IVs = 
-        { null, null, null, new IvParameterSpec(new byte[16])};
+        { null, null, null, new IvParameterSpec(Hex.decode("166450152e2394835606a9d1dd2cdc8b"))};
     static private final byte[][] trueMacs = 
         { Hex.decode("b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"),
         Hex.decode("afd03944d84895626b0825f4ab46907f15f9dadbe4101ec682aa034c7cebc59cfaea9ea9076ede7"
                 + "f4af152e8b2fa9cb6"),
         Hex.decode("87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cdedaa833b7d6b8a70"
                 + "2038b274eaea3f4e4be9d914eeb61f1702e696c203a126854"),
-        Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854")};
+        Hex.decode("2924f51b9c2eff5df09db61dd03a9ca1")};
     static private final byte[][] falseMacs = 
         { Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7"),
         Hex.decode("4bb5e21dd13001ed5faccfcfdaf8a854881dc200c9833da726e9376c2e32cff7faea9ea9076ede7"
@@ -45,12 +55,6 @@ public class MessageAuthCodeTest{
 
     static{
         Security.addProvider(new BouncyCastleProvider());
-        try {
-            hmacMessage = "Hi There".getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            Logger.error(CryptSignature.class, "Internal error; please report:", e);
-        }
     }
 
     @Test
@@ -298,6 +302,7 @@ public class MessageAuthCodeTest{
     @Test
     public void testVerifyData() throws InvalidKeyException, InvalidAlgorithmParameterException {
         for(int i = 0; i < types.length; i++){
+            System.out.println(types[i].name());
             MessageAuthCode mac;
             if(types[i].ivlen != -1){
                 mac = new MessageAuthCode(types[i], keys[i], IVs[i]);
