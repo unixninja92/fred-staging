@@ -15,17 +15,24 @@ import javax.crypto.KeyAgreement;
 import freenet.support.HexUtil;
 import freenet.support.Logger;
 
+/**
+ * 
+ * @author unixninja92
+ *
+ */
 public class KeyExchange extends KeyAgreementSchemeContext{
     public static final KeyExchType preferredKeyExchange = KeyExchType.ECDHP256;
     private static volatile boolean logMINOR;
     private static volatile boolean logDEBUG;
 
     protected final KeyExchType type;	
-
-    //ECDH
     private KeyAgreement ka;
     private KeyPair keys;
 
+    /**
+     * Initialize the KeyExchange: this will draw some entropy
+     * @param type The key exchange algorithm to use. 
+     */
     public KeyExchange(KeyExchType type){
         this.type = type;
         try {
@@ -50,7 +57,7 @@ public class KeyExchange extends KeyAgreementSchemeContext{
      * @throws InvalidKeyException 
      * @throws UnsupportedTypeException **
      */
-    public ByteBuffer getSharedSecrect(PublicKey publicKey) throws InvalidKeyException{
+    public ByteBuffer getHMACKey(ECPublicKey publicKey) throws InvalidKeyException{
         byte[] sharedKey = null;
         synchronized(this) {
             lastUsedTime = System.currentTimeMillis();
@@ -73,15 +80,17 @@ public class KeyExchange extends KeyAgreementSchemeContext{
         return ByteBuffer.wrap(sharedKey);
     }
 
-    @Deprecated
-    public byte[] getHMACKey(ECPublicKey peerExponential) throws InvalidKeyException{
-        return getSharedSecrect(peerExponential).array();
+    /**
+     * Returns the public key being used
+     * @return The public key as ECPublicKey
+     */
+    public ECPublicKey getPublicKey() {
+        return (ECPublicKey)keys.getPublic();
     }
 
-    public PublicKey getPublicKey() {
-        return keys.getPublic();
-    }
-
+    /**
+     * Returns the public key as a byte[] in network format
+     */
     public byte[] getPublicKeyNetworkFormat() {
         byte[] ret = getPublicKey().getEncoded();
         if(ret.length == type.modulusSize) {
