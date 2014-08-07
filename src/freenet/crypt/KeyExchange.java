@@ -68,9 +68,9 @@ public class KeyExchange extends KeyAgreementSchemeContext{
         if (logMINOR) {
             Logger.minor(this, "Curve in use: " + type.name().substring(4));
             if(logDEBUG) {
-                Logger.debug(this, "My exponential: " + 
+                Logger.debug(this, "My public key: " + 
                         HexUtil.bytesToHex(getPublicKey().getEncoded()));
-                Logger.debug(this, "Peer's exponential: " + 
+                Logger.debug(this, "Peer's public key: " + 
                         HexUtil.bytesToHex(publicKey.getEncoded()));
                 Logger.debug(this, "SharedSecret = " + 
                         HexUtil.bytesToHex(sharedKey));
