@@ -45,8 +45,6 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     private int version; 
     
     private static final long END_MAGIC = 0x2c158a6c7772acd3L;
-    private static final int MAC_LEN = 16;
-    private static final int FOOTER_LENGTH = 52;// in bytes
     
     //writes
     public EncryptedRandomAccessThing(EncryptedRandomAccessThingType type, 
@@ -66,7 +64,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         
         this.unencryptedBaseKey = KeyGenUtils.genSecretKey(KeyType.HMACSHA512);
         
-        if(underlyingThing.size() < FOOTER_LENGTH){
+        if(underlyingThing.size() < type.footerLen){
             throw new IOException("Underlying RandomAccessThing is not long enough to include the "
                     + "footer.");
         }
@@ -132,7 +130,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     }
     
     private void writeFooter() throws IOException{
-        byte[] footer = new byte[FOOTER_LENGTH];
+        byte[] footer = new byte[type.footerLen];
         int offset = 0;
         
         int ivLen = headerEncIV.length;
@@ -168,7 +166,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         byte[] magic = ByteBuffer.allocate(8).putLong(END_MAGIC).array();
         System.arraycopy(magic, 0, footer, offset, magic.length);
         
-        pwrite(size()-FOOTER_LENGTH, footer, 0, FOOTER_LENGTH);
+        pwrite(size()-type.footerLen, footer, 0, type.footerLen);
     }
     
     private boolean getVersionCheckMagic() throws IOException{
@@ -187,11 +185,11 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
     }
     
     private boolean readFooter() throws IOException {
-        byte[] footer = new byte[FOOTER_LENGTH-12];
+        byte[] footer = new byte[type.footerLen-12];
         int offset = 0;
-        pread(size()-FOOTER_LENGTH, footer, offset, FOOTER_LENGTH-12);
+        pread(size()-type.footerLen, footer, offset, type.footerLen-12);
         
-        headerEncIV = new byte[CryptBitSetType.ChaCha128.ivSize];
+        headerEncIV = new byte[type.encryptType.ivSize];
         System.arraycopy(footer, offset, headerEncIV, 0, headerEncIV.length);
         offset += headerEncIV.length;
         
@@ -200,7 +198,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         System.arraycopy(footer, offset, encryptedKey, 0, keySize);
         offset += keySize;
         try {
-            CryptBitSet crypt = new CryptBitSet(CryptBitSetType.ChaCha128, headerEncKey, 
+            CryptBitSet crypt = new CryptBitSet(type.encryptType, headerEncKey, 
                     headerEncIV);
             unencryptedBaseKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, 
                     crypt.decrypt(unencryptedBaseKey.getEncoded()));
@@ -208,12 +206,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
             throw new IOException();
         }
         
-        byte[] mac = new byte[MAC_LEN];
-        System.arraycopy(footer, offset, mac, 0, MAC_LEN);
+        byte[] mac = new byte[type.macLen];
+        System.arraycopy(footer, offset, mac, 0, type.macLen);
         
         byte[] ver = ByteBuffer.allocate(4).putInt(version).array();
         try{
-            MessageAuthCode authcode = new MessageAuthCode(MACType.Poly1305AES, headerMacKey, headerMacIV);
+            MessageAuthCode authcode = new MessageAuthCode(type.macType, headerMacKey, headerMacIV);
             return authcode.verifyData(mac, headerEncIV, unencryptedBaseKey.getEncoded(), ver);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
             throw new IOException();
