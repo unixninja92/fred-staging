@@ -77,12 +77,12 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         int readVersion = ByteBuffer.wrap(footer, offset, 4).getInt();
         offset += 4;
         long magic = ByteBuffer.wrap(footer, offset, 8).getLong();
-        
+
         if(END_MAGIC != magic && magic == 0){
-            throw new IOException();
+        	throw new IOException();
         }
 
-    	version = type.bitmask;
+        version = type.bitmask;
         if(magic == 0){
 
         	writeFooter();
@@ -92,24 +92,24 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         		throw new IOException("Version of the underlying RandomAccessThing is "
         				+ "incompatible with this ERATType");
         	}
-        	
+
         	if(readFooter()){
         		throw new IOException("Macs is incorrect");
         	}
         }
-        
 
-    	try{
-    		this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
-    				(Class<?>)this.getClass(), kdfInput.underlyingKey.input, 
-    				type.encryptKey).getEncoded());
-    		this.cipherParams = new ParametersWithIV(cipherKey, 
-    				KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
-    						kdfInput.underlyingIV.input, type.skippingCipherIVLen).getIV());
-    	} catch(InvalidKeyException e) {
-    		// TODO Auto-generated catch block
-    		e.printStackTrace();
-    	}
+
+        try{
+        	this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
+        			(Class<?>)this.getClass(), kdfInput.underlyingKey.input, 
+        			type.encryptKey).getEncoded());
+        	this.cipherParams = new ParametersWithIV(cipherKey, 
+        			KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
+        					kdfInput.underlyingIV.input, type.skippingCipherIVLen).getIV());
+        } catch(InvalidKeyException e) {
+        	// TODO Auto-generated catch block
+        	e.printStackTrace();
+        }
 
     	cipherRead.init(false, cipherParams);
     	cipherWrite.init(true, cipherParams);
