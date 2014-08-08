@@ -69,11 +69,16 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
                     + "footer.");
         }
         
-        this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
-                (Class<?>)this.getClass(), kdfInput.underlyingKey, type.encryptKey).getEncoded());
-        this.cipherParams = new ParametersWithIV(cipherKey, 
-                KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
-                        kdfInput.underlyingIV, type.skippingCipherIVLen));
+        try{
+        	this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
+        			(Class<?>)this.getClass(), kdfInput.underlyingKey.input, type.encryptKey).getEncoded());
+        	this.cipherParams = new ParametersWithIV(cipherKey, 
+        			KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
+        					kdfInput.underlyingIV.input, type.skippingCipherIVLen).getIV());
+        } catch(InvalidKeyException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         version = type.bitmask;
         
