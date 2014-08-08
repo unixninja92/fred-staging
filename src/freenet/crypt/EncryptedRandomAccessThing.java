@@ -1,7 +1,6 @@
 package freenet.crypt;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -14,7 +13,6 @@ import org.bouncycastle.crypto.SkippingStreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
-import freenet.node.MasterKeys;
 import freenet.support.io.RandomAccessThing;
 /**
  * REQUIRES BC 151 OR NEWER!!!!!! 
@@ -84,7 +82,6 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 
         version = type.bitmask;
         if(magic == 0){
-
         	writeFooter();
         }
         else{
@@ -97,7 +94,6 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         		throw new IOException("Macs is incorrect");
         	}
         }
-
 
         try{
         	this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
@@ -199,21 +195,6 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         System.arraycopy(magic, 0, footer, offset, magic.length);
         
         pwrite(size()-type.footerLen, footer, 0, type.footerLen);
-    }
-    
-    private boolean getVersionCheckMagic() throws IOException{
-        int len = 12;
-        byte[] footer = new byte[len];
-        int offset = 0;
-        pread(size()-len, footer, offset, len);
-        
-        version = ByteBuffer.wrap(footer, offset, 4).getInt();
-        offset += 4;
-        
-        if(END_MAGIC != ByteBuffer.wrap(footer, offset, 8).getLong()){
-            return false;
-        }
-        return true;
     }
     
     private boolean readFooter() throws IOException {
