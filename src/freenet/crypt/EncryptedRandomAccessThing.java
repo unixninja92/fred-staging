@@ -69,23 +69,50 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
                     + "footer.");
         }
         
-        try{
-        	this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
-        			(Class<?>)this.getClass(), kdfInput.underlyingKey.input, type.encryptKey).getEncoded());
-        	this.cipherParams = new ParametersWithIV(cipherKey, 
-        			KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
-        					kdfInput.underlyingIV.input, type.skippingCipherIVLen).getIV());
-        } catch(InvalidKeyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        int len = 12;
+        byte[] footer = new byte[len];
+        int offset = 0;
+        pread(size()-len, footer, offset, len);
+        
+        int readVersion = ByteBuffer.wrap(footer, offset, 4).getInt();
+        offset += 4;
+        long magic = ByteBuffer.wrap(footer, offset, 8).getLong();
+        
+        if(END_MAGIC != magic && magic == 0){
+            throw new IOException();
         }
 
-        version = type.bitmask;
+    	version = type.bitmask;
+        if(magic == 0){
+
+        	writeFooter();
+        }
+        else{
+        	if(readVersion != version){
+        		throw new IOException("Version of the underlying RandomAccessThing is "
+        				+ "incompatible with this ERATType");
+        	}
+        	
+        	if(readFooter()){
+        		throw new IOException("Macs is incorrect");
+        	}
+        }
         
-        cipherRead.init(false, cipherParams);
-        cipherWrite.init(true, cipherParams);
-        
-        writeFooter();
+
+    	try{
+    		this.cipherKey = new KeyParameter(KeyGenUtils.deriveSecretKey(unencryptedBaseKey, 
+    				(Class<?>)this.getClass(), kdfInput.underlyingKey.input, 
+    				type.encryptKey).getEncoded());
+    		this.cipherParams = new ParametersWithIV(cipherKey, 
+    				KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
+    						kdfInput.underlyingIV.input, type.skippingCipherIVLen).getIV());
+    	} catch(InvalidKeyException e) {
+    		// TODO Auto-generated catch block
+    		e.printStackTrace();
+    	}
+
+    	cipherRead.init(false, cipherParams);
+    	cipherWrite.init(true, cipherParams);
     }
 
     @Override
