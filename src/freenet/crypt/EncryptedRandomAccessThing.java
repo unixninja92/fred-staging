@@ -13,6 +13,7 @@ import org.bouncycastle.crypto.SkippingStreamCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
+import freenet.support.Logger;
 import freenet.support.io.RandomAccessThing;
 /**
  * REQUIRES BC 151 OR NEWER!!!!!! 
@@ -103,8 +104,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
         			KeyGenUtils.deriveIvParameterSpec(unencryptedBaseKey, this.getClass(), 
         					kdfInput.underlyingIV.input, type.skippingCipherIVLen).getIV());
         } catch(InvalidKeyException e) {
-        	// TODO Auto-generated catch block
-        	e.printStackTrace();
+            Logger.error(EncryptedRandomAccessThing.class, "Internal error; please report:", e);
         }
 
     	cipherRead.init(false, cipherParams);
@@ -171,8 +171,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
                     headerEncIV);
             encryptedKey = crypt.encrypt(unencryptedBaseKey.getEncoded()).array();
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Logger.error(EncryptedRandomAccessThing.class, "Internal error; please report:", e);
         }
         System.arraycopy(encryptedKey, 0, footer, offset, encryptedKey.length);
         offset += encryptedKey.length;
@@ -184,8 +183,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
             System.arraycopy(macResult, 0, footer, offset, macResult.length);
             offset += macResult.length;
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Logger.error(EncryptedRandomAccessThing.class, "Internal error; please report:", e);
         }
         
         System.arraycopy(ver, 0, footer, offset, ver.length);

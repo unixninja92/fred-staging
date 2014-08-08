@@ -6,6 +6,8 @@ import java.security.InvalidKeyException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
+import freenet.support.Logger;
+
 public final class MasterSecret implements Serializable{
     private static final long serialVersionUID = -8411217325990445764L;
     private final SecretKey masterKey;
@@ -27,8 +29,7 @@ public final class MasterSecret implements Serializable{
         try {
             return KeyGenUtils.deriveSecretKey(masterKey, getClass(), type.name()+" key", type);
         } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Logger.error(MasterSecret.class, "Internal error; please report:", e);
         }
         return null;
     }
@@ -37,14 +38,8 @@ public final class MasterSecret implements Serializable{
         try {
             return KeyGenUtils.deriveIvParameterSpec(masterKey, getClass(), "iv len "+len, len);
         } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            Logger.error(MasterSecret.class, "Internal error; please report:", e);
         }
         return null;
     }
-    
-//    public static void save(){
-//        MasterSecret key = new MasterSecret(CryptBitSetType.ChaCha256);
-////        key.
-//    }
 }
