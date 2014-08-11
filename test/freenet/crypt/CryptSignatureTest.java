@@ -12,7 +12,11 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 
+import freenet.node.FSParseException;
 import freenet.node.NodeStarter;
+import freenet.support.Base64;
+import freenet.support.IllegalBase64Exception;
+import freenet.support.SimpleFieldSet;
 
 public class CryptSignatureTest {
     @SuppressWarnings("deprecation")
@@ -1211,8 +1215,31 @@ public class CryptSignatureTest {
     }
 
     @Test
-    public void testAsFieldSet() {
-        fail("Not yet implemented");
+    public void testAsFieldSetBothKeys() throws IllegalBase64Exception, FSParseException, InvalidKeyException {
+    	for(int i = 0; i < ecdsaTypes.length; i++){
+    		CryptSignature sign = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+    		SimpleFieldSet sfs = sign.asFieldSet(true);
+    		SimpleFieldSet isfs = sfs.getSubset(ecdsaTypes[i].name());
+    		byte[] pub = Base64.decode(isfs.get("pub"));
+    		byte[] pri = Base64.decode(isfs.get("pri"));
+    		assertArrayEquals("SigType: "+ecdsaTypes[i].name(), pub, keyPairs[i].getPublic().getEncoded());
+    		assertArrayEquals("SigType: "+ecdsaTypes[i].name(), pri, keyPairs[i].getPrivate().getEncoded());
+    	}
+    }
+
+    @Test
+    public void testAsFieldSetPublicKey() throws InvalidKeyException, IllegalBase64Exception, FSParseException {
+    	for(int i = 0; i < ecdsaTypes.length; i++){
+    		CryptSignature sign = new CryptSignature(ecdsaTypes[i], keyPairs[i]);
+    		SimpleFieldSet sfs = sign.asFieldSet(false);
+    		SimpleFieldSet isfs = sfs.getSubset(ecdsaTypes[i].name());
+    		byte[] pub = Base64.decode(isfs.get("pub"));
+    		try{
+    			byte[] pri = Base64.decode(isfs.get("pri"));
+    			fail("Expected NullPointerException");
+    		} catch(NullPointerException e){}
+    		assertArrayEquals("SigType: "+ecdsaTypes[i].name(), pub, keyPairs[i].getPublic().getEncoded());
+    	}
     }
 
 }
