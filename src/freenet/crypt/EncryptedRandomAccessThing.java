@@ -113,7 +113,7 @@ public final class EncryptedRandomAccessThing implements RandomAccessThing {
 
     @Override
     public long size() throws IOException {
-        return underlyingThing.size();
+        return underlyingThing.size() + type.footerLen;
     }
 
     @Override
