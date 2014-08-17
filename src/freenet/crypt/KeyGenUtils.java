@@ -72,7 +72,7 @@ public final class KeyGenUtils {
         }
         return null;
     }
-    
+
     /**
      * Converts a specified key for a specified algorithm to a PublicKey. Can not handle DSA keys.
      * @param type The type of key being passed in
@@ -93,7 +93,7 @@ public final class KeyGenUtils {
     public static KeyPair getPublicKeyPair(KeyPairType type, byte[] pub) {
         return getKeyPair(getPublicKey(type, pub), null);
     }
-    
+
     /**
      * Converts a specified key for a specified algorithm to a PublicKey which is then stored in
      * a KeyPair. The private key of the KeyPair is null. Can not handle DSA keys.
@@ -133,7 +133,7 @@ public final class KeyGenUtils {
         }
         return null;
     }
-    
+
     /**
      * Converts the specified keys for a specified algorithm to PrivateKey and PublicKey
      * respectively. These are then placed in a KeyPair. Can not handle DSA keys.
@@ -186,7 +186,7 @@ public final class KeyGenUtils {
         }
         return new SecretKeySpec(key, type.alg);
     }
-    
+
     /**
      * Converts the specified key into a SecretKey for the specified algorithm
      * @param key The ByteBuffer of the key
@@ -236,7 +236,7 @@ public final class KeyGenUtils {
     public static IvParameterSpec getIvParameterSpec(byte[] iv, int offset, int length){
         return new IvParameterSpec(iv, offset, length);
     }
-    
+
     /**
      * Converts an iv in a ByteBuffer and places it in a IvParameterSpec.
      * @param iv The ByteBuffer containing the iv
@@ -245,8 +245,18 @@ public final class KeyGenUtils {
     public static IvParameterSpec getIvParameterSpec(ByteBuffer iv){
         return new IvParameterSpec(iv.array());
     }
-    
-    private static ByteBuffer deriveBytes(SecretKey kdfKey, Class<?> c, String kdfString) throws InvalidKeyException{
+
+    /**
+     * Derives a ByteBuffer that is 512 bytes long from the given key using the provided class name 
+     * and kdfString
+     * @param kdfKey The key to derive from
+     * @param c Class name to use in derivation 
+     * @param kdfString Sting to use in derivation
+     * @return A 512 long ByteBuffer
+     * @throws InvalidKeyException
+     */
+    private static ByteBuffer deriveBytes(SecretKey kdfKey, Class<?> c, String kdfString) 
+            throws InvalidKeyException{
         if(kdfString == null){
             throw new NullPointerException();
         }
@@ -258,21 +268,52 @@ public final class KeyGenUtils {
         }
         return null;
     }
-    
+
+
+    /**
+     * Derives a ByteBuffer of the specified length from the given key using the provided class name 
+     * and kdfString
+     * @param kdfKey The key to derive from
+     * @param c Class name to use in derivation 
+     * @param kdfString Sting to use in derivation
+     * @param len How long the new ByteBuffer should be. 
+     * @return A ByteBuffer of the specified length
+     * @throws InvalidKeyException
+     */
     private static ByteBuffer deriveBytesTruncated(SecretKey kdfKey, Class<?> c, String kdfString, 
             int len) throws InvalidKeyException{
         byte[] key = new byte[len];
         deriveBytes(kdfKey, c, kdfString).get(key);
         return ByteBuffer.wrap(key);
     }
-    
+
+    /**
+     * Derives a SecretKey of the specified type from the given key using the provided class name 
+     * and kdfString
+     * @param kdfKey The key to derive from
+     * @param c Class name to use in derivation 
+     * @param kdfString Sting to use in derivation
+     * @param type The type of key to derive
+     * @return The derived key as a SecretKey
+     * @throws InvalidKeyException
+     */
     public static SecretKey deriveSecretKey(SecretKey kdfKey, Class<?> c, String kdfString, 
             KeyType type) throws InvalidKeyException{
-        return getSecretKey(type, deriveBytesTruncated(kdfKey, c, kdfString, type.keySize));
+        return getSecretKey(type, deriveBytesTruncated(kdfKey, c, kdfString, type.keySize >> 3));
     }
-    
-    public static IvParameterSpec deriveIvParameterSpec(SecretKey kdfKey, Class<?> c, String kdfString, 
-            int ivLen) throws InvalidKeyException{
-        return getIvParameterSpec(deriveBytesTruncated(kdfKey, c, kdfString, ivLen));
+
+    /**
+     * Derives a IvParameterSpec of the specified type from the given key using the provided class 
+     * name and kdfString
+     * @param kdfKey The key to derive from
+     * @param c Class name to use in derivation 
+     * @param kdfString Sting to use in derivation
+     * @param ivType The type of IV to derive
+     * @return The derived IV as an IvParameterSpec
+     * @throws InvalidKeyException
+     */
+    public static IvParameterSpec deriveIvParameterSpec(SecretKey kdfKey, Class<?> c, 
+            String kdfString, KeyType ivType) throws InvalidKeyException{
+        return getIvParameterSpec(deriveBytesTruncated(kdfKey, c, kdfString, ivType.ivSize >> 3));
     }
 }

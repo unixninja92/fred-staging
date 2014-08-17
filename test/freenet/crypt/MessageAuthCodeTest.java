@@ -1,3 +1,6 @@
+/* This code is part of Freenet. It is distributed under the GNU General
+ * Public License, version 2 (or at your option any later version). See
+ * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
 import static org.junit.Assert.*;
@@ -30,7 +33,7 @@ public class MessageAuthCodeTest{
             temp = "Hi There".getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            Logger.error(CryptSignature.class, "Internal error; please report:", e);
+            Logger.error(MessageAuthCodeTest.class, "Internal error; please report:", e);
         }
         hmacMessage = temp;
     }

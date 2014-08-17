@@ -1,8 +1,10 @@
+/* This code is part of Freenet. It is distributed under the GNU General
+ * Public License, version 2 (or at your option any later version). See
+ * http://www.gnu.org/ for further details of the GPL. */
 package freenet.crypt;
 
 import static org.junit.Assert.*;
 
-import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -38,7 +40,7 @@ public class KeyGenUtilsTest {
         HexUtil.hexToBytes("45d6c9656b3b115263ba12739e90dcc1"),
         HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
     };
-    
+
     private static final byte[][] trueLengthSecretKeys = {
         HexUtil.hexToBytes("20e86dc31ebf2c0e37670e30f8f45c57"),
         HexUtil.hexToBytes("8c6c2e0a60b3b73e9dbef076b68b686bacc9d20081e8822725d14b10b5034f48"),
@@ -48,7 +50,7 @@ public class KeyGenUtilsTest {
         HexUtil.hexToBytes("c9f1731f7e996603c6e1f8f72da8a66e51dd8bbc2465f1a9f4d32f800c41ac28"
                 + "f99fe0c1d811678f91300cf33e527436"),
         HexUtil.hexToBytes("2ada39975c02c442e5ebc34832cde05e718acb28e15cdf80c8ab1da9c05bb53c"
-                + "0b026c88a32aee65a924c9ea0b4e6cf5d2d434489d8bb82dfe7876919f690a56"),
+                        + "0b026c88a32aee65a924c9ea0b4e6cf5d2d434489d8bb82dfe7876919f690a56"),
         HexUtil.hexToBytes("a92e3fa63e8cbe50869fb352d883911271bf2b0e9048ad04c013b20e901f5806"),
         HexUtil.hexToBytes("45d6c9656b3b115263ba12739e90dcc1"),
         HexUtil.hexToBytes("f468986cbaeecabd4cf242607ac602b51a1adaf4f9a4fc5b298970cbda0b55c6")
@@ -86,7 +88,7 @@ public class KeyGenUtilsTest {
     private static PrivateKey[] privateKeys = new PrivateKey[truePublicKeys.length];
 
     private static final byte[] trueIV = new byte[16];
-    
+
     private static final String kdfInput = "testKey";
 
     static{
@@ -267,7 +269,7 @@ public class KeyGenUtilsTest {
             byte[] key = KeyGenUtils.genSecretKey(type).getEncoded();
             System.out.println(key.length);
             int keySizeBytes = type.keySize >> 3;
-            assertEquals("KeyType: "+type.name(), keySizeBytes, key.length);
+        assertEquals("KeyType: "+type.name(), keySizeBytes, key.length);
         }
     }
 
@@ -338,37 +340,95 @@ public class KeyGenUtilsTest {
     }
     
     @Test
-    public void testDeriveIvParameterSpec() throws InvalidKeyException{
+    public void testDeriveSecretKey() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
-        IvParameterSpec buf1 = 
-                KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 512);
-        IvParameterSpec buf2 = 
-                KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 512);
+        SecretKey buf1 = KeyGenUtils.deriveSecretKey(kdfKey, KeyGenUtils.class, kdfInput, 
+                KeyType.HMACSHA512);
+        SecretKey buf2 = KeyGenUtils.deriveSecretKey(kdfKey, KeyGenUtils.class, kdfInput, 
+                KeyType.HMACSHA512);
         assertNotNull(buf1);
         assertTrue(buf1.equals(buf2));
     }
     
+    @Test
+    public void testDeriveSecretKeyLength() throws InvalidKeyException{
+        for(KeyType type: keyTypes){
+            SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
+            SecretKey buf1 = KeyGenUtils.deriveSecretKey(kdfKey, KeyGenUtils.class, kdfInput, type);
+
+            assertEquals(buf1.getEncoded().length, type.keySize >> 3);
+        }
+    }
+
+    @Test (expected = InvalidKeyException.class)
+    public void testDeriveSecretKeyNullInput1() throws InvalidKeyException {
+        SecretKey kdfKey = null;
+        KeyGenUtils.deriveSecretKey(kdfKey, KeyGenUtils.class, kdfInput, KeyType.ChaCha128);
+    }
+
+    @Test (expected = NullPointerException.class)
+    public void testDeriveSecretKeyNullInput2() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
+        KeyGenUtils.deriveSecretKey(kdfKey, null, kdfInput, KeyType.ChaCha128);
+    }
+
+    @Test (expected = NullPointerException.class)
+    public void testDeriveSecretKeyNullInput3() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
+        KeyGenUtils.deriveSecretKey(kdfKey, KeyGenUtils.class, null, KeyType.ChaCha128);
+    }
+
+    @Test (expected = NullPointerException.class)
+    public void testDeriveSecretKeyNullInput4() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
+        KeyGenUtils.deriveSecretKey(kdfKey, KeyGenUtils.class, kdfInput, null);
+    }
+
+    @Test
+    public void testDeriveIvParameterSpec() throws InvalidKeyException{
+        SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
+        IvParameterSpec buf1 = 
+                KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 
+                        KeyType.ChaCha128);
+        IvParameterSpec buf2 = 
+                KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 
+                        KeyType.ChaCha128);
+        assertNotNull(buf1);
+        assertArrayEquals(buf1.getIV(), buf2.getIV());
+    }
+    
+    @Test
+    public void testDeriveIvParameterSpecLength() throws InvalidKeyException{
+        for(KeyType type: keyTypes){
+            SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
+            IvParameterSpec buf1 = KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, 
+                    kdfInput, type);
+
+            assertEquals(buf1.getIV().length, type.ivSize >> 3);
+        }
+    }
+
     @Test (expected = InvalidKeyException.class)
     public void testDeriveIvParameterSpecNullInput1() throws InvalidKeyException {
         SecretKey kdfKey = null;
-        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, 8);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, KeyType.ChaCha128);
     }
 
     @Test (expected = NullPointerException.class)
     public void testDeriveIvParameterSpecNullInput2() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
-        KeyGenUtils.deriveIvParameterSpec(kdfKey, null, kdfInput, 8);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, null, kdfInput, KeyType.ChaCha128);
     }
 
     @Test (expected = NullPointerException.class)
     public void testDeriveIvParameterSpecNullInput3() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
-        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, null, 8);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, null, KeyType.ChaCha128);
     }
-    
-    @Test (expected = IndexOutOfBoundsException.class)
-    public void testDeriveIvParameterSpecLenOutOfBounds() throws InvalidKeyException{
+
+    @Test (expected = NullPointerException.class)
+    public void testDeriveIvParameterSpecNullInput4() throws InvalidKeyException{
         SecretKey kdfKey = KeyGenUtils.getSecretKey(KeyType.HMACSHA512, trueLengthSecretKeys[6]);
-        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, -1);
+        KeyGenUtils.deriveIvParameterSpec(kdfKey, KeyGenUtils.class, kdfInput, null);
     }
 }
