@@ -32,7 +32,7 @@ public enum CryptByteBufferType implements Serializable{
     public final KeyType keyType;
 
     /**
-     * Creates the RijndaelECB enum value. iv is -1. 
+     * Creates the RijndaelECB enum value. iv is null. 
      * @param bitmask
      * @param keyType The type of key the alg requires
      */
@@ -46,7 +46,7 @@ public enum CryptByteBufferType implements Serializable{
     }
 
     /**
-     * Creates the RijndaelECB128 enum value. iv is -1. 
+     * Creates the RijndaelECB128 enum value. iv is null. 
      * and sets the non-standard blocksize. 
      * @param bitmask
      * @param keyType The type of key the alg requires
@@ -54,7 +54,7 @@ public enum CryptByteBufferType implements Serializable{
      */
     private CryptByteBufferType(int bitmask, KeyType keyType, int blockSize){
         this.bitmask = bitmask;
-        this.ivSize = -1;
+        this.ivSize = null;
         this.keyType = keyType;
         this.cipherName = keyType.alg;
         this.blockSize = blockSize;
@@ -97,9 +97,6 @@ public enum CryptByteBufferType implements Serializable{
      * Returns true if the algorithm supports/requires an IV, otherwise returns false.
      */
     public boolean hasIV(){
-        if(ivSize != null){
-            return true;
-        }
-        return false;
+        return ivSize != null;
     }
 }
