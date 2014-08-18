@@ -571,7 +571,9 @@ public final class CryptSignature{
     }
 
     /**
-     * Verifies that the Signature of the byte[] data matches the signature passed in
+     * Verifies that a given signature matches the data in the given byte[]s  and is 
+     * signed by the public key the class was instantiated with. The buffer is reset before and 
+     * after verification
      * @param signature Signature to be verified
      * @param data Data to be signed
      * @return True if the signature matches the signature generated for the passed in 
@@ -602,6 +604,15 @@ public final class CryptSignature{
         return false; 
     }
     
+    /**
+     * Verifies that a given signature matches the data in the given byte[]s  and is 
+     * signed by the public key the class was instantiated with. The buffer is reset before and 
+     * after verification
+     * @param signature Signature to be verified
+     * @param data Data to be signed
+     * @return True if the signature matches the signature generated for the passed in 
+     * data, otherwise false
+     */
     public boolean verifyData(ByteBuffer signature, ByteBuffer data){
         return verifyData(signature.array(), data.array());
     }
@@ -620,26 +631,69 @@ public final class CryptSignature{
         return DSA.verify(dsaPubK, sig, m, false);
     }
 
+    /**
+     * Verifies that the signature m matches the signature passed in r+s
+     * @param r The r part of the signature
+     * @param s The s part of the signature
+     * @param m Data to be signed
+     * @return True if the signature matches the signature generated for the passed in 
+     * data, otherwise false
+     */
     public boolean verifyData(BigInteger r, BigInteger s, BigInteger m) {
         return verifyData(new DSASignature(r, s), m);
     }
 
+    /**
+     * Verifies that the signature of the give byte[]s matches the signature passed in
+     * @param sig Signature to be verified
+     * @param data Data to be signed
+     * @return True if the signature matches the signature generated for the passed in 
+     * data, otherwise false
+     */
     public boolean verifyData(DSASignature sig, byte[]... data) {
         return verifyData(sig, new NativeBigInteger(1, sha256.genHash(data)));
     }
     
+    /**
+     * Verifies that the signature of the given ByteBuffer matches the signature passed in
+     * @param sig Signature to be verified
+     * @param data Data to be signed
+     * @return True if the signature matches the signature generated for the passed in 
+     * data, otherwise false
+     */
     public boolean verifyData(DSASignature sig, ByteBuffer data) {
         return verifyData(sig, data.array());
     }
 
+    /**
+     * Verifies that the signature the given byte[]s matches the signature passed in r+s
+     * @param r The r part of the signature
+     * @param s The s part of the signature
+     * @param data Data to be signed
+     * @return True if the signature matches the signature generated for the passed in 
+     * data, otherwise false
+     */
     public boolean verifyData(BigInteger r, BigInteger s, byte[]... data) {
         return verifyData(r, s, new NativeBigInteger(1, sha256.genHash(data)));
     }
     
+    /**
+     * Verifies that the signature the given ByteBuffer matches the signature passed in r+s
+     * @param r The r part of the signature
+     * @param s The s part of the signature
+     * @param data Data to be signed
+     * @return True if the signature matches the signature generated for the passed in 
+     * data, otherwise false
+     */
     public boolean verifyData(BigInteger r, BigInteger s, ByteBuffer data) {
         return verifyData(r, s, data.array());
     }
 
+    /**
+     * Returns the public key being used. Does not support DSA. 
+     * @return The ECPublicKey being used. 
+     * @throws UnsupportedTypeException
+     */
     public ECPublicKey getPublicKey() throws UnsupportedTypeException{
         if(type == SigType.DSA){
             throw new UnsupportedTypeException(type);
