@@ -22,13 +22,14 @@ import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
 
 /**
- * 
+ * CryptSignature can sign data and then verify that the signature both matches the data and was 
+ * created using the same public key. In verify only mode, only verification can be done. 
+ * The suggested SigType for use is ECDSAP256 
  * @author unixninja92
  *
  */
 @SuppressWarnings("deprecation")//for suppressing DSA related warnings. 
 public final class CryptSignature{
-    public static final SigType preferredSignature = SigType.ECDSAP256;
     private static final String verifyError = "CryptSignature inalized in verify only mode. "
             + "Can not sign in this mode";
     private boolean verifyOnly;
