@@ -21,7 +21,12 @@ import freenet.support.Base64;
 import freenet.support.Logger;
 import freenet.support.SimpleFieldSet;
 
-@SuppressWarnings("deprecation")
+/**
+ * 
+ * @author unixninja92
+ *
+ */
+@SuppressWarnings("deprecation")//for suppressing DSA related warnings. 
 public final class CryptSignature{
     public static final SigType preferredSignature = SigType.ECDSAP256;
     private static final String verifyError = "CryptSignature inalized in verify only mode. "
@@ -72,10 +77,9 @@ public final class CryptSignature{
     }
 
     /**
-     * Will initialize CryptSignature to be able to verify a message was signed with 
-     * the public key.
+     * Will initialize CryptSignature in verify only mode using the provided public key. 
      * @param type Type of Signature algorithm used
-     * @param publicKey The public key that can be used to verify signatures
+     * @param publicKey The public key that can be used to verify signatures as byte[]
      * @throws CryptFormatException
      * @throws InvalidKeyException
      */
@@ -99,10 +103,9 @@ public final class CryptSignature{
     }
     
     /**
-     * Will initialize CryptSignature to be able to verify a message was signed with 
-     * the public key.
+     * Will initialize CryptSignature in verify only mode using the provided public key. 
      * @param type Type of Signature algorithm used
-     * @param publicKey The public key that can be used to verify signatures
+     * @param publicKey The public key that can be used to verify signatures as a ByteBuffer
      * @throws CryptFormatException
      * @throws InvalidKeyException
      */
@@ -111,6 +114,15 @@ public final class CryptSignature{
         this(type, publicKey.array());
     }
 
+    
+    /**
+     * Will initialize CryptSignature using the provided KeyPair. If the private key is set to null,
+     * it will be initialized in verify only mode. 
+     * @param type Type of Signature algorithm used
+     * @param pair The KeyPair to be used. The private key can be null for verify only mode. 
+     * @throws CryptFormatException
+     * @throws InvalidKeyException
+     */
     public CryptSignature(SigType type, KeyPair pair) throws InvalidKeyException{
         if(type == SigType.DSA){
             throw new UnsupportedTypeException(type);
@@ -127,6 +139,17 @@ public final class CryptSignature{
         }
     }
 
+
+    /**
+     * Will initialize CryptSignature using the provided public and private key. If the private 
+     * key is set to null, it will be initialized in verify only mode. 
+     * @param type Type of Signature algorithm used
+     * @param pub The public key to be used
+     * @param pri The private key to be used. If this is null the CryptSignature will be in verify
+     * only mode. 
+     * @throws CryptFormatException
+     * @throws InvalidKeyException
+     */
     public CryptSignature(SigType type, PublicKey pub, PrivateKey pri) throws InvalidKeyException{
         this(type, KeyGenUtils.getKeyPair(pub, pri));
     }
@@ -176,6 +199,11 @@ public final class CryptSignature{
         verifyOnly = false;
     }
 
+    /**
+     * Creates an instance of CryptSignature in verify only mode using the global DSAGroup and
+     * the passed in public key
+     * @param pub DSA public key
+     */
     public CryptSignature(DSAPublicKey pub){
         type = SigType.DSA;
         dsaPubK = pub;
