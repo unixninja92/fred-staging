@@ -528,9 +528,12 @@ public final class CryptSignature{
     }
 
     /**
-     * Verifies that a signature is signed by the public key the class was 
-     * instantiated with
-     * @param signature The signature to verify
+     * Verifies that a given signature matches the bytes passed in through addBytes methods and is 
+     * signed by the public key the class was instantiated with. The buffer is reset after 
+     * verification
+     * @param signature The byte[] containing the signature to verify
+     * @param offset Where in the byte[] the signature begins
+     * @param len How long the signature is
      * @return If the signature is valid it returns true, otherwise it returns false.
      */
     public boolean verify(byte[] signature, int offset, int len) {
@@ -545,10 +548,24 @@ public final class CryptSignature{
         return false;
     }
 
+    /**
+     * Verifies that a given signature matches the bytes passed in through addBytes methods and is 
+     * signed by the public key the class was instantiated with. The buffer is reset after 
+     * verification
+     * @param sig The signature to verify
+     * @return If the signature is valid it returns true, otherwise it returns false.
+     */
     public boolean verify(byte[] sig) {
         return verify(sig, 0, sig.length);
     }
-    
+
+    /**
+     * Verifies that a given signature matches the bytes passed in through addBytes methods and is 
+     * signed by the public key the class was instantiated with. The buffer is reset after 
+     * verification
+     * @param sig The signature to verify
+     * @return If the signature is valid it returns true, otherwise it returns false.
+     */
     public boolean verify(ByteBuffer sig) {
         return verify(sig.array());
     }
