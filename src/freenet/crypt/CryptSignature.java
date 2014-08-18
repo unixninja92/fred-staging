@@ -211,8 +211,8 @@ public final class CryptSignature{
     }
 
     /**
-     * Add the passed in byte to the bytes that will be signed.
-     * @param input Byte to be signed
+     * Adds the specified byte to the buffer of bytes to be used for processing
+     * @param input Byte to be processed
      * @throws UnsupportedTypeException 
      */
     private void addByte(Signature sig, byte input) {
@@ -227,8 +227,8 @@ public final class CryptSignature{
     }
 
     /**
-     * Add the passed in byte[] to the bytes that will be signed.
-     * @param input Byte[] to be signed
+     * Adds the specified byte[]s to the buffer of bytes to be used for processing
+     * @param input byte[]s to be processed
      */
     private void addBytes(Signature sig, byte[]... input) {
         if(type == SigType.DSA){
@@ -244,26 +244,29 @@ public final class CryptSignature{
     }
 
     /**
-     * Add the specified portion of the passed in byte[] to the bytes that 
-     * will be signed.
-     * @param data Byte[] to be signed
+     * Adds the specified portion of a byte[] to the buffer of bytes to be used for processing
+     * @param input Byte[] to be processed
      * @param offset Where to start reading bytes for signature
      * @param length How many bytes after offset to use for signature
      */
-    private void addBytes(Signature sig, byte[] data, int offset, int length) {
+    private void addBytes(Signature sig, byte[] input, int offset, int length) {
         if(type == SigType.DSA){
             throw new UnsupportedTypeException(type);
         }
         try {
-            sig.update(data, offset, length);
+            sig.update(input, offset, length);
         } catch (SignatureException e) {
             Logger.error(CryptSignature.class, "Internal error; please report:", e);
         }
     }
 
     /**
-     * Adds the ByteBuffer to the bytes that will be signed.
-     * @param input ByteBuffer to be signed
+     * Adds the remaining bytes from a  ByteBuffer to the buffer of bytes 
+     * to be used for processing. The bytes read from the ByteBuffer will be from 
+     * input.position() to input.remaining(). Upon return, the ByteBuffer's
+     * .position() will be equal to .remaining() and .remaining() will 
+     * stay unchanged.
+     * @param input ByteBuffer to be processing
      */
     private void addBytes(Signature sig, ByteBuffer input) {
         if(type == SigType.DSA){
@@ -276,6 +279,11 @@ public final class CryptSignature{
         }
     }
 
+    /**
+     * Adds the specified byte to the buffer of bytes to be used for signing
+     * @param input Byte to be signed
+     * @throws UnsupportedTypeException 
+     */
     public void addByteToSign(byte input) {
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
@@ -283,6 +291,10 @@ public final class CryptSignature{
         addByte(sign, input);
     }
 
+    /**
+     * Adds the specified byte[]s to the buffer of bytes to be used for signing
+     * @param input byte[]s to be signed
+     */
     public void addBytesToSign(byte[]... input) {
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
@@ -290,6 +302,12 @@ public final class CryptSignature{
         addBytes(sign, input);
     }
 
+    /**
+     * Adds the specified portion of a byte[] to the buffer of bytes to be used for signing
+     * @param input Byte[] to be signed
+     * @param offset Where to start reading bytes for signature
+     * @param length How many bytes after offset to use for signature
+     */
     public void addBytesToSign(byte[] input, int offset, int length) {
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
@@ -297,6 +315,14 @@ public final class CryptSignature{
         addBytes(sign, input, offset, length);
     }
 
+    /**
+     * Adds the remaining bytes from a  ByteBuffer to the buffer of bytes 
+     * to be used for signing. The bytes read from the ByteBuffer will be from 
+     * input.position() to input.remaining(). Upon return, the ByteBuffer's
+     * .position() will be equal to .remaining() and .remaining() will 
+     * stay unchanged. 
+     * @param input ByteBuffer to be signed
+     */
     public void addBytesToSign(ByteBuffer input) {
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
@@ -304,22 +330,50 @@ public final class CryptSignature{
         addBytes(sign, input);
     }
 
+    /**
+     * Adds the specified byte to the buffer of bytes to be used for verification
+     * @param input Byte to be verified 
+     * @throws UnsupportedTypeException 
+     */
     public void addByteToVerify(byte input) {
         addByte(verify, input);
     }
 
+    /**
+     * Adds the specified byte[]s to the buffer of bytes to be used for verification
+     * @param input byte[]s to be verified
+     */
     public void addBytesToVerify(byte[]... input) {
         addBytes(verify, input);
     }
 
+    /**
+     * Adds the specified portion of a byte[] to the buffer of bytes to be used for verification
+     * @param input Byte[] to be verified
+     * @param offset Where to start reading bytes for verification
+     * @param length How many bytes after offset to use for verification
+     */
     public void addBytesToVerify(byte[] input, int offset, int length) {
         addBytes(verify, input, offset, length);
     }
 
+    /**
+     * Adds the remaining bytes from a  ByteBuffer to the buffer of bytes 
+     * to be used for verification. The bytes read from the ByteBuffer will be from 
+     * input.position() to input.remaining(). Upon return, the ByteBuffer's
+     * .position() will be equal to .remaining() and .remaining() will 
+     * stay unchanged. 
+     * @param input ByteBuffer to be verified
+     */
     public void addBytesToVerify(ByteBuffer input) {
         addBytes(verify, input);
     }
 
+    /**
+     * Signs all of the bytes passed in through addBytes methods. The buffer from addBytes is reset 
+     * after the signature has been generated. Does not support DSA. Signature will be DER encoded.
+     * @return ByteBuffer of the DER encoded signature. 
+     */
     public ByteBuffer sign(){
         if(verifyOnly){
             throw new IllegalStateException(verifyError);
@@ -345,7 +399,9 @@ public final class CryptSignature{
     }
 
     /**
-     * Signs the byte[]s passed in
+     * Signs only the specified bytes. If using ECDSA, the buffer is cleared before processing the 
+     * input to ensure that no extra data is included. Once the signature has been generated, the 
+     * buffer is cleared again. 
      * @param data byte[]s to be signed
      * @return The signature of the signed data
      */
@@ -368,6 +424,11 @@ public final class CryptSignature{
             }
         }
         else{
+            try {
+                sign.sign();
+            } catch (SignatureException e) {
+                Logger.error(CryptSignature.class, "Internal error; please report:", e);
+            }
             addBytesToSign(data);
             result = sign().array();
         }
@@ -375,7 +436,9 @@ public final class CryptSignature{
     }
     
     /**
-     * Signs the ByteBuffer passed in
+     * Signs only the specified bytes. If using ECDSA, the buffer is cleared before processing the 
+     * input to ensure that no extra data is included. Once the signature has been generated, the 
+     * buffer is cleared again. 
      * @param data ByteBuffer to be signed
      * @return The signature of the signed data
      */
@@ -384,7 +447,7 @@ public final class CryptSignature{
     }
 
     /**
-     * Signs byte[]s to DSASignature
+     * Signs specified byte[]s to DSASignature
      * @param data Byte[]s to sign
      * @return Returns the DSASignature of the data
      * @throws UnsupportedTypeException 
@@ -397,7 +460,7 @@ public final class CryptSignature{
     }
     
     /**
-     * Signs ByteBuffer to DSASignature
+     * Signs specified ByteBuffer to DSASignature
      * @param data ByteBuffer to sign
      * @return Returns the DSASignature of the data
      * @throws UnsupportedTypeException 
@@ -407,7 +470,7 @@ public final class CryptSignature{
     }
 
     /**
-     * Signs data m to DSASignature
+     * Signs specified BigInteger m to DSASignature
      * @param m BitIteger to be signed
      * @return Returns the DSASignature of m
      * @throws UnsupportedTypeException 
@@ -426,8 +489,9 @@ public final class CryptSignature{
     }
 
     /**
-     * Sign data and return a fixed size signature. The data does not need to be hashed, the 
-     * signing code will handle that for us, using an algorithm appropriate for the keysize.
+     * Signs data and return a fixed size signature. The data does not need to be hashed, the 
+     * signing code will handle that for us, using an algorithm appropriate for the keysize. DSA
+     * not supported.
      * @return A zero padded DER signature (maxSigSize). Space Inefficient but constant-size.
      */
     public byte[] signToNetworkFormat(byte[]... data) {
@@ -455,7 +519,8 @@ public final class CryptSignature{
     
     /**
      * Sign data and return a fixed size signature. The data does not need to be hashed, the 
-     * signing code will handle that for us, using an algorithm appropriate for the keysize.
+     * signing code will handle that for us, using an algorithm appropriate for the keysize. DSA not
+     * supported.
      * @return A zero padded DER signature (maxSigSize). Space Inefficient but constant-size.
      */
     public byte[] signToNetworkFormat(ByteBuffer data) {
