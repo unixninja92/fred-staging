@@ -1,11 +1,5 @@
 package freenet.node;
 
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -22,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedHashMap;
@@ -29,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.DataFormatException;
@@ -88,6 +83,12 @@ import freenet.support.math.SimpleRunningAverage;
 import freenet.support.math.TimeDecayingRunningAverage;
 import freenet.support.transport.ip.HostnameSyntaxException;
 import freenet.support.transport.ip.IPUtil;
+
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * @author amphibian
@@ -216,9 +217,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	/** After this many failed handshakes, we start the ARK fetcher. */
 	private static final int MAX_HANDSHAKE_COUNT = 2;
 	final PeerLocation location;
-	/** Node identity; for now a block of data, in future a
-	* public key (FIXME). Cannot be changed.
-	*/
+	/** Node "identity". This is a random 32 byte block of data, which may be derived from the 
+	 * node's public key. It cannot be changed, and is only used for the outer keyed obfuscation 
+	 * on connection setup packets in FNPPacketMangler. */
 	final byte[] identity;
 	final String identityAsBase64String;
 	/** Hash of node identity. Used in setup key. */
@@ -230,7 +231,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	final long swapIdentifier;
 	/** Negotiation types supported */
 	int[] negTypes;
-	/** Integer hash of node identity. Used as hashCode(). */
+	/** Integer hash of the peer's public key. Used as hashCode(). */
 	final int hashCode;
 	/** The Node we serve */
 	final Node node;
@@ -258,12 +259,6 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 	/** Time at which we should send the next handshake request */
 	protected long sendHandshakeTime;
-	/** Time after which we log message requeues while rate limiting */
-	private long nextMessageRequeueLogTime;
-	/** Interval between rate limited message requeue logs (in milliseconds) */
-	private static final long messageRequeueLogRateLimitInterval = 1000;
-	/** Number of messages to be requeued after which we rate limit logging of such */
-	private static final int messageRequeueLogRateLimitThreshold = 15;
 	/** Version of the node */
 	private String version;
 	/** Total input */
@@ -423,21 +418,16 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 	/**
 	* Create a PeerNode from a SimpleFieldSet containing a
-	* node reference for one. This must contain the following
-	* fields:
-	* - identity
-	* - version
-	* - location
-	* - physical.udp
-	* - setupKey
-	* Do not add self to PeerManager.
+	* node reference for one. Does not add self to PeerManager.
 	* @param fs The node reference to parse.
 	* @param node2 The running Node we are part of.
 	* @param fromLocal True if the noderef was read from the stored peers file and can contain
 	* local metadata, and won't be signed. Otherwise, it is a new node reference from elsewhere,
-	* should not contain metadata, and will be signed. */
+	* should not contain metadata, and will be signed. 
+	* @throws PeerTooOldException If the peer is so old that it can no longer be parsed, e.g. 
+	* because it hasn't been connected since the last major crypto change. */
 	public PeerNode(SimpleFieldSet fs, Node node2, NodeCrypto crypto, boolean fromLocal) 
-	                throws FSParseException, PeerParseException, ReferenceSignatureVerificationException {
+	                throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
 		boolean noSig = false;
 		if(fromLocal || fromAnonymousInitiator()) noSig = true;
 		myRef = new WeakReference<PeerNode>(this);
@@ -489,6 +479,11 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 		/* Read the ECDSA key material for the peer */
 		SimpleFieldSet sfs = fs.subset("ecdsa.P256");
+		if(sfs == null) {
+		    GregorianCalendar gc = new GregorianCalendar(2013, 6, 20);
+		    gc.setTimeZone(TimeZone.getTimeZone("GMT"));
+		    throw new PeerTooOldException("No ECC support", 1449, gc.getTime());
+		}
 		byte[] pub;
 		try {
 			pub = Base64.decode(sfs.get("pub"));
@@ -3751,7 +3746,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	public void offer(Key key) {
 		byte[] keyBytes = key.getFullKey();
 		// FIXME maybe the authenticator should be shorter than 32 bytes to save memory?
-		byte[] authenticator = HMAC.macWithSHA256(node.failureTable.offerAuthenticatorKey, keyBytes, 32);
+		byte[] authenticator = HMAC.macWithSHA256(node.failureTable.offerAuthenticatorKey, keyBytes);
 		Message msg = DMT.createFNPOfferKey(key, authenticator);
 		try {
 			sendAsync(msg, null, node.nodeStats.sendOffersCtr);
@@ -3791,8 +3786,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 
 	/**
 	 * Create a DarknetPeerNode or an OpennetPeerNode as appropriate
+	 * @throws PeerTooOldException 
 	 */
-	public static PeerNode create(SimpleFieldSet fs, Node node2, NodeCrypto crypto, OpennetManager opennet, PeerManager manager) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException {
+	public static PeerNode create(SimpleFieldSet fs, Node node2, NodeCrypto crypto, OpennetManager opennet, PeerManager manager) throws FSParseException, PeerParseException, ReferenceSignatureVerificationException, PeerTooOldException {
 		if(crypto.isOpennet)
 			return new OpennetPeerNode(fs, node2, crypto, opennet, true);
 		else
@@ -5829,11 +5825,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
         return !failed;
 	}
 	
-	protected byte[] getIdentity() {
-	    return identity;
-	}
-	
-	protected final byte[] getIdentity(int negType) {
-	        return peerECDSAPubKeyHash;
+	protected final byte[] getPubKeyHash() {
+	    return peerECDSAPubKeyHash;
 	}
 }
