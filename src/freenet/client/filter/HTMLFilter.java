@@ -86,12 +86,6 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 	}
 	
 	@Override
-	public void writeFilter(InputStream input, OutputStream output, String charset, HashMap<String, String> otherParams,
-			FilterCallback cb) throws DataFilterException, IOException {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
 	public String getCharset(byte[] input, int length, String parseCharset) throws DataFilterException, IOException {
 		logMINOR = Logger.shouldLog(LogLevel.MINOR, this);		
 		if(logMINOR) Logger.minor(this, "getCharset(): default="+parseCharset);
@@ -1255,6 +1249,16 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 				new String[] { "href" },
 				emptyStringArray,
 				new String[] { "onfocus", "onblur" }));
+		allowedTagsVerifiers.put(
+			"audio", // currently just minimal support
+			new MediaTagVerifier(
+				"audio",
+				new String[] { // allowed tags
+					"preload",
+					"controls"},
+				emptyStringArray, // uris
+				new String[] { "src" }, // inline uris
+				emptyStringArray));
 		allowedTagsVerifiers.put("style", new StyleTagVerifier());
 		allowedTagsVerifiers.put(
 			"font",
@@ -2663,6 +2667,55 @@ public class HTMLFilter implements ContentDataFilter, CharsetExtractor {
 		
 		private boolean isStandardLinkType(String token) {
 			return standardRelTypes.contains(token.toLowerCase());
+		}
+	}
+
+    /** Verify media tags (audio and video). This needs its own
+     * verifier, because different from images, browsers use content
+     * sniffing to find out whether to display it as media
+     * content. Using text/plain as content type would allow
+     * exploiting this to run unfiltered files as media files. We fix
+     * this by encoding the mime type into the uri.*/
+	static class MediaTagVerifier extends CoreTagVerifier {
+		private static final String[] locallyVerifiedAttrs = new String[] {
+			"src"
+		};
+
+		MediaTagVerifier(
+			String tag,
+			String[] allowedAttrs,
+			String[] uriAttrs,
+			String[] inlineURIAttrs,
+			String[] eventAttrs) {
+			super(tag, allowedAttrs, uriAttrs, inlineURIAttrs, eventAttrs);
+			for(String attr : locallyVerifiedAttrs) {
+				this.parsedAttrs.add(attr);
+			}
+		}
+
+		@Override
+		Map<String, Object> sanitizeHash(Map<String, Object> h,
+			ParsedTag p, 
+			HTMLParseContext pc) throws DataFilterException {
+			Map<String, Object> hn = super.sanitizeHash(h, p, pc);
+			String hreflang = getHashString(h, "hreflang");
+			String charset = null;
+			String maybecharset = null;
+            /* TODO: get the type from the filename. Currently we only
+             * have a filter for mp3, so this is the simplest possible
+             * solution.*/
+            String type = "audio/mpeg";
+
+			String src = getHashString(h, "src");
+			if (src != null) {
+				src = HTMLDecoder.decode(src);
+                src = htmlSanitizeURI(src, type, null, null, pc.cb, pc, false);
+				if (src != null) {
+					src = HTMLEncoder.encode(src);
+					hn.put("src", src);
+                }
+			}
+			return hn;
 		}
 	}
 

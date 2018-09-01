@@ -3,16 +3,14 @@
  * http://www.gnu.org/ for further details of the GPL. */
 package freenet.node;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
+import org.tanukisoftware.wrapper.WrapperListener;
+import org.tanukisoftware.wrapper.WrapperManager;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Properties;
 import java.util.UUID;
-
-import org.tanukisoftware.wrapper.WrapperListener;
-import org.tanukisoftware.wrapper.WrapperManager;
 
 import freenet.config.FreenetFilePersistentConfig;
 import freenet.config.InvalidConfigValueException;
@@ -28,8 +26,11 @@ import freenet.support.Logger;
 import freenet.support.Logger.LogLevel;
 import freenet.support.LoggerHook.InvalidThresholdException;
 import freenet.support.PooledExecutor;
+import freenet.support.ProcessPriority;
 import freenet.support.SimpleFieldSet;
 import freenet.support.io.NativeThread;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  *  @author nextgens
@@ -108,7 +109,6 @@ public class NodeStarter implements WrapperListener {
 			System.out.println("Usage: $ java freenet.node.Node <configFile>");
 			return Integer.valueOf(-1);
 		}
-
 		String builtWithMessage = "freenet.jar built with freenet-ext.jar Build #" + ExtVersion.buildNumber + " r" + ExtVersion.cvsRevision+" running with ext build "+extBuildNumber+" r" + extRevisionNumber;
 		Logger.normal(this, builtWithMessage);
 		System.out.println(builtWithMessage);
@@ -135,7 +135,7 @@ public class NodeStarter implements WrapperListener {
 		}
 
 		// First, set up logging. It is global, and may be shared between several nodes.
-		SubConfig loggingConfig = new SubConfig("logger", cfg);
+		SubConfig loggingConfig = cfg.createSubConfig("logger");
 
 		PooledExecutor executor = new PooledExecutor();
 
@@ -187,7 +187,7 @@ public class NodeStarter implements WrapperListener {
 		plug.start();
 
 		// Initialize SSL
-		SubConfig sslConfig = new SubConfig("ssl", cfg);
+		SubConfig sslConfig = cfg.createSubConfig("ssl");
 		SSL.init(sslConfig);
 
 		try {
@@ -259,6 +259,10 @@ public class NodeStarter implements WrapperListener {
 	 * Main Method
 	 *-------------------------------------------------------------*/
 	public static void main(String[] args) {
+		// Immediately try entering background mode. This way also class
+		//  loading will be subject to reduced priority. 
+		ProcessPriority.enterBackgroundMode();
+		
 		// Start the application.  If the JVM was launched from the native
 		//  Wrapper then the application will wait for the native Wrapper to
 		//  call the application's start method.  Otherwise the start method
@@ -273,6 +277,7 @@ public class NodeStarter implements WrapperListener {
      * @deprecated Instead use {@link #globalTestInit(File, boolean, LogLevel, String, boolean,
      *             RandomSource)}.
      */
+    @Deprecated
     public static RandomSource globalTestInit(String testName, boolean enablePlug,
             LogLevel logThreshold, String details, boolean noDNS) throws InvalidThresholdException {
 
@@ -411,7 +416,7 @@ public class NodeStarter implements WrapperListener {
         public int dropProb;
         public RandomSource random;
         public Executor executor;
-        public int threadLimit;
+        public int threadLimit = 500;
         public long storeSize;
         public boolean ramStore;
         public boolean enableSwapping;
@@ -427,6 +432,7 @@ public class NodeStarter implements WrapperListener {
         public boolean useSlashdotCache;
         public String ipAddressOverride;
         public boolean enableFCP;
+        public boolean enablePlugins;
     }
 
     /**
@@ -515,6 +521,7 @@ public class NodeStarter implements WrapperListener {
         configFS.put("fcp.enabled", params.enableFCP);
 		configFS.put("fcp.port", 9481);
 		configFS.put("fcp.ssl", false);
+		configFS.put("pluginmanager.enabled", params.enablePlugins);
 		configFS.put("console.enabled", false);
 		configFS.putSingle("pluginmanager.loadplugin", "");
 		configFS.put("node.updater.enabled", false);

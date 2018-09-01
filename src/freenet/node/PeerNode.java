@@ -261,9 +261,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	protected long sendHandshakeTime;
 	/** Version of the node */
 	private String version;
-	/** Total input */
+	/** Total bytes received since startup */
 	private long totalInputSinceStartup;
-	/** Total output */
+	/** Total bytes sent since startup */
 	private long totalOutputSinceStartup;
 	/** Peer node public key; changing this means new noderef */
 	public final ECPublicKey peerECDSAPubKey;
@@ -337,10 +337,12 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	protected long peerAddedTime = 1;
 	/** Average proportion of requests which are rejected or timed out */
 	private TimeDecayingRunningAverage pRejected;
-	/** Total low-level input bytes */
-	private long totalBytesIn;
-	/** Total low-level output bytes */
-	private long totalBytesOut;
+
+	/** Bytes received at/before startup */
+	private final long bytesInAtStartup;
+	/** Bytes sent at/before startup */
+	private final long bytesOutAtStartup;
+
 	/** Times had routable connection when checked */
 	private long hadRoutableConnectionCount;
 	/** Times checked for routable connection */
@@ -365,8 +367,6 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	long timeLastDisconnect;
 	/** Previous time of disconnection */
 	long timePrevDisconnect;
-	/** Acknowledging mode */
-	private boolean useCumulativeAcks;
 
 	// Burst-only mode
 	/** True if we are currently sending this peer a burst of handshake requests */
@@ -710,8 +710,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		else
 			sendHandshakeTime = now;  // Be sure we're ready to handshake right away
 
-		totalInputSinceStartup = fs.getLong("totalInput", 0);
-		totalOutputSinceStartup = fs.getLong("totalOutput", 0);
+		bytesInAtStartup = fs.getLong("totalInput", 0);
+		bytesOutAtStartup = fs.getLong("totalOutput", 0);
 
 		byte buffer[] = new byte[16];
 		node.random.nextBytes(buffer);
@@ -722,6 +722,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			if(fullFieldSet == null && f != null)
 				fullFieldSet = f;
 		}
+		// If we got here, odds are we should consider writing to the peer-file
+		writePeers();
 		
 	// status may have changed from PEER_NODE_STATUS_DISCONNECTED to PEER_NODE_STATUS_NEVER_CONNECTED
 	}
@@ -975,8 +977,18 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		}
 	}
 
-	public double[] getPeersLocation() {
-		return location.getPeerLocations();
+	/** Returns an array copy of locations of this PeerNode's peers, or null if unknown. */
+	double[] getPeersLocationArray() {
+		return location.getPeersLocationArray();
+	}
+
+	/**
+	 * Finds the closest non-excluded peer.
+	 * @param exclude the set of locations to exclude, may be null
+	 * @return the closest non-excluded peer's location, or NaN if none is found
+	 */
+	public double getClosestPeerLocation(double l, Set<Double> exclude) {
+		return location.getClosestPeerLocation(l, exclude);
 	}
 
 	public long getLocSetTime() {
@@ -1379,7 +1391,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 					Logger.debug(this, "Next urgent time is "+(l-now)+"ms on "+this);
 				t = l;
 			}
-			long l = pf.timeNextUrgent(canSend);
+			long l = pf.timeNextUrgent(canSend, now);
 			if(l < now && logMINOR)
 				Logger.minor(this, "Next urgent time from packet format less than now on "+this);
 			t = Math.min(t, l);
@@ -1494,7 +1506,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			isBursting = false;
 		} else {
 			delay = Node.MIN_TIME_BETWEEN_HANDSHAKE_SENDS
-				+ node.random.nextInt((int) Node.RANDOMIZED_TIME_BETWEEN_HANDSHAKE_SENDS);
+				+ node.random.nextInt(Node.RANDOMIZED_TIME_BETWEEN_HANDSHAKE_SENDS);
 		}
 		// FIXME proper multi-homing support!
 		delay /= (handshakeIPs == null ? 1 : handshakeIPs.length);
@@ -2263,8 +2275,6 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			Logger.error(this, "Completed handshake with " + getPeer() + " but disconnected (" + isConnected + ':' + currentTracker + "!!!: " + e, e);
 		}
 
-		if(isRealConnection())
-			node.nodeUpdater.maybeSendUOMAnnounce(this);
 		sendConnectedDiffNoderef();
 	}
 
@@ -2347,6 +2357,9 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	*/
 	public void processDiffNoderef(SimpleFieldSet fs) throws FSParseException {
 		processNewNoderef(fs, false, true, false);
+		// Send UOMAnnouncement only *after* we know what the other side's version.
+		if(isRealConnection())
+		    node.nodeUpdater.maybeSendUOMAnnounce(this);
 	}
 
 	/**
@@ -2709,7 +2722,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			fs.put("hadRoutableConnectionCount", hadRoutableConnectionCount);
 		if(routableConnectionCheckCount > 0)
 			fs.put("routableConnectionCheckCount", routableConnectionCheckCount);
-		double[] peerLocs = getPeersLocation();
+		double[] peerLocs = getPeersLocationArray();
 		if(peerLocs != null)
 			fs.put("peersLocation", peerLocs);
 		return fs;
@@ -2769,8 +2782,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		}
 		fs.put("opennet", isOpennetForNoderef());
 		fs.put("seed", isSeed());
-		fs.put("totalInput", (getTotalInputSinceStartup()+getTotalInputBytes()));
-		fs.put("totalOutput", (getTotalOutputSinceStartup()+getTotalOutputBytes()));
+		fs.put("totalInput", getTotalInputBytes());
+		fs.put("totalOutput", getTotalOutputBytes());
 		return fs;
 	}
 
@@ -2921,7 +2934,8 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			int mandatoryBackoffLength = realTime ? mandatoryBackoffLengthRT : mandatoryBackoffLengthBulk;
 			if(mandatoryBackoffUntil > -1 && mandatoryBackoffUntil > now) return;
 			Logger.error(this, "Entering mandatory backoff for "+this + (realTime ? " (realtime)" : " (bulk)"));
-			mandatoryBackoffUntil = now + (mandatoryBackoffLength/2) + node.fastWeakRandom.nextInt((int) (mandatoryBackoffLength/2));
+			mandatoryBackoffUntil = now + (mandatoryBackoffLength / 2) +
+				node.fastWeakRandom.nextInt(mandatoryBackoffLength / 2);
 			mandatoryBackoffLength *= MANDATORY_BACKOFF_MULTIPLIER;
 			node.nodeStats.reportMandatoryBackoff(reason, mandatoryBackoffUntil - now, realTime);
 			if(realTime) {
@@ -3011,7 +3025,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 				routingBackoffLength = routingBackoffLength * BACKOFF_MULTIPLIER;
 				if(routingBackoffLength > MAX_ROUTING_BACKOFF_LENGTH)
 					routingBackoffLength = MAX_ROUTING_BACKOFF_LENGTH;
-				int x = node.random.nextInt((int) routingBackoffLength);
+				int x = node.random.nextInt(routingBackoffLength);
 				routingBackedOffUntil = now + x;
 				node.nodeStats.reportRoutingBackoff(reason, x, realTime);
 				if(logMINOR) {
@@ -3093,7 +3107,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 				transferBackoffLength = transferBackoffLength * TRANSFER_BACKOFF_MULTIPLIER;
 				if(transferBackoffLength > MAX_TRANSFER_BACKOFF_LENGTH)
 					transferBackoffLength = MAX_TRANSFER_BACKOFF_LENGTH;
-				int x = node.random.nextInt((int) transferBackoffLength);
+				int x = node.random.nextInt(transferBackoffLength);
 				transferBackedOffUntil = now + x;
 				node.nodeStats.reportTransferBackoff(reason, x, realTime);
 				if(logMINOR) {
@@ -3637,21 +3651,21 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	}
 
 	public synchronized void reportIncomingBytes(int length) {
-		totalBytesIn += length;
+		totalInputSinceStartup += length;
 		totalBytesExchangedWithCurrentTracker += length;
 	}
 
 	public synchronized void reportOutgoingBytes(int length) {
-		totalBytesOut += length;
+		totalOutputSinceStartup += length;
 		totalBytesExchangedWithCurrentTracker += length;
 	}
 
 	public synchronized long getTotalInputBytes() {
-		return totalBytesIn;
+		return bytesInAtStartup + totalInputSinceStartup;
 	}
 
 	public synchronized long getTotalOutputBytes() {
-		return totalBytesOut;
+		return bytesOutAtStartup + totalOutputSinceStartup;
 	}
 
 	public synchronized long getTotalInputSinceStartup() {
@@ -5322,7 +5336,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 	 * allow them to reconnect. */
 	public abstract void fatalTimeout();
 	
-	public abstract boolean shallWeRouteAccordingToOurPeersLocation();
+	public abstract boolean shallWeRouteAccordingToOurPeersLocation(int htl);
 	
 	@Override
 	public PeerMessageQueue getMessageQueue() {
@@ -5354,15 +5368,6 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			if(pf == null) return Long.MAX_VALUE;
 		}
 		return pf.timeCheckForLostPackets();
-	}
-	
-	public void setAcknowledgeType(int negType) {
-		useCumulativeAcks = (negType >= 10);
-	}
-	
-	@Override
-	public boolean isUseCumulativeAcksSet() {
-		return useCumulativeAcks;
 	}
 
 	/** Only called for new format connections, for which we don't care about PacketTracker */
@@ -5530,7 +5535,7 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 		return false;
 	}
 
-	public void reportRoutedTo(double target, boolean isLocal, boolean realTime, PeerNode prev, Set<PeerNode> routedTo) {
+	public void reportRoutedTo(double target, boolean isLocal, boolean realTime, PeerNode prev, Set<PeerNode> routedTo, int htl) {
 		double distance = Location.distance(target, getLocation());
 		
 		double myLoc = node.getLocation();
@@ -5539,22 +5544,17 @@ public abstract class PeerNode implements USKRetrieverCallback, BasePeerNode, Pe
 			prevLoc = prev.getLocation();
 		else
 			prevLoc = -1.0;
-		
-		double[] peersLocation = getPeersLocation();
-		if((peersLocation != null) && (shallWeRouteAccordingToOurPeersLocation())) {
-			for(double l : peersLocation) {
-				boolean ignoreLoc = false; // Because we've already been there
-				if(Math.abs(l - myLoc) < Double.MIN_VALUE * 2 ||
-						Math.abs(l - prevLoc) < Double.MIN_VALUE * 2)
-					ignoreLoc = true;
-				else {
-					for(PeerNode cmpPN : routedTo)
-						if(Math.abs(l - cmpPN.getLocation()) < Double.MIN_VALUE * 2) {
-							ignoreLoc = true;
-							break;
-						}
-				}
-				if(ignoreLoc) continue;
+
+		Set<Double> excludeLocations = new HashSet<Double>();
+		excludeLocations.add(myLoc);
+		excludeLocations.add(prevLoc);
+		for (PeerNode routedToNode : routedTo) {
+			excludeLocations.add(routedToNode.getLocation());
+		}
+
+		if (shallWeRouteAccordingToOurPeersLocation(htl)) {
+			double l = getClosestPeerLocation(target, excludeLocations);
+			if (!Double.isNaN(l)) {
 				double newDiff = Location.distance(l, target);
 				if(newDiff < distance) {
 					distance = newDiff;
